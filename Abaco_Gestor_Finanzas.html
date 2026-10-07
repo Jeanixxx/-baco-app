@@ -2379,6 +2379,7 @@ const LS_SET = (k,v) => localStorage.setItem(k, typeof v==='string'?v:JSON.strin
 
 /* Persistencia debounced (patrón del store del backend) */
 let _saveTimer = null;
+let _saveErrorNotified = false;
 function save(immediate) {
   const flush = () => {
     try {
@@ -2410,15 +2411,21 @@ function save(immediate) {
       if (state.pronoun) LS_SET('user_pronoun', state.pronoun);
       LS_SET('money_chart_prefs', JSON.stringify(state.moneyChartPrefs || {}));
       if (state.activePanel) LS_SET('active_panel', state.activePanel);
+      _saveErrorNotified = false;
+      return true;
     } catch (err) {
       console.warn('save failed', err);
+      if (!_saveErrorNotified && $('toast')) {
+        _saveErrorNotified = true;
+        toast('No se pudieron guardar tus cambios. Libera espacio e inténtalo de nuevo.');
+      }
+      return false;
     }
   };
   if (immediate) {
     if (_saveTimer) clearTimeout(_saveTimer);
     _saveTimer = null;
-    flush();
-    return;
+    return flush();
   }
   if (_saveTimer) clearTimeout(_saveTimer);
   _saveTimer = setTimeout(flush, 280);
@@ -2528,7 +2535,7 @@ let state = {
 
 
 const $ = id => document.getElementById(id);
-const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const money = n => '$'+(Number(n)||0).toLocaleString('es');
 const uid = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : 'abaco-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
 const catIcon = id => (state.categories.find(c=>c.id===id)||{}).icon||'📦';
@@ -2557,7 +2564,7 @@ function toast(msg) {
 function showDetail(title, rows, actions) {
   $('detailTitle').textContent = title;
   $('detailBody').innerHTML = rows.map(r =>
-    `<div class="detail-row"><span class="lbl">${esc(r.lbl)}</span><span class="val">${r.val}</span></div>`
+    `<div class="detail-row"><span class="lbl">${esc(r.lbl)}</span><span class="val">${esc(r.val)}</span></div>`
   ).join('');
   const act = $('detailActions');
   if (act) {
@@ -2628,11 +2635,18 @@ function reactHtml(id) {
   const r = state.reactions[id] || {};
   const heart = r.heart||0, clap = r.clap||0;
   return `<div class="reactions">
-    <button type="button" class="react-btn ${r.myHeart?'active':''}" onclick="event.stopPropagation();doReact('${id}','heart')">❤️ ${heart||''}</button>
-    <button type="button" class="react-btn ${r.myClap?'active':''}" onclick="event.stopPropagation();doReact('${id}','clap')">👏 ${clap||''}</button>
+    <button type="button" class="react-btn ${r.myHeart?'active':''}" data-react-id="${esc(id)}" data-react-type="heart">❤️ ${heart||''}</button>
+    <button type="button" class="react-btn ${r.myClap?'active':''}" data-react-id="${esc(id)}" data-react-type="clap">👏 ${clap||''}</button>
   </div>`;
 }
+document.addEventListener('click', e => {
+  const btn = e.target.closest?.('.react-btn[data-react-id][data-react-type]');
+  if (!btn) return;
+  e.stopPropagation();
+  window.doReact(btn.dataset.reactId, btn.dataset.reactType);
+});
 window.doReact = (id, type) => {
+  if (type !== 'heart' && type !== 'clap') return;
   if(!state.reactions[id]) state.reactions[id]={heart:0,clap:0};
   const r = state.reactions[id];
   if(type==='heart') {
@@ -2644,18 +2658,14 @@ window.doReact = (id, type) => {
   }
   save();
   // animate without full re-render of everything
-  const btns = document.querySelectorAll(`.react-btn`);
+  const btns = document.querySelectorAll('.react-btn');
   btns.forEach(b => {
-    if ((type==='heart' && b.textContent.includes('❤')) || (type==='clap' && b.textContent.includes('👏'))) {
-      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'")) {
-        b.classList.remove('pop');
-        void b.offsetWidth;
-        b.classList.add('pop');
-        if (type==='heart') b.innerHTML = '❤️ '+(r.heart||'');
-        else b.innerHTML = '👏 '+(r.clap||'');
-        b.classList.toggle('active', type==='heart' ? r.myHeart : r.myClap);
-      }
-    }
+    if (b.dataset.reactId !== id || b.dataset.reactType !== type) return;
+    b.classList.remove('pop');
+    void b.offsetWidth;
+    b.classList.add('pop');
+    b.textContent = (type === 'heart' ? '❤️ ' : '👏 ') + (type === 'heart' ? (r.heart||'') : (r.clap||''));
+    b.classList.toggle('active', type==='heart' ? r.myHeart : r.myClap);
   });
 };
 
@@ -3236,7 +3246,7 @@ function expenseDetail(e) {
 function incomeDetail(i) {
   showDetail(i.description||'Ingreso', [
     {lbl:'Monto', val: money(i.amount)},
-    {lbl:'Tipo', val: esc(i.type||'')},
+    {lbl:'Tipo', val: i.type||''},
     {lbl:'Quién', val: whoLabel(i.user_id)},
     {lbl:'Fecha', val: formatDate(i.created_at)},
     {lbl:'Ámbito', val: i.shared?'Compartido':'Personal'},
@@ -3247,7 +3257,7 @@ function incomeDetail(i) {
 
 function renderHormiga() {
   $('hormChips').innerHTML = state.categories.map(c =>
-    `<div class="chip ${state.hormCat===c.id?'active':''}" data-val="${c.id}">${c.icon} ${c.name}</div>`
+    `<div class="chip ${state.hormCat===c.id?'active':''}" data-val="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</div>`
   ).join('');
   $('hormChips').querySelectorAll('.chip').forEach(ch => {
     ch.onclick = () => { state.hormCat=ch.dataset.val; renderHormiga(); updateSwipePreview(); };
@@ -3259,7 +3269,7 @@ function renderHormiga() {
       <div class="item-icon exp">${catIcon(e.category)}</div>
       <div class="item-body">
         <div class="item-title">${esc(e.description||'Gasto')}</div>
-        <div class="item-meta">${whoLabel(e.user_id)} · ${catName(e.category)} · ${timeAgo(e.created_at)}</div>
+        <div class="item-meta">${esc(whoLabel(e.user_id))} · ${esc(catName(e.category))} · ${timeAgo(e.created_at)}</div>
         ${reactHtml(e.id)}
       </div>
       <div class="item-amount neg">-${money(e.amount)}</div>
@@ -3366,7 +3376,7 @@ function renderInicio() {
       const amt = byCat[c.id]||0;
       const pct = Math.round((amt/maxCat)*100);
       return `<div class="cat-tile">
-        <div class="ci">${c.icon}</div>
+        <div class="ci">${esc(c.icon)}</div>
         <div class="cn">${esc(c.name)}</div>
         <div class="cp">${money(amt)}</div>
         <div class="bar"><div style="width:${pct}%"></div></div>
@@ -3425,7 +3435,7 @@ function renderInicio() {
         <div class="item-icon ${m._t==='inc'?'inc':'exp'}">${m._t==='inc'?'💰':catIcon(m.category)}</div>
         <div class="item-body">
           <div class="item-title">${esc(m.description||'?')} ${m._t==='exp'?`<span class="pill ${m.shared?'shared':'personal'}">${m.shared?'Comp.':'Pers.'}</span>`:''}</div>
-          <div class="item-meta">${whoLabel(m.user_id)} · ${timeAgo(m.created_at)}</div>
+          <div class="item-meta">${esc(whoLabel(m.user_id))} · ${timeAgo(m.created_at)}</div>
           ${reactHtml(m.id)}
         </div>
         <div class="item-amount ${m._t==='inc'?'pos':'neg'}">${m._t==='inc'?'+':'-'}${money(m.amount)}</div>
@@ -3661,12 +3671,18 @@ function renderShop() {
       <div class="item-icon shop">🛒</div>
       <div class="item-body"><div class="item-title">${esc(s.name)} <span class="pill standby-pill">Espera</span></div>
       <div class="item-meta">${money(s.price||0)}</div></div>
-      <button class="btn btn-primary btn-sm" type="button" onclick="acceptShop('${s.id}')">✓</button>
-      <button class="btn btn-ghost btn-sm" type="button" onclick="declineShop('${s.id}')">✕</button>
+      <button class="btn btn-primary btn-sm" type="button" data-shop-action="accept" data-shop-id="${esc(s.id)}">✓</button>
+      <button class="btn btn-ghost btn-sm" type="button" data-shop-action="decline" data-shop-id="${esc(s.id)}">✕</button>
     </div>` : `
     <div class="item"><div class="item-icon shop">🛒</div>
     <div class="item-body"><div class="item-title">${esc(s.name)}</div><div class="item-meta">aceptado</div></div></div>`
   ).join('');
+  $('shopList').querySelectorAll('[data-shop-action]').forEach(btn => {
+    btn.onclick = () => {
+      if (btn.dataset.shopAction === 'accept') acceptShop(btn.dataset.shopId);
+      else if (btn.dataset.shopAction === 'decline') declineShop(btn.dataset.shopId);
+    };
+  });
 }
 function renderCart() {
   if(!state.shopMode) return;
@@ -3677,7 +3693,10 @@ function renderCart() {
   $('cartList').innerHTML = state.cart.length ? state.cart.map((c,i)=>`
     <div class="item"><div class="item-icon shop">🛍️</div><div class="item-body"><div class="item-title">${esc(c.name)}</div></div>
     <div class="item-amount neg">${money(c.price)}</div>
-    <button class="btn btn-ghost btn-sm" type="button" onclick="removeCart(${i})">✕</button></div>`).join('') : '<div class="empty"><p>Carrito vacío</p></div>';
+    <button class="btn btn-ghost btn-sm" type="button" data-cart-remove="${i}">✕</button></div>`).join('') : '<div class="empty"><p>Carrito vacío</p></div>';
+  $('cartList').querySelectorAll('[data-cart-remove]').forEach(btn => {
+    btn.onclick = () => removeCart(Number(btn.dataset.cartRemove));
+  });
 }
 
 function renderIncomes() {
@@ -3687,7 +3706,7 @@ function renderIncomes() {
       <div class="item-icon inc">💰</div>
       <div class="item-body">
         <div class="item-title">${esc(i.description)}</div>
-        <div class="item-meta">${whoLabel(i.user_id)} · ${timeAgo(i.created_at)}</div>
+        <div class="item-meta">${esc(whoLabel(i.user_id))} · ${timeAgo(i.created_at)}</div>
         ${reactHtml(i.id)}
       </div>
       <div class="item-amount pos">+${money(i.amount)}</div>
@@ -3822,7 +3841,7 @@ function renderDebtors(){
   list.querySelectorAll('.item').forEach(el=>{
     const d=(state.debtors||[]).find(x=>x.id===el.dataset.debtId); if(!d)return;
     el.onclick=e=>{ if(e.target.closest('[data-debt-del]'))return;
-      showDetail(d.person,[{lbl:'Monto',val:money(d.amount)},{lbl:'Concepto',val:esc(d.concept||'—')},{lbl:'Fecha',val:d.date||'Sin fecha'}],[
+      showDetail(d.person,[{lbl:'Monto',val:money(d.amount)},      {lbl:'Concepto',val:d.concept||'—'},{lbl:'Fecha',val:d.date||'Sin fecha'}],[
         {label:'✓ Ya me pagó',onClick:()=>settleDebtor(d.id)},{label:'🗑️ Borrar',danger:true,onClick:()=>deleteDebtor(d.id)}]); };
   });
 }
@@ -3848,7 +3867,7 @@ function renderInvestments(){
   list.querySelectorAll('.item').forEach(el=>{
     const inv=(state.investments||[]).find(x=>x.id===el.dataset.invId); if(!inv)return;
     el.onclick=e=>{ if(e.target.closest('[data-inv-del]'))return;
-      showDetail(inv.name,[{lbl:'Monto',val:money(inv.amount)},{lbl:'Rendimiento',val:inv.rate?inv.rate+'%':'—'},{lbl:'Fecha',val:inv.date||'—'},{lbl:'Nota',val:esc(inv.note||'—')}],[{label:'🗑️ Borrar',danger:true,onClick:()=>deleteInvestment(inv.id)}]); };
+      showDetail(inv.name,[{lbl:'Monto',val:money(inv.amount)},{lbl:'Rendimiento',val:inv.rate?inv.rate+'%':'—'},{lbl:'Fecha',val:inv.date||'—'},{lbl:'Nota',val:inv.note||'—'}],[{label:'🗑️ Borrar',danger:true,onClick:()=>deleteInvestment(inv.id)}]); };
   });
 }
 function renderSubCalendar(){
@@ -4241,7 +4260,7 @@ function renderSavings(){
       {lbl:'Meta',val:s.type==='open'?'Abierto':money(s.target)},
       {lbl:'Rendimiento anual',val:s.annualRate?`${s.annualRate}%`:'Sin configurar'},
       {lbl:'Estimado pendiente',val:money(estimate)},
-      {lbl:'Nota',val:esc(s.note||'—')}
+      {lbl:'Nota',val:s.note||'—'}
     ],actions);
   });
   renderSaveSelect();
@@ -4583,8 +4602,8 @@ function deleteReminder(id){if(!confirm('¿Borrar recordatorio?'))return;const r
 
 
 
-function renderHistorial(){const el=$('historialList');if(!el)return;const h=[...state.historial].sort((a,b)=>(b.created_at||0)-(a.created_at||0));if(!h.length){el.innerHTML='<div class="empty"><p>Sin historial</p></div>';return;}el.innerHTML=h.map(x=>`<div class="item" data-hid="${x.id}"><div class="item-icon shop">🛒</div><div class="item-body"><div class="item-title">${esc(x.description||'Compra')}</div><div class="item-meta">${whoLabel(x.user_id)} · ${formatDate(x.created_at)}</div></div><div class="item-amount neg">-${money(x.amount)}</div></div>`).join('');el.querySelectorAll('.item').forEach(e=>e.onclick=()=>{const h=state.historial.find(x=>x.id===e.dataset.hid);if(h)showDetail('Compra',[{lbl:'Descripción',val:esc(h.description||'')},{lbl:'Monto',val:money(h.amount)},{lbl:'Fecha',val:formatDate(h.created_at)}],[{label:'🗑️ Borrar',danger:true,onClick:()=>deleteHistorialItem(h.id)}]);});}
-function renderCategories(){const el=$('catList');if(!el)return;el.innerHTML=state.categories.map(c=>`<div class="item" data-cid="${c.id}"><div class="item-icon shop">${c.icon}</div><div class="item-body"><div class="item-title">${esc(c.name)}</div><div class="item-meta">Categoría</div></div>${DEFAULT_CATS.some(d=>d.id===c.id)?'':'<button type="button" class="btn btn-ghost btn-sm" data-cat-del="'+c.id+'">✕</button>'}</div>`).join('');el.querySelectorAll('[data-cat-del]').forEach(b=>b.onclick=()=>deleteCategory(b.dataset.catDel));}
+function renderHistorial(){const el=$('historialList');if(!el)return;const h=[...state.historial].sort((a,b)=>(b.created_at||0)-(a.created_at||0));if(!h.length){el.innerHTML='<div class="empty"><p>Sin historial</p></div>';return;}el.innerHTML=h.map(x=>`<div class="item" data-hid="${esc(x.id)}"><div class="item-icon shop">🛒</div><div class="item-body"><div class="item-title">${esc(x.description||'Compra')}</div><div class="item-meta">${esc(whoLabel(x.user_id))} · ${formatDate(x.created_at)}</div></div><div class="item-amount neg">-${money(x.amount)}</div></div>`).join('');el.querySelectorAll('.item').forEach(e=>e.onclick=()=>{const h=state.historial.find(x=>x.id===e.dataset.hid);if(h)showDetail('Compra',[{lbl:'Descripción',val:h.description||''},{lbl:'Monto',val:money(h.amount)},{lbl:'Fecha',val:formatDate(h.created_at)}],[{label:'🗑️ Borrar',danger:true,onClick:()=>deleteHistorialItem(h.id)}]);});}
+function renderCategories(){const el=$('catList');if(!el)return;el.innerHTML=state.categories.map(c=>`<div class="item" data-cid="${esc(c.id)}"><div class="item-icon shop">${esc(c.icon)}</div><div class="item-body"><div class="item-title">${esc(c.name)}</div><div class="item-meta">Categoría</div></div>${DEFAULT_CATS.some(d=>d.id===c.id)?'':'<button type="button" class="btn btn-ghost btn-sm" data-cat-del="'+esc(c.id)+'">✕</button>'}</div>`).join('');el.querySelectorAll('[data-cat-del]').forEach(b=>b.onclick=()=>deleteCategory(b.dataset.catDel));}
 function addCategory(){const name=($('catName')?.value||'').trim(),icon=($('catIcon')?.value||'📦').trim();if(!name){toast('Escribe el nombre');return;}const id=name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||uid();if(state.categories.some(c=>c.id===id)){toast('Esa categoría ya existe');return;}const c={id,name,icon};state.categories.push(c);save();renderCategories();renderHormiga();renderInicio();$('catName').value='';$('catIcon').value='📦';toast('Categoría creada');}
 function deleteCategory(id){if(DEFAULT_CATS.some(c=>c.id===id)){toast('Las categorías base no se pueden borrar');return;}if(!confirm('¿Borrar categoría? Los movimientos conservarán sus datos.'))return;state.categories=state.categories.filter(c=>c.id!==id);if(state.hormCat===id)state.hormCat='general';save();renderCategories();renderHormiga();renderInicio();toast('Categoría borrada');}
 function clearMine(){if(!ensureUser())return;if(!confirm('¿Borrar tus movimientos? Esta acción no se puede deshacer.'))return;state.expenses=state.expenses.filter(e=>e.user_id!==state.user_id);
@@ -4613,23 +4632,66 @@ async function exportBackup(){
     toast('Copia de seguridad exportada');
   }catch(e){console.warn('exportBackup',e);toast('No se pudo exportar la copia');}
 }
+function validateBackupData(incoming){
+  const arrayKeys=new Set(['expenses','incomes','shop','checklist','cart','historial','savings','kanban','reminders','categories','budgets','cards','msiPlans','accounts','transfers','loans','subscriptions','debtors','investments','pinned']);
+  const objectKeys=new Set(['reactions','money_chart_prefs','wallet_quiz']);
+  const stringKeys=new Set(['user_name','budget_period','account_view','user_pronoun','active_panel','theme']);
+  if(!incoming||typeof incoming!=='object'||Array.isArray(incoming))throw new Error('El estado de la copia debe ser un objeto');
+  for(const key of PERSISTED_KEYS){
+    if(!Object.prototype.hasOwnProperty.call(incoming,key))continue;
+    const value=incoming[key];
+    if(arrayKeys.has(key)&&!Array.isArray(value))throw new Error(`Formato inválido en ${key}`);
+    if(objectKeys.has(key)&&(!value||typeof value!=='object'||Array.isArray(value)))throw new Error(`Formato inválido en ${key}`);
+    if(stringKeys.has(key)&&typeof value!=='string')throw new Error(`Formato inválido en ${key}`);
+    if(key==='user_id'&&value!==null&&typeof value!=='string')throw new Error('Formato inválido en user_id');
+    if(key==='shopMode'&&value!==null&&(typeof value!=='object'||Array.isArray(value)))throw new Error('Formato inválido en shopMode');
+  }
+  if(Object.prototype.hasOwnProperty.call(incoming,'transactions')&&!Array.isArray(incoming.transactions))throw new Error('Formato inválido en transactions');
+  const inspect=(value,key='',depth=0)=>{
+    if(depth>40)throw new Error('La copia es demasiado profunda');
+    if(typeof value==='string'){
+      if(/^(id|.*Id|.*_id)$/.test(key)&&/[\u0000-\u001f"'<>`\\]/.test(value))throw new Error(`Identificador inválido en ${key}`);
+      return;
+    }
+    if(value===null||typeof value==='boolean')return;
+    if(typeof value==='number'){if(!Number.isFinite(value))throw new Error('Número inválido en la copia');return;}
+    if(Array.isArray(value)){value.forEach(item=>inspect(item,'',depth+1));return;}
+    if(typeof value==='object'){
+      Object.keys(value).forEach(k=>{
+        if(k==='__proto__'||k==='prototype'||k==='constructor')throw new Error('La copia contiene una propiedad no permitida');
+        inspect(value[k],k,depth+1);
+      });
+      return;
+    }
+    throw new Error('La copia contiene un valor no permitido');
+  };
+  PERSISTED_KEYS.forEach(key=>{if(Object.prototype.hasOwnProperty.call(incoming,key))inspect(incoming[key],key);});
+  if(Object.prototype.hasOwnProperty.call(incoming,'transactions'))inspect(incoming.transactions,'transactions');
+}
 function importBackup(file){
   if(!file)return;
   const reader=new FileReader();
   reader.onload=()=>{
     try{
+      if(typeof reader.result!=='string')throw new Error('No se pudo leer el archivo');
       const payload=JSON.parse(reader.result);
-      const incoming=(payload&&payload.state)?payload.state:payload;
-      if(!incoming||typeof incoming!=='object')throw new Error('Formato inválido');
+      let incoming=payload;
+      if(payload&&typeof payload==='object'&&!Array.isArray(payload)&&Object.prototype.hasOwnProperty.call(payload,'state')){
+        if(payload.app&&payload.app!=='abaco-gestor-finanzas')throw new Error('La copia pertenece a otra aplicación');
+        if(payload.version!==undefined&&(!Number.isInteger(payload.version)||payload.version<1||payload.version>2))throw new Error('Versión de copia no compatible');
+        incoming=payload.state;
+      }
+      validateBackupData(incoming);
       if(!confirm('Esto reemplazará tus datos actuales con los de esta copia de seguridad. ¿Continuar?'))return;
       PERSISTED_KEYS.forEach(k=>{if(k in incoming)state[k]=incoming[k];});
       if(Array.isArray(incoming.transactions))state.transactions=incoming.transactions;
-      save(true);
+      if(!save(true))return;
       try{Abaco?.Finance?.ensure();}catch(e){}
       updateUI(); renderMenu(); renderPinned(); closeMenu();
       toast('Copia de seguridad restaurada');
-    }catch(e){console.warn('importBackup',e);toast('El archivo no es una copia válida de Ábaco');}
+    }catch(e){console.warn('importBackup',e);toast('La copia no es válida o contiene datos incompatibles');}
   };
+  reader.onerror=()=>{console.warn('importBackup: no se pudo leer el archivo',reader.error);toast('No se pudo leer el archivo de copia');};
   reader.readAsText(file);
 }
 function updateBackupStatusLabel(){
@@ -4887,8 +4949,8 @@ function markLoanPayment(id){
 
 function renderHistorial(){
   const el=$('historialList');if(!el)return;const h=[...(state.historial||[])].sort((a,b)=>(b.created_at||0)-(a.created_at||0));if(!h.length){el.innerHTML='<div class="empty"><p>Sin historial</p></div>';return;}
-  el.innerHTML=h.map(x=>{const dir=x.direction||'out',incoming=dir==='in',memo=dir==='memo'||dir==='transfer';const sign=incoming?'+':(memo?'':'-');const cls=incoming?'pos':(memo?'':'neg');return `<div class="item" data-hid="${x.id}"><div class="item-icon shop">${incoming?'💰':(memo?'↔️':'🛒')}</div><div class="item-body"><div class="item-title">${esc(x.description||'Movimiento')}</div><div class="item-meta">${whoLabel(x.user_id)} · ${formatDate(x.created_at)}</div></div><div class="item-amount ${cls}">${sign}${money(x.amount)}</div></div>`;}).join('');
-  el.querySelectorAll('.item').forEach(e=>e.onclick=()=>{const h=state.historial.find(x=>x.id===e.dataset.hid);if(h)showDetail('Movimiento',[{lbl:'Descripción',val:esc(h.description||'')},{lbl:'Monto',val:money(h.amount)},{lbl:'Tipo',val:esc(h.type||'movimiento')},{lbl:'Fecha',val:formatDate(h.created_at)}],[]);});
+  el.innerHTML=h.map(x=>{const dir=x.direction||'out',incoming=dir==='in',memo=dir==='memo'||dir==='transfer';const sign=incoming?'+':(memo?'':'-');const cls=incoming?'pos':(memo?'':'neg');return `<div class="item" data-hid="${esc(x.id)}"><div class="item-icon shop">${incoming?'💰':(memo?'↔️':'🛒')}</div><div class="item-body"><div class="item-title">${esc(x.description||'Movimiento')}</div><div class="item-meta">${esc(whoLabel(x.user_id))} · ${formatDate(x.created_at)}</div></div><div class="item-amount ${cls}">${sign}${money(x.amount)}</div></div>`;}).join('');
+  el.querySelectorAll('.item').forEach(e=>e.onclick=()=>{const h=state.historial.find(x=>x.id===e.dataset.hid);if(h)showDetail('Movimiento',[{lbl:'Descripción',val:h.description||''},{lbl:'Monto',val:money(h.amount)},{lbl:'Tipo',val:h.type||'movimiento'},{lbl:'Fecha',val:formatDate(h.created_at)}],[]);});
 }
 
 ensureFinancialCore();
