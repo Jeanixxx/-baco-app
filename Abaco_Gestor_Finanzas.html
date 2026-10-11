@@ -2440,6 +2440,10 @@ function hapticTap(style) {
     const Haptics = window.Capacitor?.Plugins?.Haptics;
     if (Haptics?.impact) { Haptics.impact({ style: style || 'LIGHT' }); return; }
   } catch (e) {}
+  try {
+    const native = window.AndroidBridge;
+    if (native?.hapticTap) { native.hapticTap(style || 'LIGHT'); return; }
+  } catch (e) {}
   try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
 }
 function reminderNotifId(id) {
@@ -2447,18 +2451,33 @@ function reminderNotifId(id) {
   return h % 2147483647;
 }
 function scheduleReminderNotification(r) {
+  const id = reminderNotifId(r.id);
+  const when = Number(r.when);
+  try {
+    const native = window.AndroidBridge;
+    if (native?.scheduleLocalNotification && Number.isFinite(when) && when > Date.now()) {
+      native.requestNotificationPermission?.();
+      native.scheduleLocalNotification(String(id), 'Ábaco · Recordatorio', String(r.text || ''), when);
+      return;
+    }
+  } catch (e) { console.warn('Notificación Android no programada', e); }
   try {
     const LN = window.Capacitor?.Plugins?.LocalNotifications;
     if (!LN?.schedule) return;
     LN.requestPermissions?.().catch(() => {});
-    LN.schedule({ notifications: [{ title: 'Ábaco · Recordatorio', body: r.text, id: reminderNotifId(r.id), schedule: { at: new Date(r.when) } }] }).catch(e => console.warn('Notificación no programada', e));
+    LN.schedule({ notifications: [{ title: 'Ábaco · Recordatorio', body: r.text, id, schedule: { at: new Date(when) } }] }).catch(e => console.warn('Notificación no programada', e));
   } catch (e) {}
 }
 function cancelReminderNotification(r) {
+  const id = reminderNotifId(r.id);
+  try {
+    const native = window.AndroidBridge;
+    if (native?.cancelLocalNotification) { native.cancelLocalNotification(String(id)); return; }
+  } catch (e) {}
   try {
     const LN = window.Capacitor?.Plugins?.LocalNotifications;
     if (!LN?.cancel) return;
-    LN.cancel({ notifications: [{ id: reminderNotifId(r.id) }] }).catch(() => {});
+    LN.cancel({ notifications: [{ id }] }).catch(() => {});
   } catch (e) {}
 }
 /* Respaldo del sistema de recordatorios cuando no hay plugin nativo de
@@ -4613,25 +4632,30 @@ save(true);updateUI();closeMenu();toast('Tus movimientos fueron borrados');}
 /* Respaldo/Restauración: usa PERSISTED_KEYS (la misma lista que clearAll) para
    que exportar/importar y vaciar datos nunca queden desincronizados. */
 async function exportBackup(){
-  try{
+  try {
     save(true);
-    const snap={}; PERSISTED_KEYS.forEach(k=>{snap[k]=state[k];}); snap.transactions=state.transactions||[];
-    const payload={app:'abaco-gestor-finanzas',version:2,exported_at:Date.now(),state:JSON.parse(JSON.stringify(snap))};
-    const json=JSON.stringify(payload,null,2);
-    const filename=`abaco_backup_${todayInputValue()}.json`;
-    const FS=window.Capacitor?.Plugins?.Filesystem, Share=window.Capacitor?.Plugins?.Share;
-    if(FS?.writeFile){
-      const res=await FS.writeFile({path:filename,data:json,directory:'CACHE',encoding:'utf8'});
-      if(Share?.share) await Share.share({title:'Copia de seguridad de Ábaco',url:res.uri});
-      else toast('Copia guardada: '+filename);
-    }else{
-      const blob=new Blob([json],{type:'application/json'}),url=URL.createObjectURL(blob);
-      const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),4000);
+    const snap = {};
+    PERSISTED_KEYS.forEach(k => { snap[k] = state[k]; });
+    snap.transactions = state.transactions || [];
+    const payload = { app: 'abaco-gestor-finanzas', version: 2, exported_at: Date.now(), state: JSON.parse(JSON.stringify(snap)) };
+    const json = JSON.stringify(payload, null, 2);
+    const filename = 'abaco_backup_' + todayInputValue() + '.json';
+    const native = window.AndroidBridge;
+    const FS = window.Capacitor?.Plugins?.Filesystem;
+    const Share = window.Capacitor?.Plugins?.Share;
+    if (native?.shareBackup) {
+      native.shareBackup(filename, json);
+    } else if (FS?.writeFile) {
+      const res = await FS.writeFile({ path: filename, data: json, directory: 'CACHE', encoding: 'utf8' });
+      if (Share?.share) await Share.share({ title: 'Copia de seguridad de Ábaco', url: res.uri });
+      else toast('Copia guardada: ' + filename);
+    } else {
+      const blob = new Blob([json], { type: 'application/json' }), url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
     }
-    LS_SET('last_backup_at',Date.now()); updateBackupStatusLabel();
-    toast('Copia de seguridad exportada');
-  }catch(e){console.warn('exportBackup',e);toast('No se pudo exportar la copia');}
+    LS_SET('last_backup_at', Date.now()); updateBackupStatusLabel(); toast('Copia de seguridad exportada');
+  } catch (e) { console.warn('exportBackup', e); toast('No se pudo exportar la copia'); }
 }
 function validateBackupData(incoming){
   const arrayKeys=new Set(['expenses','incomes','shop','checklist','cart','historial','savings','kanban','reminders','categories','budgets','cards','msiPlans','accounts','transfers','loans','subscriptions','debtors','investments','pinned']);
@@ -5673,6 +5697,7 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
       const status=window.Capacitor?.Plugins?.StatusBar;
       if(status?.setBackgroundColor) status.setBackgroundColor({color:dark?'#2B303A':'#EAEFF5'}).catch(()=>{});
       if(status?.setStyle) status.setStyle({style:dark?'DARK':'LIGHT'}).catch(()=>{});
+      const native=window.AndroidBridge; if(native?.setStatusBarColor) native.setStatusBarColor(meta.content);
     }catch(e){}
   };
   window.setAndroidThemeColor();
