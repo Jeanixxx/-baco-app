@@ -105,8 +105,7 @@ body {
   60%{ transform: translateX(-18px); }
 }
 .live-emoji {
-  display: inline-block; animation: floatY 2.4s ease-in-out infinite;
-  font-size: 18px;
+  display: none;
 }
 .panel.active.panel-enter { animation: slideUp .28s cubic-bezier(.22,1,.36,1); }
 
@@ -165,8 +164,8 @@ header {
   font-weight: 700; font-size: 12px; color: var(--green);
   flex-shrink: 0;
 }
-.header-name { font-size: 13px; font-weight: 600; line-height: 1.15; }
-.header-sub { font-size: 9.5px; opacity: .75; line-height: 1.2; }
+.header-name { font-size: 15px; font-weight: 650; line-height: 1.15; }
+.header-sub { font-size: 10px; opacity: .75; line-height: 1.25; }
 .header-actions { display: flex; align-items: center; gap: 4px; }
 .icon-btn {
   width: 34px; height: 34px; border-radius: 11px;
@@ -179,6 +178,7 @@ header {
   box-shadow: var(--neo-in-sm);
   transform: scale(.96);
 }
+#btnCalcHeader { font-size: 11px; font-weight: 700; letter-spacing: -.04em; }
 .sync-btn { position: relative; }
 .sync-dot {
   position: absolute; top: 2px; right: 2px; width: 8px; height: 8px;
@@ -451,7 +451,7 @@ input:focus, select:focus, textarea:focus {
   border-radius: 22px; padding: 22px 16px; margin-bottom: 12px;
   box-shadow: var(--neo-out); text-align: center;
 }
-.onboard-card .emoji { font-size: 40px; margin-bottom: 6px; }
+.onboard-card .emoji { display: none; }
 .onboard-card h2 { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
 .onboard-card p { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.4; }
 .code-reveal {
@@ -533,7 +533,7 @@ body.keyboard-open .toast {
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 .detail-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 80;
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 120;
   display: flex; align-items: flex-end; justify-content: center;
   opacity: 0; pointer-events: none; transition: opacity .2s;
 }
@@ -855,9 +855,13 @@ header, .content, .mode-choice, .pinned-bar {
 .app.has-bottom-nav .content {
   /* espacio para bottom nav */
 }
-.header-sub.phrase {
-  font-size: 10px; opacity: .85; font-weight: 500;
-  max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+.header-phrase {
+  margin: 8px 0 0; padding: 7px 10px;
+  border-left: 2px solid var(--green); border-radius: 0 10px 10px 0;
+  background: var(--green-soft); color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 12px; font-style: italic; line-height: 1.35;
+  white-space: normal; overflow-wrap: anywhere;
 }
 .help-sheet-body { font-size: 13px; line-height: 1.45; color: var(--text); }
 .help-sheet-body li { margin: 6px 0 0 16px; }
@@ -1044,17 +1048,17 @@ header, .content, .mode-choice, .pinned-bar {
   background: var(--card);
   color: var(--text);
   border-radius: 18px;
-  padding: 14px 12px;
+  padding: 11px 12px;
   box-shadow: var(--neo-out);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 64px;
+  min-height: 52px;
 }
 [data-theme="dark"] .op-title-card { background: var(--card); }
 .op-title-card h2 { color: var(--text); }
 .op-title-card p { color: var(--muted); opacity: 1; }
-.op-title-card .op-emoji { font-size: 18px; line-height: 1; margin-bottom: 2px; }
+.op-title-card .op-emoji, .op-title-card p { display: none; }
 .op-title-card h2 {
   font-size: 14px; font-weight: 700; margin: 0; line-height: 1.2;
 }
@@ -1118,13 +1122,17 @@ header, .content, .mode-choice, .pinned-bar {
   will-change: transform;
 }
 .calc-page.open { transform: translateX(0); }
-.calc-grid button { min-height: 56px !important; font-size: 20px !important; }
-.calc-display { font-size: 36px !important; min-height: 80px !important; }
+.calc-grid button { min-height: 56px; font-size: 20px; }
+.calc-expression {
+  min-height: 22px; margin: 14px 4px 0; overflow: hidden;
+  color: var(--muted); font-size: 15px; line-height: 1.4;
+  text-align: right; text-overflow: ellipsis; white-space: nowrap;
+}
 .calc-display {
   background: var(--card); border: none;
   border-radius: 18px; padding: 16px; text-align: right;
-  font-size: 28px; font-weight: 700; min-height: 64px;
-  margin: 10px 0 12px; word-break: break-all;
+  font-size: 42px; font-weight: 700; min-height: 76px;
+  margin: 4px 0 14px; word-break: break-all;
   box-shadow: var(--neo-in);
   color: var(--text);
 }
@@ -1422,22 +1430,22 @@ input, select, textarea { font-size: 16px; }
 <div class="menu-page" id="menuPage">
   <div class="menu-page-header">
     <h2>Menú</h2>
-    <p>Elige una sección · fija tus favoritas con 📌</p>
+    <p>Secciones</p>
   </div>
   <div class="menu-scroll" id="menuScroll">
     <div class="menu-list" id="menuList"></div>
     <div class="menu-footer">
       <div class="menu-section" style="margin-top:0">Apariencia y cuenta</div>
-      <div class="menu-item" id="btnThemeMenu"><span class="ico">🌙</span><span class="menu-item-label">Modo oscuro / claro</span></div>
-      <div class="menu-item" id="btnPronounMenu"><span class="ico">🗣️</span><span class="menu-item-label">Trato: él / ella / neutro</span></div>
-      <div class="menu-item" id="btnClearMine"><span class="ico">🧹</span><span class="menu-item-label">Borrar mis movimientos</span></div>
-      <div class="menu-item" id="btnClearAll"><span class="ico">🗑️</span><span class="menu-item-label">Vaciar todos los datos</span></div>
-      <div class="menu-section">Copia de seguridad</div>
-      <div class="menu-item" id="btnExportBackup"><span class="ico">💾</span><span class="menu-item-label">Exportar copia de seguridad</span></div>
-      <div class="menu-item" id="btnImportBackup"><span class="ico">📥</span><span class="menu-item-label">Importar copia de seguridad</span></div>
+      <div class="menu-item" id="btnThemeMenu"><span class="ico">◐</span><span class="menu-item-label">Tema</span></div>
+      <div class="menu-item" id="btnPronounMenu"><span class="ico">Aa</span><span class="menu-item-label">Pronombres</span></div>
+      <div class="menu-item" id="btnClearMine"><span class="ico">−</span><span class="menu-item-label">Borrar mis movimientos</span></div>
+      <div class="menu-item" id="btnClearAll"><span class="ico">×</span><span class="menu-item-label">Vaciar datos</span></div>
+      <div class="menu-section">Respaldo</div>
+      <div class="menu-item" id="btnExportBackup"><span class="ico">↓</span><span class="menu-item-label">Exportar respaldo</span></div>
+      <div class="menu-item" id="btnImportBackup"><span class="ico">↑</span><span class="menu-item-label">Importar respaldo</span></div>
       <input type="file" id="inputImportBackup" accept="application/json" style="display:none">
       <div class="menu-item" id="menuBackupStatus" style="opacity:.65;pointer-events:none">
-        <span class="ico">🕐</span><span class="menu-item-label" id="menuBackupStatusLabel">Sin copias exportadas aún</span>
+        <span class="ico">•</span><span class="menu-item-label" id="menuBackupStatusLabel">Sin respaldo</span>
       </div>
       <div class="brand-footer"><strong>Abaco Gestor de Finanzas</strong><span>Hecho por Hugo Jean R</span></div>
     </div>
@@ -1451,7 +1459,8 @@ input, select, textarea { font-size: 16px; }
     <h3 style="margin:0;font-size:16px">Calculadora</h3>
     <button type="button" class="btn btn-ghost btn-sm" id="btnCloseCalc">Cerrar</button>
   </div>
-  <div class="calc-display" id="calcDisplay">0</div>
+  <div class="calc-expression" id="calcExpression" aria-live="polite"></div>
+  <div class="calc-display" id="calcDisplay" aria-live="polite">0</div>
   <div class="calc-grid" id="calcGrid"></div>
 </div>
 
@@ -1466,11 +1475,12 @@ input, select, textarea { font-size: 16px; }
     </div>
     <div class="header-actions">
       <span class="pending-count hidden" id="pendingBadge">0</span>
-      <button class="icon-btn" id="btnCalcHeader" type="button" aria-label="Calculadora" title="Calculadora">🧮</button>
+      <button class="icon-btn" id="btnCalcHeader" type="button" aria-label="Calculadora" title="Calculadora">123</button>
       <button class="icon-btn" id="btnHelpHeader" type="button" aria-label="Ayuda" title="Ayuda de esta sección">?</button>
       <button class="icon-btn" id="btnMenuHeader" type="button" aria-label="Abrir menú" title="Menú">☰</button>
     </div>
   </div>
+  <div class="header-phrase" id="headerPhrase" aria-live="polite"></div>
 </header>
 
 <div class="content">
@@ -1511,16 +1521,12 @@ input, select, textarea { font-size: 16px; }
     <!-- RÁPIDOS + SWIPE -->
     <div class="panel active" id="panel-hormiga">
       <div class="hormiga-hero">
-        <h2>Anotar gasto <span class="live-emoji">✨</span></h2>
-        <p>Lo de todos los días, sin complicarte</p>
+        <h2>Anotar gasto</h2>
       </div>
 
       <div class="swipe-hint" id="swipeHint">
-        <span style="font-size:20px">👆</span>
         <div style="flex:1">
-          <b>Cómo funciona:</b> escribe monto y descripción, luego
-          <b>desliza a la derecha</b> para guardar o <b>a la izquierda</b> para descartar.
-          También puedes usar ✓ y ✕.
+          Desliza a la derecha para guardar y a la izquierda para descartar.
         </div>
         <button type="button" id="btnCloseHint">×</button>
       </div>
@@ -2899,27 +2905,28 @@ const PANEL_HELP = {
   },
   categorias: {
     title: 'Mis categorías',
-    body: 'Personaliza las categorías de tus gastos con nombre y emoji. Así tus reportes hablan en tu idioma.'
+    body: 'Personaliza tus categorías con un nombre y un símbolo.'
   }
 };
 
 const HEADER_PHRASES = [
-  'Hoy también cuentas, poquito a poco',
-  'Tu dinero, sin drama',
-  'Un paso más hacia claridad',
-  'Respirar y revisar: ya vas bien',
-  'Pequeños números, grandes calmas',
-  'Aquí nadie te juzga, solo te ordena',
-  'Hoy eliges con más calma',
-  'Tu futuro te agradece este rato',
-  'Menos niebla, más control',
-  'Cuidarte también es cuadrar la quincena'
+  'Cada pequeño paso te acerca a una vida financiera más tranquila.',
+  'Tu dinero puede ser más sencillo de entender.',
+  'Hoy puedes tomar decisiones con más claridad.',
+  'Revisar tus finanzas también es una forma de cuidarte.',
+  'Los hábitos pequeños construyen tranquilidad.',
+  'Avanzas a tu ritmo; cada paso cuenta.',
+  'Mirar tus números te ayuda a elegir con calma.',
+  'Tu futuro se construye con decisiones pequeñas.',
+  'Más claridad para tu dinero, más tranquilidad para ti.',
+  'Cuidar tu quincena también es cuidar de ti.'
 ];
 
 function updateHeaderPhrase(){
   const sub = $('headerSub');
-  if (!sub) return;
-  if (!state.user_id) { sub.textContent = 'Sin registrar'; return; }
+  const phraseEl = $('headerPhrase');
+  if (sub) sub.textContent = state.user_id ? 'Finanzas personales' : 'Sin registrar';
+  if (!phraseEl) return;
   const dayKey = new Date().toDateString();
   let phrase = sessionStorage.getItem('abaco_phrase');
   let phraseDay = sessionStorage.getItem('abaco_phrase_day');
@@ -2928,21 +2935,20 @@ function updateHeaderPhrase(){
     sessionStorage.setItem('abaco_phrase', phrase);
     sessionStorage.setItem('abaco_phrase_day', dayKey);
   }
-  sub.textContent = phrase;
-  sub.classList.add('phrase');
+  phraseEl.textContent = phrase;
 }
 
 function showPanelHelp(){
   const key = state.activePanel || 'hormiga';
   const h = PANEL_HELP[key] || { title: 'Ayuda', body: 'Explora esta sección con calma. Si algo no cuadra, revisa el historial o tus cuentas.' };
-  showDetail('Ayuda · ' + h.title, [
-    { lbl: 'Cómo funciona', val: h.body }
-  ], []);
-  // richer body
-  setTimeout(() => {
-    const body = $('detailBody');
-    if (body) body.innerHTML = `<div class="help-sheet-body"><p>${h.body}</p><p class="note" style="margin-top:10px">Tip: usa 📌 en el menú para fijar abajo solo lo que usas diario.</p></div>`;
-  }, 0);
+  showDetail('Ayuda · ' + h.title, [], []);
+  const body = $('detailBody');
+  if (body) {
+    const copy = document.createElement('div');
+    copy.className = 'help-sheet-body';
+    copy.textContent = h.body;
+    body.replaceChildren(copy);
+  }
 }
 
 function renderUpcoming(){
@@ -3792,24 +3798,41 @@ function walletDebt(){
   return credit+loans+msi;
 }
 function walletNet(){ return walletLiquidity()-walletDebt(); }
-let calcValue='0', calcPrev=null, calcOp=null, calcFresh=true;
+let calcValue='0', calcPrev=null, calcOp=null, calcFresh=true, calcExpressionText='';
 function openCalc(){ $('calcPage')?.classList.add('open'); $('calcOverlay')?.classList.add('open'); document.querySelector('.app')?.classList.add('calc-open'); }
 function closeCalc(){ $('calcPage')?.classList.remove('open'); $('calcOverlay')?.classList.remove('open'); document.querySelector('.app')?.classList.remove('calc-open'); }
-function updateCalcDisplay(){ if($('calcDisplay')) $('calcDisplay').textContent=calcValue; }
+function updateCalcDisplay(){
+  if($('calcDisplay')) $('calcDisplay').textContent=calcValue;
+  if($('calcExpression')) $('calcExpression').textContent=calcExpressionText;
+}
+function updatePendingCalcExpression(){
+  if(calcOp!==null&&calcPrev!==null){
+    calcExpressionText=`${calcPrev} ${calcOp}${calcFresh?'':` ${calcValue}`}`;
+  }
+}
 function calcInput(key){
-  if(key==='C'){ calcValue='0'; calcPrev=null; calcOp=null; calcFresh=true; updateCalcDisplay(); return; }
-  if(key==='±'){ calcValue=String(-(parseFloat(calcValue)||0)); updateCalcDisplay(); return; }
-  if(key==='%'){ calcValue=String((parseFloat(calcValue)||0)/100); updateCalcDisplay(); return; }
-  if(['+','-','×','÷'].includes(key)){ if(calcOp&&!calcFresh) calcEquals(); calcPrev=parseFloat(calcValue)||0; calcOp=key; calcFresh=true; return; }
+  if(key==='C'){ calcValue='0'; calcPrev=null; calcOp=null; calcFresh=true; calcExpressionText=''; updateCalcDisplay(); return; }
+  if(key==='±'){ calcValue=String(-(parseFloat(calcValue)||0)); updatePendingCalcExpression(); updateCalcDisplay(); return; }
+  if(key==='%'){ calcValue=String((parseFloat(calcValue)||0)/100); updatePendingCalcExpression(); updateCalcDisplay(); return; }
+  if(['+','-','×','÷'].includes(key)){
+    if(calcOp&&!calcFresh) calcEquals();
+    calcPrev=parseFloat(calcValue)||0; calcOp=key; calcFresh=true;
+    calcExpressionText=`${calcPrev} ${calcOp}`; updateCalcDisplay(); return;
+  }
   if(key==='='){ calcEquals(); return; }
-  if(key==='.'){ if(calcFresh){calcValue='0.';calcFresh=false;} else if(!calcValue.includes('.')) calcValue+='.'; updateCalcDisplay(); return; }
-  if(calcFresh||calcValue==='0'){ calcValue=key; calcFresh=false; } else calcValue+=key;
+  if(key==='.'){
+    if(calcFresh){calcValue='0.';calcFresh=false;} else if(!calcValue.includes('.')) calcValue+='.';
+    updatePendingCalcExpression(); updateCalcDisplay(); return;
+  }
+  if(calcFresh||calcValue==='0'){ calcValue=key; calcFresh=false; if(calcOp===null) calcExpressionText=''; } else calcValue+=key;
+  updatePendingCalcExpression();
   updateCalcDisplay();
 }
 function calcEquals(){
   if(calcOp==null||calcPrev==null) return;
-  const b=parseFloat(calcValue)||0; let r=calcPrev;
-  if(calcOp==='+') r=calcPrev+b; if(calcOp==='-') r=calcPrev-b; if(calcOp==='×') r=calcPrev*b; if(calcOp==='÷') r=b===0?0:calcPrev/b;
+  const a=calcPrev, op=calcOp, b=parseFloat(calcValue)||0; let r=a;
+  if(op==='+') r=a+b; if(op==='-') r=a-b; if(op==='×') r=a*b; if(op==='÷') r=b===0?0:a/b;
+  calcExpressionText=`${a} ${op} ${calcValue} =`;
   calcValue=String(Math.round(r*1e8)/1e8); calcOp=null; calcPrev=null; calcFresh=true; updateCalcDisplay();
 }
 function setupCalculator(){
@@ -3911,7 +3934,7 @@ function applyPronounUI(){
   const item = $('btnPronounMenu');
   if (item) {
     const lab = item.querySelector('.menu-item-label');
-    if (lab) lab.textContent = 'Trato: ' + (p==='ella'?'ella':p==='neutro'?'neutro':'él');
+    if (lab) lab.textContent = 'Pronombres';
   }
   document.querySelectorAll('#pronounChoice [data-pronoun], #pronounNeutro').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.pronoun === p);
@@ -4698,7 +4721,7 @@ function importBackup(file){
 function updateBackupStatusLabel(){
   const el=$('menuBackupStatusLabel'); if(!el)return;
   const ts=safeNum(LS('last_backup_at'));
-  el.textContent=ts?('Última copia: '+timeAgo(ts)):'Sin copias exportadas aún';
+  el.textContent=ts?('Última copia: '+timeAgo(ts)):'Sin respaldo';
 }
 function clearAll(){if(!confirm('¿Vaciar TODOS los datos locales? Esta acción no se puede deshacer.'))return;PERSISTED_KEYS.concat(['transactions','abaco_db_updated_at']).forEach(k=>localStorage.removeItem(k));state.expenses=[];state.incomes=[];state.shop=[];state.checklist=[];state.cart=[];state.shopMode=null;state.historial=[];state.savings=[];state.budgets=[];state.budgetPeriod='mensual';state.cards=[];state.msiPlans=[];state.accounts=[];state.transfers=[];state.loans=[];state.subscriptions=[];state.debtors=[];state.investments=[];state.accountView='todas';state.kanban=[];state.reminders=[];state.reactions={};state.transactions=[];save(true);try{window.Abaco?.DB?.clear?.();}catch(e){console.warn('No se pudo limpiar la base local',e)}closeMenu();updateUI();toast('Datos vaciados');}
 
