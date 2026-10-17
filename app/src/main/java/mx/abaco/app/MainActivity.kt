@@ -9,28 +9,40 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.view.Gravity
 import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.FrameLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.WindowInsetsControllerCompat
 import java.io.File
 import java.util.Locale
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
+    private lateinit var contentFrame: FrameLayout
+    private lateinit var privacyCover: TextView
     private var pendingFileCallback: ValueCallback<Array<Uri>>? = null
+    private var pageReady = false
+    private var biometricPromptActive = false
+    private var appLocked = false
 
     private val backupPicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         pendingFileCallback?.onReceiveValue(uri?.let { arrayOf(it) })
@@ -44,11 +56,11 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setSystemBarColor("#EAEFF5")
+        setSystemBarColor("#FAF9F6")
         ReminderScheduler.createNotificationChannel(this)
 
         webView = WebView(this).apply {
-            setBackgroundColor(Color.parseColor("#EAEFF5"))
+            setBackgroundColor(Color.parseColor("#FAF9F6"))
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.allowFileAccess = true
@@ -73,6 +85,12 @@ class MainActivity : AppCompatActivity() {
                     }
                     return false
                 }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    pageReady = true
+                    completeBiometricStartup()
+                }
             }
             webChromeClient = object : WebChromeClient() {
                 override fun onShowFileChooser(
@@ -93,7 +111,25 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        setContentView(webView)
+        contentFrame = FrameLayout(this)
+        contentFrame.addView(webView, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+        privacyCover = TextView(this).apply {
+            text = "Ábaco bloqueado\nConfirma tu identidad para continuar"
+            gravity = Gravity.CENTER
+            textSize = 16f
+            setTextColor(Color.parseColor("#2B4C3F"))
+            setBackgroundColor(Color.parseColor("#FAF9F6"))
+            visibility = if (isBiometricLockEnabled()) android.view.View.VISIBLE else android.view.View.GONE
+        }
+        contentFrame.addView(privacyCover, FrameLayout.LayoutParams(
+            FrameLayout.LayoutParams.MATCH_PARENT,
+            FrameLayout.LayoutParams.MATCH_PARENT
+        ))
+        appLocked = isBiometricLockEnabled()
+        setContentView(contentFrame)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -106,6 +142,9 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
             webView.loadUrl("file:///android_asset/index.html")
+        } else {
+            pageReady = true
+            completeBiometricStartup()
         }
     }
 
@@ -114,6 +153,7 @@ class MainActivity : AppCompatActivity() {
             webView.evaluateJavascript("try { window.dispatchEvent(new Event('blur')); } catch(e) {}", null)
             webView.onPause()
         }
+        if (::privacyCover.isInitialized && isBiometricLockEnabled() && !biometricPromptActive) lockApp()
         super.onPause()
     }
 
@@ -122,6 +162,7 @@ class MainActivity : AppCompatActivity() {
         if (::webView.isInitialized) {
             webView.onResume()
             webView.evaluateJavascript("try { checkReminders(); } catch(e) {}", null)
+            if (pageReady && appLocked && isBiometricLockEnabled() && !biometricPromptActive) authenticateBiometric("unlock")
         }
     }
 
@@ -145,7 +186,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setSystemBarColor(value: String) {
-        val color = try { Color.parseColor(value) } catch (_: IllegalArgumentException) { Color.parseColor("#EAEFF5") }
+        val color = try { Color.parseColor(value) } catch (_: IllegalArgumentException) { Color.parseColor("#FAF9F6") }
         window.statusBarColor = color
         window.navigationBarColor = color
         val lightBars = Color.luminance(color) > 0.55f
@@ -155,7 +196,120 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun biometricAvailability(): String = when (
+        BiometricManager.from(this).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+    ) {
+        BiometricManager.BIOMETRIC_SUCCESS -> "available"
+        BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> "no_hardware"
+        BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> "none_enrolled"
+        else -> "unavailable"
+    }
+
+    private fun isBiometricLockEnabled(): Boolean =
+        getSharedPreferences(SECURITY_PREFS, MODE_PRIVATE).getBoolean(KEY_BIOMETRIC_LOCK, false)
+
+    private fun completeBiometricStartup() {
+        if (!isBiometricLockEnabled()) return
+        if (biometricAvailability() == "available") {
+            lockApp()
+            authenticateBiometric("unlock")
+        } else {
+            getSharedPreferences(SECURITY_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_BIOMETRIC_LOCK, false).apply()
+            appLocked = false
+            if (::privacyCover.isInitialized) privacyCover.visibility = android.view.View.GONE
+            Toast.makeText(this, "La biometría ya no está disponible. Actívala de nuevo en Ajustes.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun lockApp() {
+        appLocked = true
+        if (::privacyCover.isInitialized) privacyCover.visibility = android.view.View.VISIBLE
+    }
+
+    private fun authenticateBiometric(mode: String) {
+        if (biometricPromptActive || isFinishing) return
+        if (biometricAvailability() != "available") {
+            sendBiometricResult(mode, false, "Registra una huella o biometría en los ajustes de Android.")
+            return
+        }
+        biometricPromptActive = true
+        val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this), object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                biometricPromptActive = false
+                appLocked = false
+                if (mode == "enable") {
+                    getSharedPreferences(SECURITY_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_BIOMETRIC_LOCK, true).apply()
+                }
+                if (::privacyCover.isInitialized) privacyCover.visibility = android.view.View.GONE
+                sendBiometricResult(mode, true, "")
+            }
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                biometricPromptActive = false
+                if (mode == "enable") {
+                    appLocked = false
+                    sendBiometricResult(mode, false, errString.toString())
+                } else {
+                    lockApp()
+                }
+            }
+        })
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Acceso a Ábaco")
+            .setSubtitle("Confirma tu identidad para continuar")
+            .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+            .build()
+        prompt.authenticate(promptInfo)
+    }
+
+    private fun sendBiometricResult(mode: String, success: Boolean, message: String) {
+        if (!::webView.isInitialized) return
+        val modeJson = JSONObject.quote(mode)
+        val messageJson = JSONObject.quote(message)
+        webView.evaluateJavascript(
+            "window.onNativeBiometricResult?.($modeJson,$success,$messageJson)",
+            null
+        )
+    }
+
+    private fun setBiometricLock(enabled: Boolean) {
+        if (!enabled) {
+            getSharedPreferences(SECURITY_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_BIOMETRIC_LOCK, false).apply()
+            appLocked = false
+            if (::privacyCover.isInitialized) privacyCover.visibility = android.view.View.GONE
+            sendBiometricResult("disable", true, "")
+            return
+        }
+        if (biometricAvailability() == "none_enrolled") {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    startActivity(Intent(Settings.ACTION_BIOMETRIC_ENROLL).putExtra(
+                        Settings.EXTRA_BIOMETRIC_AUTHENTICATORS_ALLOWED,
+                        BiometricManager.Authenticators.BIOMETRIC_STRONG
+                    ))
+                } else {
+                    startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+                }
+            } catch (_: Exception) {
+                sendBiometricResult("enable", false, "No se pudieron abrir los ajustes de biometría.")
+            }
+            return
+        }
+        authenticateBiometric("enable")
+    }
+
     private inner class AndroidBridge {
+        @JavascriptInterface
+        fun biometricAvailability(): String = this@MainActivity.biometricAvailability()
+
+        @JavascriptInterface
+        fun biometricLockEnabled(): Boolean = isBiometricLockEnabled()
+
+        @JavascriptInterface
+        fun setBiometricLock(enabled: Boolean) {
+            runOnUiThread { this@MainActivity.setBiometricLock(enabled) }
+        }
+
         @JavascriptInterface
         fun requestNotificationPermission() {
             runOnUiThread { requestNotificationPermissionFromBridge() }
@@ -220,5 +374,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }.start()
         }
+    }
+
+    companion object {
+        private const val SECURITY_PREFS = "abaco_security"
+        private const val KEY_BIOMETRIC_LOCK = "biometric_lock_enabled"
     }
 }

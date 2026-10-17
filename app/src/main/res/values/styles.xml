@@ -2,9 +2,9 @@
 <resources>
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#0F766E</item>
-        <item name="android:statusBarColor">#EAEFF5</item>
-        <item name="android:navigationBarColor">#EAEFF5</item>
+        <item name="android:colorAccent">#2B4C3F</item>
+        <item name="android:statusBarColor">#FAF9F6</item>
+        <item name="android:navigationBarColor">#FAF9F6</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowActionModeOverlay">true</item>

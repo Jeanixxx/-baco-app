@@ -6,6 +6,7 @@ on:
       - main
       - agent/android-kotlin-wrapper
       - feature/month-for-you-carousel
+      - feature/stitch-interface-integration
   pull_request:
     branches:
       - main

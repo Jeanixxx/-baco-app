@@ -3,35 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#E8EEF5" id="metaThemeColor">
+<meta name="theme-color" content="#FAF9F6" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Abaco Gestor de Finanzas</title>
 <style>
 :root, [data-theme="light"] {
   /* Neumorfismo moderno y minimalista: base gris-azul suave + acento teal, sombras más discretas */
-  --bg: #EAEFF5;
-  --card: #EAEFF5;
-  --card-border: transparent;
-  --text: #2A3344;
-  --muted: #78859A;
-  --green: #0F766E;
-  --green-soft: #D9F1EC;
-  --gold: #C9852A;
-  --gold-soft: #F5E6C8;
-  --blue: #3B82A0;
+  --bg: #FAF9F6;
+  --card: #FFFFFF;
+  --card-border: #E8E8E3;
+  --text: #1A1C1A;
+  --muted: #717974;
+  --green: #2B4C3F;
+  --green-soft: #E6EEE8;
+  --gold: #C87D55;
+  --gold-soft: #F7EDE6;
+  --blue: #56766A;
   --purple: #7C6BC4;
-  --radius: 18px;
-  --radius-sm: 13px;
+  --radius: 20px;
+  --radius-sm: 14px;
   --gap: 10px;
-  --neo-out: 5px 5px 11px #CDD5DF, -5px -5px 11px #FFFFFF;
-  --neo-out-sm: 3px 3px 7px #CDD5DF, -3px -3px 7px #FFFFFF;
-  --neo-in: inset 3px 3px 7px #CDD5DF, inset -3px -3px 7px #FFFFFF;
-  --neo-in-sm: inset 2px 2px 5px #CDD5DF, inset -2px -2px 5px #FFFFFF;
+  --neo-out: 0 4px 20px -2px rgba(43,76,63,.06);
+  --neo-out-sm: 0 2px 10px -2px rgba(43,76,63,.05);
+  --neo-in: inset 0 1px 3px rgba(43,76,63,.08);
+  --neo-in-sm: inset 0 1px 2px rgba(43,76,63,.06);
   --shadow-sm: var(--neo-out-sm);
-  --header-bg: #EAEFF5;
-  --header-text: #2A3344;
-  --accent-grad: linear-gradient(145deg, #0F766E 0%, #115E59 100%);
+  --header-bg: #FAF9F6;
+  --header-text: #1A1C1A;
+  --accent-grad: linear-gradient(145deg, #2B4C3F 0%, #1E3B30 100%);
   /* Android: status bar ~24–28dp, nav bar ~48dp (3 botones) o ~16–24dp (gestos) */
   --js-safe-top: 28px;
   --js-safe-bottom: 24px;
@@ -46,25 +46,25 @@
 }
 [data-theme="dark"] {
   /* Neumorfismo oscuro: pizarra suave + menta */
-  --bg: #2B303A;
-  --card: #2B303A;
-  --card-border: transparent;
-  --text: #E8ECF2;
-  --muted: #9AA3B2;
-  --green: #2DD4BF;
-  --green-soft: #1A3D3A;
-  --gold: #E0B35A;
-  --gold-soft: #3D3420;
-  --blue: #7DD3FC;
+  --bg: #202923;
+  --card: #29342D;
+  --card-border: #3A4940;
+  --text: #F2F3EF;
+  --muted: #B1BDB5;
+  --green: #A7C4B3;
+  --green-soft: #33473A;
+  --gold: #E5A47E;
+  --gold-soft: #49372E;
+  --blue: #9FC2B2;
   --purple: #C4B5FD;
-  --neo-out: 5px 5px 12px #1E2128, -5px -5px 12px #383E4A;
-  --neo-out-sm: 3px 3px 8px #1E2128, -3px -3px 8px #383E4A;
-  --neo-in: inset 3px 3px 8px #1E2128, inset -3px -3px 8px #383E4A;
-  --neo-in-sm: inset 2px 2px 5px #1E2128, inset -2px -2px 5px #383E4A;
+  --neo-out: 0 4px 20px -2px rgba(0,0,0,.2);
+  --neo-out-sm: 0 2px 10px -2px rgba(0,0,0,.16);
+  --neo-in: inset 0 1px 3px rgba(0,0,0,.18);
+  --neo-in-sm: inset 0 1px 2px rgba(0,0,0,.16);
   --shadow-sm: var(--neo-out-sm);
-  --header-bg: #2B303A;
-  --header-text: #E8ECF2;
-  --accent-grad: linear-gradient(145deg, #0F766E 0%, #115E59 100%);
+  --header-bg: #202923;
+  --header-text: #F2F3EF;
+  --accent-grad: linear-gradient(145deg, #486956 0%, #2B4C3F 100%);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html {
@@ -1228,8 +1228,8 @@ header, .content, .mode-choice, .pinned-bar {
 }
 [data-theme="dark"] .bh-bar-ideal { background: rgba(255,255,255,.35); }
 .bh-fill-ok {
-  background: linear-gradient(90deg, #34D399, #0F766E);
-  box-shadow: 0 0 12px rgba(15,118,110,.45);
+  background: linear-gradient(90deg, #A7C4B3, #2B4C3F);
+  box-shadow: 0 0 12px rgba(43,76,63,.24);
 }
 .bh-fill-warn {
   background: linear-gradient(90deg, #FBBF24, #D97706);
@@ -1465,6 +1465,88 @@ input, select, textarea { font-size: 16px; }
   .month-info-cubes { scroll-behavior:auto; }
   .month-info-cube { transition:none; }
 }
+
+/* Stitch-inspired app shell */
+.app.stitch-mode>header,.app.stitch-mode .pinned-bar,.app.stitch-mode #menuPage,
+.app.stitch-mode #menuOverlay,.app.stitch-mode #menuEdgeHint,.app.stitch-mode #calcEdgeHint,
+.app.stitch-mode .calc-page,.app.stitch-mode .calc-overlay { display:none!important; }
+.app.stitch-mode .content { flex:1; min-height:0; padding:0; overflow:hidden; }
+.app.stitch-mode #onboarding { display:none!important; }
+.app.stitch-mode #appPanels { display:none!important; }
+.stitch-shell { display:flex; flex-direction:column; position:relative; width:100%; height:100%; min-height:0; overflow:hidden; background:var(--bg); color:var(--text); font-family:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+.stitch-shell.hidden { display:none!important; }
+.stitch-topbar { display:flex; flex:0 0 auto; align-items:center; justify-content:space-between; padding:14px 20px 10px; background:var(--bg); }
+.stitch-brand { display:flex; align-items:center; gap:10px; }
+.stitch-mark { display:grid; width:38px; height:38px; place-items:center; border-radius:13px; background:var(--green); color:#fff; font-size:26px; font-weight:700; line-height:1; }
+.stitch-brand strong { display:block; color:var(--green); font-size:17px; letter-spacing:-.03em; }
+.stitch-brand small { display:block; margin-top:1px; color:var(--muted); font-size:11px; }
+.stitch-icon-btn { width:40px; min-height:40px; border:1px solid var(--card-border); border-radius:50%; background:var(--card); color:var(--green); font-size:18px; }
+.stitch-view { flex:1 1 auto; width:100%; max-width:620px; min-height:0; margin:0 auto; padding:8px 18px 22px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:none; }
+.stitch-view::-webkit-scrollbar { display:none; }
+.stitch-nav { display:grid; flex:0 0 auto; grid-template-columns:repeat(4,1fr); padding:7px 8px max(8px,var(--safe-bottom)); border-top:1px solid var(--card-border); background:var(--card); }
+.stitch-nav button { display:flex; min-height:50px; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:0; background:transparent; color:var(--muted); font:500 10px Manrope,-apple-system,sans-serif; }
+.stitch-nav button span { font-size:20px; line-height:1.15; }
+.stitch-nav button.active { color:var(--green); font-weight:700; }
+.stitch-heading { margin:10px 0 16px; }
+.stitch-heading h1 { color:var(--green); font-size:24px; font-weight:600; letter-spacing:-.04em; line-height:1.2; }
+.stitch-heading p { margin-top:5px; color:var(--muted); font-size:12px; }
+.stitch-card { margin:0 0 14px; padding:18px; border:1px solid var(--card-border); border-radius:20px; background:var(--card); box-shadow:var(--neo-out-sm); }
+.stitch-hero { padding:21px; border:0; background:var(--accent-grad); color:#fff; }
+.stitch-hero .stitch-eyebrow { color:rgba(255,255,255,.75); font-size:11px; letter-spacing:.02em; }
+.stitch-hero .stitch-amount { margin:8px 0 14px; color:#fff; font-size:clamp(30px,8vw,42px); font-weight:600; letter-spacing:-.045em; line-height:1.05; overflow-wrap:anywhere; }
+.stitch-hero .stitch-caption { color:rgba(255,255,255,.78); font-size:12px; }
+.stitch-card-title { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; color:var(--green); font-size:14px; font-weight:700; }
+.stitch-card-title small { color:var(--muted); font-size:11px; font-weight:500; }
+.stitch-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+.stitch-metric { min-width:0; padding:14px; border:1px solid var(--card-border); border-radius:16px; background:var(--card); }
+.stitch-metric span,.stitch-metric small { display:block; color:var(--muted); font-size:11px; }
+.stitch-metric strong { display:block; margin:7px 0 2px; color:var(--green); font-size:18px; letter-spacing:-.03em; overflow-wrap:anywhere; }
+.stitch-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin:12px 0 18px; }
+.stitch-action { display:flex; min-height:74px; flex-direction:column; align-items:center; justify-content:center; gap:7px; border:1px solid var(--card-border); border-radius:17px; background:var(--card); color:var(--green); font-size:10px; font-weight:600; }
+.stitch-action span { display:grid; width:30px; height:30px; place-items:center; border-radius:10px; background:var(--green-soft); font-size:17px; }
+.stitch-row { display:flex; align-items:center; gap:11px; width:100%; padding:11px 0; border:0; border-bottom:1px solid var(--card-border); background:transparent; color:var(--text); text-align:left; cursor:pointer; }
+.stitch-row:last-child { border-bottom:0; padding-bottom:0; }
+.stitch-row-icon { display:grid; width:38px; height:38px; flex:0 0 auto; place-items:center; border-radius:13px; background:var(--green-soft); color:var(--green); font-size:16px; }
+.stitch-row-body { flex:1; min-width:0; }
+.stitch-row-body strong { display:block; overflow:hidden; color:var(--text); font-size:12px; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
+.stitch-row-body small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+.stitch-row-amount { flex:0 0 auto; color:var(--text); font-size:12px; font-weight:650; text-align:right; }
+.stitch-positive { color:var(--green)!important; }
+.stitch-negative { color:var(--gold)!important; }
+.stitch-empty { padding:18px 8px; color:var(--muted); font-size:12px; text-align:center; }
+.stitch-progress { height:7px; margin-top:10px; overflow:hidden; border-radius:99px; background:var(--green-soft); }
+.stitch-progress span { display:block; height:100%; border-radius:inherit; background:var(--green); }
+.stitch-bars { display:flex; height:118px; align-items:flex-end; gap:7px; padding:8px 0 0; }
+.stitch-bar { display:flex; flex:1; height:100%; flex-direction:column; align-items:center; justify-content:flex-end; gap:5px; color:var(--muted); font-size:9px; }
+.stitch-bar i { display:block; width:min(28px,75%); min-height:4px; border-radius:7px 7px 2px 2px; background:var(--green); }
+.stitch-empty-state { padding:25px 14px; color:var(--muted); font-size:12px; text-align:center; }
+.stitch-button { display:inline-flex; min-height:44px; align-items:center; justify-content:center; gap:7px; padding:0 16px; border:0; border-radius:14px; background:var(--green); color:#fff; font:600 12px Manrope,-apple-system,sans-serif; cursor:pointer; }
+.stitch-button.secondary { border:1px solid var(--card-border); background:var(--card); color:var(--green); }
+.stitch-button.warn { background:var(--gold); }
+.stitch-full { width:100%; }
+.stitch-form { display:grid; gap:12px; }
+.stitch-form label { display:grid; gap:6px; color:var(--muted); font-size:11px; font-weight:600; }
+.stitch-form input,.stitch-form select { width:100%; min-height:46px; padding:0 12px; border:1px solid var(--card-border); border-radius:12px; outline:none; background:var(--bg); color:var(--text); font:500 14px Manrope,-apple-system,sans-serif; }
+.stitch-form input:focus,.stitch-form select:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(43,76,63,.1); }
+.stitch-segment { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:4px; border-radius:13px; background:var(--green-soft); }
+.stitch-segment button { min-height:38px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-size:11px; font-weight:600; }
+.stitch-segment button.active { background:var(--card); color:var(--green); box-shadow:var(--neo-out-sm); }
+.stitch-overlay { position:absolute; z-index:20; inset:0; display:none; align-items:flex-end; justify-content:center; padding:16px; background:rgba(22,32,26,.36); }
+.stitch-overlay.open { display:flex; }
+.stitch-sheet { width:100%; max-width:540px; max-height:88%; overflow:auto; padding:22px 18px max(18px,var(--safe-bottom)); border-radius:24px 24px 16px 16px; background:var(--bg); box-shadow:0 -10px 40px rgba(0,0,0,.14); animation:stitch-sheet-in .22s ease-out; }
+.stitch-sheet-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.stitch-sheet-head h2 { color:var(--green); font-size:19px; font-weight:650; letter-spacing:-.03em; }
+.stitch-close { width:36px; min-height:36px; border:0; border-radius:50%; background:var(--green-soft); color:var(--green); font-size:19px; }
+.stitch-settings-row { display:flex; align-items:center; justify-content:space-between; gap:14px; width:100%; padding:14px 0; border:0; border-bottom:1px solid var(--card-border); background:none; color:var(--text); text-align:left; }
+.stitch-settings-row strong { display:block; font-size:12px; font-weight:600; }
+.stitch-settings-row small { display:block; max-width:260px; margin-top:4px; color:var(--muted); font-size:10px; }
+.stitch-switch { width:42px; height:24px; flex:0 0 auto; padding:3px; border:0; border-radius:99px; background:#B9C0BB; }
+.stitch-switch::after { display:block; width:18px; height:18px; border-radius:50%; background:#fff; content:""; transition:transform .18s ease; }
+.stitch-switch.on { background:var(--green); }
+.stitch-switch.on::after { transform:translateX(18px); }
+@keyframes stitch-sheet-in { from { transform:translateY(22px); opacity:.6; } to { transform:translateY(0); opacity:1; } }
+[data-theme="dark"] .stitch-hero { background:linear-gradient(145deg,#395B46,#293F33); }
+@media(prefers-reduced-motion:reduce) { .stitch-sheet { animation:none; } }
 
 </style>
 
@@ -2194,6 +2276,20 @@ input, select, textarea { font-size: 16px; }
       <div id="subList"></div>
     </div>
   </div>
+  <section class="stitch-shell hidden" id="stitchShell" aria-label="Ábaco">
+    <div class="stitch-topbar">
+      <div class="stitch-brand"><span class="stitch-mark">a</span><div><strong>Ábaco</strong><small id="stitchGreeting">Tu dinero, en calma</small></div></div>
+      <button class="stitch-icon-btn" type="button" data-stitch-action="hide-balance" aria-label="Ocultar saldo">◉</button>
+    </div>
+    <main class="stitch-view" id="stitchView" tabindex="-1"></main>
+    <nav class="stitch-nav" aria-label="Navegación principal">
+      <button type="button" data-stitch-nav="home"><span>⌂</span>Inicio</button>
+      <button type="button" data-stitch-nav="wallet"><span>▣</span>Billetera</button>
+      <button type="button" data-stitch-nav="stats"><span>◷</span>Estadísticas</button>
+      <button type="button" data-stitch-nav="settings"><span>☼</span>Ajustes</button>
+    </nav>
+    <div class="stitch-overlay" id="stitchOverlay" aria-hidden="true"></div>
+  </section>
 </div>
 
 <div class="pinned-bar" id="pinnedBar"></div>
@@ -2282,7 +2378,7 @@ input, select, textarea { font-size: 16px; }
       const meta = document.getElementById('metaThemeColor');
       if (meta) {
         const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-        meta.setAttribute('content', dark ? '#2B303A' : '#E8EEF5');
+        meta.setAttribute('content', dark ? '#202923' : '#FAF9F6');
       }
     } catch (e) {}
   }
@@ -2870,7 +2966,7 @@ $('btnThemeMenu').onclick = () => {
   const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   document.documentElement.setAttribute('data-theme',next); LS_SET('theme',next);
   const meta = document.getElementById('metaThemeColor');
-  if (meta) meta.setAttribute('content', next==='dark' ? '#2B303A' : '#E8EEF5');
+  if (meta) meta.setAttribute('content', next==='dark' ? '#202923' : '#FAF9F6');
   toast(next==='dark'?'Oscuro':'Claro');
 };
 
@@ -5328,6 +5424,12 @@ function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(bt
   const A=window.Abaco, F=A.Finance, M=A.Math, DB=A.DB;
   const clone=o=>{try{return JSON.parse(JSON.stringify(o));}catch(_){return o;}};
   const now=()=>Date.now();
+  const transactionTime=value=>{
+    if(value===undefined||value===null||value==='')return now();
+    const time=typeof value==='number'?value:new Date(`${value}T12:00:00`).getTime();
+    if(!Number.isFinite(time))throw Error('Fecha inválida');
+    return time;
+  };
   const txGroup=()=>uid();
   const refresh=()=>{ try{F.ensure();}catch(_){} try{updateUI();}catch(_){} try{renderInicio();}catch(_){} };
   const saveNow=()=>{ try{save();}catch(e){console.warn('Abaco save',e)} };
@@ -5359,6 +5461,8 @@ function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(bt
       ahorro:{cash:true,assetMove:true},
       aporte_ahorro:{cash:true,assetMove:true},
       inversion:{cash:true,assetMove:true},
+      pago_tarjeta:{cash:true,liability:true},
+      saldo_inicial_tarjeta:{liability:true},
       prestamo:{liability:true},
       pago_prestamo:{cash:true,liability:true},
       interes_prestamo:{expense:true,cash:true},
@@ -5381,29 +5485,78 @@ function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(bt
   function redraw(names){refresh();(names||[]).forEach(n=>{try{window[n]&&window[n]();}catch(_){} });}
 
   const S={};
-  S.expense=function({amount,description='Gasto',category='general',accountId,refId=null,source='gasto',meta={}}){
+  S.expense=function({amount,description='Gasto',category='general',accountId,refId=null,source='gasto',meta={},date}){
     const value=requireAmount(amount); if(!value)throw Error('Monto inválido');
-    const selected=liquid(accountId); const a=selected||firstLiquid();
+    const selected=accountId?account(accountId):null;
+    const a=selected?(isLiquidAccount(selected)||isCreditAccount(selected)?selected:null):firstLiquid();
     if(!a)throw Error('No hay cuenta disponible');
-    if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');
-    a.balance=M.round(safeNum(a.balance)-value);
-    const e={id:refId||uid(),description,amount:value,category,shared:false,hormiga:source==='hormiga',user_id:state.user_id,created_at:now(),accountId:a.id};
-    state.expenses.push(e); ledger({type:'gasto',amount:value,direction:'out',description,accountId:a.id,refId:e.id,source,meta:{...meta,category}}); saveNow(); return e;
+    const onCredit=isCreditAccount(a);
+    if(!onCredit&&safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');
+    if(onCredit&&safeNum(a.limit)>0&&safeNum(a.balance)+value>safeNum(a.limit))throw Error('El gasto supera el límite de crédito');
+    const created_at=transactionTime(date);
+    a.balance=M.round(safeNum(a.balance)+(onCredit?value:-value));
+    const e={id:refId||uid(),description,amount:value,category,shared:false,hormiga:source==='hormiga',user_id:state.user_id,created_at,accountId:a.id};
+    state.expenses.push(e); ledger({type:'gasto',amount:value,direction:'out',description,accountId:a.id,refId:e.id,source,created_at,impact:{expense:true,cash:!onCredit,credit:onCredit},meta:{...meta,category}}); saveNow(); return e;
   };
-  S.income=function({amount,description='Ingreso',type='otro',accountId,refId=null,source='ingresos'}){
+  S.income=function({amount,description='Ingreso',type='otro',accountId,refId=null,source='ingresos',date}){
     const value=requireAmount(amount); if(!value)throw Error('Monto inválido');
-    const a=liquid(accountId)||firstLiquid(); if(!a)throw Error('No hay cuenta de destino');
+    const selected=accountId?account(accountId):null;
+    if(selected&&!isLiquidAccount(selected))throw Error('El ingreso debe llegar a una cuenta de dinero disponible');
+    const a=selected||firstLiquid(); if(!a)throw Error('No hay cuenta de destino');
+    const created_at=transactionTime(date);
     a.balance=M.round(safeNum(a.balance)+value);
-    const i={id:refId||uid(),description,amount:value,type,note:'',shared:false,user_id:state.user_id,created_at:now(),accountId:a.id};
-    state.incomes.push(i); ledger({type:'ingreso',amount:value,direction:'in',description,accountId:a.id,refId:i.id,source}); saveNow(); return i;
+    const i={id:refId||uid(),description,amount:value,type,note:'',shared:false,user_id:state.user_id,created_at,accountId:a.id};
+    state.incomes.push(i); ledger({type:'ingreso',amount:value,direction:'in',description,accountId:a.id,refId:i.id,source,created_at}); saveNow(); return i;
   };
-  S.transfer=function({fromId,toId,amount}){
+  S.transfer=function({fromId,toId,amount,date}){
     const value=requireAmount(amount),from=liquid(fromId),to=liquid(toId);
+    if(!value)throw Error('Monto inválido');
     if(!from||!to||from.id===to.id)throw Error('Elige dos cuentas líquidas distintas');
     if(safeNum(from.balance)<value)throw Error('Saldo de origen insuficiente');
+    const id=uid(),created_at=transactionTime(date);
     from.balance=M.round(from.balance-value);to.balance=M.round(to.balance+value);
-    const id=uid();state.transfers=state.transfers||[];state.transfers.push({id,from:from.id,to:to.id,amount:value,created_at:now(),user_id:state.user_id});
-    ledger({type:'transferencia',amount:value,direction:'transfer',description:`Transferencia: ${from.name} → ${to.name}`,accountId:to.id,refId:id,source:'cuentas',meta:{fromAccountId:from.id,toAccountId:to.id}});saveNow();return id;
+    state.transfers=state.transfers||[];state.transfers.push({id,from:from.id,to:to.id,amount:value,created_at,user_id:state.user_id});
+    ledger({type:'transferencia',amount:value,direction:'transfer',description:`Transferencia: ${from.name} → ${to.name}`,accountId:to.id,refId:id,source:'cuentas',created_at,meta:{fromAccountId:from.id,toAccountId:to.id}});saveNow();return id;
+  };
+  S.createAccount=function({name,type='débito',balance=0,limit=0}){
+    const label=(name||'').trim(),amount=safeNum(balance),creditLimit=safeNum(limit);
+    if(!label)throw Error('Escribe un nombre para la cuenta');
+    if(!['débito','efectivo','crédito'].includes(type))throw Error('Tipo de cuenta inválido');
+    if(amount<0||creditLimit<0)throw Error('Los saldos no pueden ser negativos');
+    if(type==='crédito'&&creditLimit<=0)throw Error('Indica un límite de crédito válido');
+    if(type==='crédito'&&amount>creditLimit)throw Error('La deuda inicial supera el límite de crédito');
+    const account={id:uid(),name:label,type,balance:M.round(amount),limit:type==='crédito'?M.round(creditLimit):0,user_id:state.user_id,created_at:now(),wallet_id:uid()};
+    state.accounts.push(account);
+    if(type==='crédito'&&amount>0)ledger({type:'saldo_inicial_tarjeta',amount,direction:'memo',description:`Deuda inicial: ${label}`,accountId:account.id,refId:account.id,source:'cuentas',impact:{liability:true}});
+    saveNow();return account;
+  };
+  S.payCredit=function({accountId,sourceAccountId,amount}){
+    const value=requireAmount(amount),credit=account(accountId),source=liquid(sourceAccountId);
+    if(!credit||!isCreditAccount(credit))throw Error('Selecciona una cuenta de crédito');
+    if(!value)throw Error('Monto inválido');
+    if(!source)throw Error('Selecciona una cuenta de dinero disponible');
+    const card=(state.cards||[]).find(item=>item.wallet_id===credit.id||item.id===credit.card_id);
+    const pendingMsi=card&&(state.msiPlans||[]).some(plan=>plan.cardId===card.id&&(plan.installments||[]).some(item=>!item.paid));
+    if(pendingMsi)throw Error('Paga las mensualidades MSI desde el detalle del plan');
+    if(value>safeNum(credit.balance))throw Error('El pago supera la deuda pendiente');
+    if(value>safeNum(source.balance))throw Error('Saldo disponible insuficiente');
+    source.balance=M.round(source.balance-value);credit.balance=M.round(credit.balance-value);
+    if(card)syncCardDebt(card);
+    ledger({type:'pago_tarjeta',amount:value,direction:'out',description:`Pago a ${credit.name}`,accountId:source.id,refId:credit.id,source:'cuentas',impact:{cash:true,liability:true}});
+    saveNow();return credit;
+  };
+  S.createSaving=function({name,type='target',target=0,current=0,annualRate=0,note='',accountId}){
+    const label=(name||'').trim(),goal=M.round(target),opening=M.round(current);
+    if(!label)throw Error('Escribe un nombre para el ahorro');
+    if(type!=='open'&&goal<=0)throw Error('Indica una meta válida');
+    if(opening<0)throw Error('El saldo inicial no puede ser negativo');
+    const selectedAccount=accountId?liquid(accountId):null;
+    if(accountId&&!selectedAccount)throw Error('Selecciona una cuenta de dinero disponible');
+    const account=opening?(selectedAccount||firstLiquid()):null;
+    if(opening&&(!account||safeNum(account.balance)<opening))throw Error('Saldo disponible insuficiente');
+    const saving={id:uid(),name:label,type:type==='open'?'open':'target',target:type==='open'?0:goal,current:opening,annualRate:Math.max(0,safeNum(annualRate)),note:(note||'').trim(),user_id:state.user_id,created_at:now()};
+    if(account){account.balance=M.round(account.balance-opening);ledger({type:'ahorro',amount:opening,direction:'out',description:`Ahorro: ${label}`,accountId:account.id,refId:saving.id,source:'ahorros'});}
+    state.savings.push(saving);saveNow();return saving;
   };
   S.lend=function({person,concept,amount,date}){
     const value=requireAmount(amount),a=firstLiquid();if(!a)throw Error('Agrega una cuenta para prestar dinero');if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');
@@ -5412,7 +5565,17 @@ function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(bt
   };
   S.collect=function(id){const d=(state.debtors||[]).find(x=>x.id===id);if(!d||d.settled)return null;const a=firstLiquid();if(!a)throw Error('Agrega una cuenta para recibir el pago');const value=safeNum(d.remaining??d.amount);d.settled=true;d.remaining=0;d.settledAt=now();d.settledAccountId=a.id;a.balance=M.round(safeNum(a.balance)+value);ledger({type:'cobro',amount:value,direction:'in',description:`Cobro a ${d.person}: ${d.concept||'Préstamo'}`,accountId:a.id,refId:d.id,source:'quien_me_debe'});saveNow();return d;};
   S.saving=function({name,amount,type='open',target=0}){const value=requireAmount(amount),a=firstLiquid();if(!a)throw Error('Agrega una cuenta para ahorrar');if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');const s={id:uid(),name,amount:value,current:value,type,target:safeNum(target),user_id:state.user_id,created_at:now()};a.balance=M.round(a.balance-value);state.savings.push(s);ledger({type:'ahorro',amount:value,direction:'out',description:`Ahorro: ${name}`,accountId:a.id,refId:s.id,source:'ahorros'});saveNow();return s;};
-  S.saveContribution=function(id,amount){const value=requireAmount(amount),s=state.savings.find(x=>x.id===id),a=firstLiquid();if(!s||!a)throw Error('Ahorro o cuenta no disponible');if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');a.balance=M.round(a.balance-value);s.current=M.round(safeNum(s.current??s.amount)+value);ledger({type:'aporte_ahorro',amount:value,direction:'out',description:`Aporte a ${s.name}`,accountId:a.id,refId:s.id,source:'ahorros'});saveNow();return s;};
+  S.saveContribution=function(id,amount,options={}){
+    const value=requireAmount(amount),s=state.savings.find(x=>x.id===id),requested=options.accountId?liquid(options.accountId):null;
+    if(options.accountId&&!requested)throw Error('Selecciona una cuenta de dinero disponible');
+    const a=requested||firstLiquid();
+    if(!s||!a)throw Error('Ahorro o cuenta no disponible');
+    if(!value)throw Error('Monto inválido');
+    if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');
+    a.balance=M.round(safeNum(a.balance)-value);s.current=M.round(safeNum(s.current??s.amount)+value);
+    ledger({type:'aporte_ahorro',amount:value,direction:'out',description:(options.note||'').trim()||`Aporte a ${s.name}`,accountId:a.id,refId:s.id,source:'ahorros'});
+    saveNow();return s;
+  };
   S.invest=function({name,amount,rate=0,date='',note=''}){const value=requireAmount(amount),a=firstLiquid();if(!a)throw Error('Agrega una cuenta para invertir');if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');a.balance=M.round(a.balance-value);const i={id:uid(),name,amount:value,current:value,rate:safeNum(rate),date,note,user_id:state.user_id,created_at:now(),accountId:a.id};state.investments.push(i);ledger({type:'inversion',amount:value,direction:'out',description:`Inversión: ${name}`,accountId:a.id,refId:i.id,source:'inversiones'});saveNow();return i;};
   S.loan=function({name,principal,annualRate=0,term,type='personal'}){const p=requireAmount(principal),n=Math.max(1,Math.floor(safeNum(term))),rate=safeNum(annualRate);if(!p)throw Error('Monto inválido');const l={id:uid(),name,type:type||'personal',principal:p,current:p,annualRate:rate,term:n,payment:M.monthlyPayment(p,rate,n),paid:0,created_at:now(),user_id:state.user_id};state.loans.push(l);ledger({type:'prestamo',amount:p,direction:'memo',description:`Deuda: ${name}`,refId:l.id,source:'prestamos',meta:{principal:p,annualRate:rate,term:n}});saveNow();return l;};
   S.loanPayment=function(id){const l=state.loans.find(x=>x.id===id);if(!l||safeNum(l.current)<=0)return null;const a=firstLiquid();if(!a)throw Error('Agrega una cuenta para pagar el préstamo');const remaining=safeNum(l.current),r=safeNum(l.annualRate)/100/12,scheduled=safeNum(l.payment)||M.monthlyPayment(remaining,l.annualRate,l.term),interest=M.round(remaining*r),payment=M.round(Math.min(remaining+interest,scheduled)),principal=M.round(Math.min(remaining,Math.max(0,payment-interest)));if(safeNum(a.balance)<payment)throw Error('Saldo disponible insuficiente');a.balance=M.round(a.balance-payment);l.current=M.round(Math.max(0,remaining-principal));l.paid=Math.min(safeNum(l.term),safeNum(l.paid)+1);l.lastPaymentAt=now();if(interest>0){const e={id:uid(),description:'Interés: '+l.name,amount:interest,category:'general',shared:false,hormiga:false,user_id:state.user_id,created_at:now(),accountId:a.id,loanId:l.id};state.expenses.push(e);ledger({type:'interes_prestamo',amount:interest,direction:'out',description:e.description,accountId:a.id,refId:e.id,source:'prestamos'});}ledger({type:'pago_prestamo',amount:payment,direction:'out',description:'Pago: '+l.name,accountId:a.id,refId:l.id,source:'prestamos',meta:{interest,principal}});saveNow();return l;};
@@ -5573,6 +5736,8 @@ function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(bt
   addLoan=function(){if(!ensureUser())return;try{S.loan({name:($('loanName')?.value||'').trim(),principal:$('loanPrincipal')?.value,annualRate:$('loanRate')?.value,term:$('loanTerm')?.value,type:$('loanType')?.value});['loanName','loanPrincipal','loanRate','loanTerm'].forEach(id=>{if($(id))$(id).value='';});closeOpForm('loanFormPanel');redraw(['renderLoans']);toast('Deuda registrada');}catch(e){toast(e.message||'No se pudo registrar');}};
   markLoanPayment=function(id){try{S.loanPayment(id);redraw(['renderLoans','renderAccounts','renderHistorial']);toast('Pago registrado con capital e interés separados');}catch(e){toast(e.message||'No se pudo pagar');}};
   addMsi=function(){try{S.msi({cardId:$('msiCardSelect')?.value,concept:($('msiConcept')?.value||'').trim(),total:$('msiTotal')?.value,months:$('msiMonths')?.value,paidBefore:$('msiPaidBefore')?.value,purchaseDate:$('msiPurchaseDate')?.value||todayInputValue()});['msiConcept','msiTotal','msiMonths','msiPaidBefore'].forEach(id=>{if($(id))$(id).value='';});if($('msiPurchaseDate'))$('msiPurchaseDate').value=todayInputValue();redraw(['renderCards','renderAccounts']);toast('Plan MSI conectado a tu crédito');}catch(e){toast(e.message||'No se pudo crear el MSI');}};
+
+  A.Services=S;
 
   /* Guardado normalizado tras cada save; no altera el almacenamiento legacy. */
   const prevSave=save;
@@ -5843,9 +6008,9 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
       const meta=document.getElementById('metaThemeColor');
       if(!meta)return;
       const dark=document.documentElement.getAttribute('data-theme')==='dark';
-      meta.content=dark?'#2B303A':'#EAEFF5';
+      meta.content=dark?'#202923':'#FAF9F6';
       const status=window.Capacitor?.Plugins?.StatusBar;
-      if(status?.setBackgroundColor) status.setBackgroundColor({color:dark?'#2B303A':'#EAEFF5'}).catch(()=>{});
+      if(status?.setBackgroundColor) status.setBackgroundColor({color:dark?'#202923':'#FAF9F6'}).catch(()=>{});
       if(status?.setStyle) status.setStyle({style:dark?'DARK':'LIGHT'}).catch(()=>{});
       const native=window.AndroidBridge; if(native?.setStatusBarColor) native.setStatusBarColor(meta.content);
     }catch(e){}
@@ -5854,6 +6019,255 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
   root.addEventListener('themechange', window.setAndroidThemeColor);
 })();
 
+</script>
+<script>
+(function stitchApp(){
+  const root=document.querySelector('.app'),shell=document.getElementById('stitchShell'),view=document.getElementById('stitchView');
+  const overlay=document.getElementById('stitchOverlay'),panels=document.getElementById('appPanels');
+  const finance=()=>window.Abaco?.Finance,services=()=>window.Abaco?.Services;
+  if(!root||!shell||!view||!overlay)return;
+  let active='home',movementType='gasto',renderQueued=false;
+  const escapeHtml=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const amount=value=>{try{return money(Number(value)||0);}catch(_){return String(value??0);}};
+  const dateLabel=value=>{const d=new Date(Number(value)||value);return Number.isNaN(d.getTime())?'—':d.toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'});};
+  const getState=()=>finance()?.ensure()||{};
+  const accounts=()=>finance()?.accounts?.()||[];
+  const liquidAccounts=()=>finance()?.liquidAccounts?.()||[];
+  const transactions=()=>finance()?.transactions?.()||[];
+  const savings=()=>getState().savings||[];
+  const hiddenBalance=()=>localStorage.getItem('stitch_hide_balance')==='1';
+  const displayAmount=value=>hiddenBalance()?'••••':amount(value);
+  function toastMessage(message){if(typeof window.toast==='function')window.toast(message);}
+  function accountName(id){return accounts().find(a=>a.id===id)?.name||'Cuenta';}
+  function heading(title,subtitle=''){return `<div class="stitch-heading"><h1>${escapeHtml(title)}</h1>${subtitle?`<p>${escapeHtml(subtitle)}</p>`:''}</div>`;}
+  function row({icon='•',title,subtitle='',value='',className='',action='',id='',kind=''}){
+    const attr=action?`data-stitch-action="${escapeHtml(action)}"`:kind?`data-stitch-${kind}="${escapeHtml(id)}"`:'';
+    return `<button type="button" class="stitch-row ${className}" ${attr}><span class="stitch-row-icon">${icon}</span><span class="stitch-row-body"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(subtitle)}</small></span><span class="stitch-row-amount">${escapeHtml(value)}</span></button>`;
+  }
+  function monthlyTransactions(){
+    const bounds=finance().monthBounds(new Date());
+    return transactions().filter(tx=>Number(tx.created_at)>=bounds.start&&Number(tx.created_at)<bounds.end);
+  }
+  function currentBudget(state){
+    const period=state.budgetPeriod||'mensual';
+    return (Array.isArray(state.budgets)?state.budgets:[]).filter(item=>item.period===period).reduce((sum,item)=>sum+(Number(item.amount)||0),0);
+  }
+  function recentList(rows){
+    if(!rows.length)return '<div class="stitch-empty">Aún no hay movimientos</div>';
+    return rows.slice(0,5).map(tx=>{
+      const incoming=tx.direction==='in'||tx.type==='ingreso',transfer=tx.direction==='transfer'||tx.type==='transferencia';
+      const sign=incoming?'+':transfer?'':'−',kind=incoming?'stitch-positive':transfer?'': 'stitch-negative';
+      const meta=tx.meta||{},description=tx.description||'Movimiento';
+      return row({icon:incoming?'↓':transfer?'↔':'↑',title:description,subtitle:`${dateLabel(tx.created_at)} · ${accountName(tx.accountId)}`,value:`${sign}${displayAmount(tx.amount)}`,className:kind,kind:'transaction',id:tx.id});
+    }).join('');
+  }
+  function homeView(){
+    const F=finance(),state=getState(),dashboard=F.dashboard(new Date()),monthTx=monthlyTransactions();
+    const spending=state.expenses.filter(item=>{const b=F.monthBounds(new Date()),t=Number(item.created_at)||0;return t>=b.start&&t<b.end;});
+    const byCategory={};spending.forEach(item=>{const key=item.category||'general';byCategory[key]=(byCategory[key]||0)+(Number(item.amount)||0);});
+    const category=Object.entries(byCategory).sort((a,b)=>b[1]-a[1])[0];
+    const budget=currentBudget(state),spent=Number(dashboard.expense)||0;
+    const progress=budget?Math.min(100,Math.round(spent/budget*100)):0;
+    const person=state.user_name?`Hola, ${state.user_name}`:'Tu dinero, en calma';
+    document.getElementById('stitchGreeting').textContent=person;
+    const insight=category?`${typeof window.catName==='function'?catName(category[0]):category[0]} · ${displayAmount(category[1])}`:'Aún no hay categorías este mes';
+    return `${heading('Tu resumen','Una vista clara de este mes')}
+      <section class="stitch-card stitch-hero"><div class="stitch-eyebrow">Patrimonio neto</div><div class="stitch-amount">${displayAmount(F.netWorth())}</div><div class="stitch-caption">Disponible ${displayAmount(F.available())} · Ahorro ${displayAmount(F.savings())}</div></section>
+      <div class="stitch-metrics"><div class="stitch-metric"><span>Ingresos del mes</span><strong>${displayAmount(dashboard.income)}</strong><small>Registrados</small></div><div class="stitch-metric"><span>Gastos del mes</span><strong>${displayAmount(dashboard.expense)}</strong><small>${budget?`${progress}% del presupuesto`: 'Sin presupuesto mensual'}</small></div></div>
+      <div class="stitch-actions"><button class="stitch-action" type="button" data-stitch-action="movement"><span>＋</span>Movimiento</button><button class="stitch-action" type="button" data-stitch-action="transfer"><span>↔</span>Transferir</button><button class="stitch-action" type="button" data-stitch-action="saving"><span>◇</span>Ahorrar</button></div>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Presupuesto</span><small>${budget?`${progress}% usado`:'Sin plan'}</small></div><strong>${displayAmount(spent)}${budget?` <small>de ${displayAmount(budget)}</small>`:''}</strong><div class="stitch-progress"><span style="width:${budget?progress:0}%"></span></div></section>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Mayor categoría</span><small>Este mes</small></div><div class="stitch-row"><span class="stitch-row-icon">◌</span><span class="stitch-row-body"><strong>${escapeHtml(insight)}</strong><small>${category?'Por gasto registrado':'Cuando registres gastos, aparecerá aquí'}</small></span></div></section>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Movimientos recientes</span><button class="stitch-button secondary" type="button" data-stitch-nav="stats">Ver todo</button></div>${recentList(monthTx)}</section>`;
+  }
+  function walletView(){
+    const F=finance(),state=getState(),list=accounts(),goals=savings();
+    return `${heading('Billetera','Cuentas y metas de ahorro')}
+      <section class="stitch-card stitch-hero"><div class="stitch-eyebrow">Disponible</div><div class="stitch-amount">${displayAmount(F.available())}</div><div class="stitch-caption">Patrimonio neto ${displayAmount(F.netWorth())}</div></section>
+      <div class="stitch-actions"><button class="stitch-action" type="button" data-stitch-action="account"><span>＋</span>Cuenta</button><button class="stitch-action" type="button" data-stitch-action="transfer"><span>↔</span>Transferir</button><button class="stitch-action" type="button" data-stitch-action="saving"><span>◇</span>Meta</button></div>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Tus cuentas</span><small>${list.length} ${list.length===1?'cuenta':'cuentas'}</small></div>${list.length?list.map(a=>row({icon:a.type==='crédito'?'▣':'▤',title:a.name,subtitle:a.type||'Cuenta',value:`${a.type==='crédito'?'Deuda ':''}${displayAmount(a.balance)}`,kind:'account',id:a.id})).join(''):'<div class="stitch-empty">Agrega una cuenta para empezar</div>'}</section>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Metas de ahorro</span><button class="stitch-button secondary" type="button" data-stitch-action="saving">Nueva meta</button></div>${goals.length?goals.map(g=>{const goal=Number(g.target)||0,current=Number(g.current??g.amount)||0,pct=goal?Math.min(100,Math.round(current/goal*100)):0;return `<button type="button" class="stitch-row" data-stitch-saving="${escapeHtml(g.id)}"><span class="stitch-row-icon">◇</span><span class="stitch-row-body"><strong>${escapeHtml(g.name)}</strong><small>${goal?`${displayAmount(current)} de ${displayAmount(goal)}`:'Ahorro abierto'}<span class="stitch-progress"><span style="width:${pct}%"></span></span></small></span><span class="stitch-row-amount">${pct}%</span></button>`;}).join(''):'<div class="stitch-empty">Crea una meta para darle rumbo a tu ahorro</div>'}</section>`;
+  }
+  function statsView(){
+    const F=finance(),state=getState(),month=monthlyTransactions(),expenses=month.filter(tx=>tx.meta?.impact?.expense||tx.type==='gasto'||tx.type==='interes_prestamo');
+    const categories={};expenses.forEach(tx=>{const key=tx.meta?.category||state.expenses.find(e=>e.id===tx.refId)?.category||'general';categories[key]=(categories[key]||0)+(Number(tx.amount)||0);});
+    const top=Object.entries(categories).sort((a,b)=>b[1]-a[1]).slice(0,5),daily=Array.from({length:7},(_,index)=>{const day=new Date();day.setDate(day.getDate()-6+index);day.setHours(0,0,0,0);const next=day.getTime()+86400000;return{label:day.toLocaleDateString('es-MX',{weekday:'narrow'}),value:expenses.filter(tx=>Number(tx.created_at)>=day.getTime()&&Number(tx.created_at)<next).reduce((sum,tx)=>sum+(Number(tx.amount)||0),0)};});
+    const max=Math.max(1,...daily.map(d=>d.value)),budget=currentBudget(state),spent=Number(F.monthlyExpense())||0,pct=budget?Math.min(100,Math.round(spent/budget*100)):0;
+    return `${heading('Estadísticas','Actividad real de tus cuentas')}
+      <div class="stitch-metrics"><div class="stitch-metric"><span>Ingresos</span><strong>${displayAmount(F.monthlyIncome())}</strong><small>Este mes</small></div><div class="stitch-metric"><span>Gastos</span><strong>${displayAmount(spent)}</strong><small>Este mes</small></div></div>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Gastos de los últimos 7 días</span><small>Por día</small></div>${expenses.length?`<div class="stitch-bars">${daily.map(d=>`<div class="stitch-bar"><i style="height:${Math.max(4,Math.round(d.value/max*88))}px"></i><span>${escapeHtml(d.label)}</span></div>`).join('')}</div>`:'<div class="stitch-empty">Sin gastos registrados esta semana</div>'}</section>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Presupuesto</span><small>${budget?`${pct}% usado`:'Sin presupuesto'}</small></div><strong>${displayAmount(spent)}${budget?` <small>de ${displayAmount(budget)}</small>`:''}</strong><div class="stitch-progress"><span style="width:${budget?pct:0}%"></span></div></section>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Gastos por categoría</span><small>Este mes</small></div>${top.length?top.map(([key,value])=>row({icon:'◌',title:typeof window.catName==='function'?catName(key):key,subtitle:'Gasto registrado',value:displayAmount(value)})).join(''):'<div class="stitch-empty">Registra un gasto para ver el desglose</div>'}</section>
+      <section class="stitch-card"><div class="stitch-card-title"><span>Movimientos del mes</span><small>${month.length}</small></div>${recentList(month)}</section>`;
+  }
+  function settingsView(){
+    const native=window.AndroidBridge,availability=native?.biometricAvailability?.()||'unsupported';
+    const enabled=!!native?.biometricLockEnabled?.(),bioLabel=availability==='available'?'Usa huella o biometría al abrir':availability==='none_enrolled'?'Configura una huella en Android':'Biometría no disponible en este dispositivo';
+    return `${heading('Ajustes','Tus preferencias de Ábaco')}
+      <section class="stitch-card"><div class="stitch-card-title">Preferencias</div>
+        <button type="button" class="stitch-settings-row" data-stitch-action="theme"><span><strong>Tema</strong><small>Cambiar entre claro y oscuro</small></span><span>${document.documentElement.dataset.theme==='dark'?'Oscuro':'Claro'} ›</span></button>
+        <button type="button" class="stitch-settings-row" data-stitch-action="biometric" ${availability==='unsupported'||availability==='no_hardware'?'disabled':''}><span><strong>Acceso biométrico</strong><small>${escapeHtml(bioLabel)}</small></span><span class="stitch-switch ${enabled?'on':''}" aria-label="${enabled?'Activado':'Desactivado'}"></span></button>
+      </section>
+      <section class="stitch-card"><div class="stitch-card-title">Tus datos</div>
+        <button type="button" class="stitch-settings-row" data-stitch-action="export"><span><strong>Exportar copia</strong><small>Guarda tus datos en un archivo</small></span><span>↓</span></button>
+        <button type="button" class="stitch-settings-row" data-stitch-action="import"><span><strong>Importar copia</strong><small>Restaura un archivo de Ábaco</small></span><span>↑</span></button>
+        <button type="button" class="stitch-settings-row" data-stitch-action="clear"><span><strong>Borrar datos</strong><small>Elimina la información guardada en este dispositivo</small></span><span>›</span></button>
+      </section>
+      <p style="padding:4px 2px;color:var(--muted);font-size:10px;text-align:center">Tus datos financieros permanecen en este dispositivo.</p>`;
+  }
+  function render(){
+    if(!shell.classList.contains('hidden')){
+      const content={home:homeView,wallet:walletView,stats:statsView,settings:settingsView}[active]||homeView;
+      view.innerHTML=content();
+      shell.querySelectorAll('[data-stitch-nav]').forEach(button=>button.classList.toggle('active',button.dataset.stitchNav===active));
+      const privacyButton=shell.querySelector?.('.stitch-icon-btn');
+      if(privacyButton){privacyButton.setAttribute('aria-label',hiddenBalance()?'Mostrar saldo':'Ocultar saldo');privacyButton.textContent=hiddenBalance()?'⊘':'◉';}
+    }
+  }
+  function activate(){
+    if(panels?.classList.contains('hidden')||!finance())return;
+    root.classList.add('stitch-mode');shell.classList.remove('hidden');active='home';render();
+    setTimeout(render,250);setTimeout(render,900);
+  }
+  function openSheet(title,content){
+    overlay.innerHTML=`<section class="stitch-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}"><div class="stitch-sheet-head"><h2>${escapeHtml(title)}</h2><button type="button" class="stitch-close" data-stitch-action="close" aria-label="Cerrar">×</button></div>${content}</section>`;
+    overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');overlay.querySelector('input,select,button')?.focus();
+  }
+  function closeSheet(){overlay.classList.remove('open');overlay.setAttribute('aria-hidden','true');overlay.innerHTML='';}
+  function optionList(items,selected=''){
+    return items.map(item=>`<option value="${escapeHtml(item.id)}" ${item.id===selected?'selected':''}>${escapeHtml(item.name)}</option>`).join('');
+  }
+  function openMovement(type='gasto',values={}){
+    movementType=type;const liquid=liquidAccounts(),movementAccounts=liquid,categorySource=getState().categories||[];
+    const categories=categorySource.filter(c=>c.active!==false).map(c=>({id:c.id||c.name,name:c.name||c.id}));
+    const categoryOptions=categories.length?categories.map(c=>`<option value="${escapeHtml(c.id)}" ${values.category===c.id?'selected':''}>${escapeHtml(c.name)}</option>`).join(''):'<option value="general">General</option>';
+    const selected=values.accountId||liquid[0]?.id||movementAccounts[0]?.id||'',accountsMarkup=optionList(movementAccounts,selected);
+    const tabs=['gasto','ingreso','transferencia'];
+    const form=`<div class="stitch-segment" role="tablist">${tabs.map(tab=>`<button type="button" role="tab" aria-selected="${tab===type}" class="${tab===type?'active':''}" data-stitch-type="${tab}">${tab==='gasto'?'Gasto':tab==='ingreso'?'Ingreso':'Transferir'}</button>`).join('')}</div>
+      <form class="stitch-form" id="stitchMovementForm">
+        <label>Monto<input name="amount" type="number" inputmode="decimal" min="0.01" step="0.01" required placeholder="$0.00" value="${escapeHtml(values.amount||'')}"></label>
+        <label>Concepto<input name="description" type="text" maxlength="90" required placeholder="${type==='gasto'?'¿En qué gastaste?':type==='ingreso'?'¿De dónde viene?':'Concepto opcional'}" value="${escapeHtml(values.description||'')}"></label>
+        ${type==='transferencia'?`<label>Desde<select name="fromId" required>${accountsMarkup}</select></label><label>Hacia<select name="toId" required>${optionList(liquid,values.toId||liquid.find(a=>a.id!==selected)?.id||'')}</select></label>`:`${type==='gasto'?`<label>Categoría<select name="category">${categoryOptions}</select></label>`:''}<label>Cuenta<select name="accountId" required>${accountsMarkup}</select></label>`}
+        <label>Fecha<input name="date" type="date" required value="${escapeHtml(values.date||todayInputValue())}"></label>
+        <button class="stitch-button stitch-full" type="submit">${type==='gasto'?'Guardar gasto':type==='ingreso'?'Guardar ingreso':'Transferir'}</button>
+      </form>`;
+    openSheet(type==='gasto'?'Registrar gasto':type==='ingreso'?'Registrar ingreso':'Transferir',form);
+  }
+  function openAccountForm(){
+    openSheet('Agregar cuenta',`<form class="stitch-form" id="stitchAccountForm"><label>Nombre<input name="name" required maxlength="50" placeholder="Ej. Cuenta principal"></label><label>Tipo<select name="type"><option value="débito">Débito</option><option value="efectivo">Efectivo</option><option value="crédito">Crédito</option></select></label><label id="stitchAccountBalanceLabel">Saldo inicial<input name="balance" type="number" inputmode="decimal" min="0" step="0.01" value="0"></label><label id="stitchAccountLimitField" class="hidden">Límite de crédito<input name="limit" type="number" inputmode="decimal" min="0.01" step="0.01"></label><button class="stitch-button stitch-full" type="submit">Guardar cuenta</button></form>`);
+  }
+  function openSavingForm(){
+    const liquid=liquidAccounts();
+    openSheet('Nueva meta',`<form class="stitch-form" id="stitchSavingForm"><label>Nombre<input name="name" required maxlength="50" placeholder="Ej. Viaje"></label><label>Objetivo<input name="target" type="number" min="0.01" step="0.01" required placeholder="$0.00"></label><label>Saldo inicial<input name="current" type="number" min="0" step="0.01" value="0"></label><label>Cuenta para el saldo inicial<select name="accountId">${optionList(liquid)}</select></label><label>Nota<input name="note" maxlength="90" placeholder="Opcional"></label><button class="stitch-button stitch-full" type="submit">Crear meta</button></form>`);
+  }
+  function openContribution(saving){
+    const liquid=liquidAccounts();
+    openSheet(saving.name,`<p style="margin:0 0 16px;color:var(--muted);font-size:12px">${displayAmount(saving.current??saving.amount)}${saving.target?` de ${displayAmount(saving.target)}`:' ahorrados'}${saving.note?` · ${escapeHtml(saving.note)}`:''}</p><form class="stitch-form" id="stitchContributionForm"><input type="hidden" name="savingId" value="${escapeHtml(saving.id)}"><label>Aportar<input name="amount" type="number" min="0.01" step="0.01" required placeholder="$0.00"></label><label>Desde<select name="accountId" required>${optionList(liquid)}</select></label><button class="stitch-button stitch-full" type="submit">Registrar aporte</button></form><button type="button" class="stitch-button secondary stitch-full" style="margin-top:10px" data-stitch-action="delete-saving" data-id="${escapeHtml(saving.id)}">Eliminar meta</button>`);
+  }
+  function openTransaction(tx){
+    const isExpense=tx.type==='gasto'||tx.type==='interes_prestamo',isIncome=tx.type==='ingreso';
+    const category=tx.meta?.category||getState().expenses.find(e=>e.id===tx.refId)?.category||'—';
+    const fields=[['Tipo',tx.type||'Movimiento'],['Monto',displayAmount(tx.amount)],['Fecha',dateLabel(tx.created_at)],['Cuenta',accountName(tx.accountId)]];
+    if(isExpense)fields.push(['Categoría',typeof window.catName==='function'?catName(category):category]);
+    const deletable=(isExpense&&tx.refId)||(isIncome&&tx.refId);
+    openSheet(tx.description||'Movimiento',`<section class="stitch-card">${fields.map(([label,value])=>`<div class="stitch-settings-row"><span><strong>${escapeHtml(label)}</strong></span><span>${escapeHtml(value)}</span></div>`).join('')}</section>${deletable?`<button type="button" class="stitch-button warn stitch-full" data-stitch-action="delete-transaction" data-id="${escapeHtml(tx.refId)}" data-kind="${isExpense?'expense':'income'}">Eliminar movimiento</button>`:''}`);
+  }
+  function handleAction(action,button){
+    if(action==='close'){closeSheet();return;}
+    if(action==='hide-balance'){localStorage.setItem('stitch_hide_balance',hiddenBalance()?'0':'1');render();return;}
+    if(action==='movement'){openMovement('gasto');return;}
+    if(action==='transfer'){openMovement('transferencia');return;}
+    if(action==='saving'){openSavingForm();return;}
+    if(action==='account'){openAccountForm();return;}
+    if(action==='delete-saving'){const id=button.dataset.id;closeSheet();if(typeof window.deleteSaving==='function')window.deleteSaving(id);setTimeout(render,100);return;}
+    if(action==='delete-transaction'){
+      const id=button.dataset.id,kind=button.dataset.kind;closeSheet();
+      if(kind==='expense'&&typeof window.deleteExpense==='function')window.deleteExpense(id);
+      else if(kind==='income'&&typeof window.deleteIncome==='function')window.deleteIncome(id);
+      setTimeout(render,100);return;
+    }
+    if(action==='theme'){document.getElementById('btnThemeMenu')?.click();window.setAndroidThemeColor?.();render();return;}
+    if(action==='biometric'){
+      if(!window.AndroidBridge){toastMessage('La biometría solo está disponible en la app Android');return;}
+      window.AndroidBridge.setBiometricLock(!window.AndroidBridge.biometricLockEnabled());return;
+    }
+    if(action==='export'){if(typeof window.exportBackup==='function')window.exportBackup();else toastMessage('No se pudo preparar la copia');return;}
+    if(action==='import'){document.getElementById('inputImportBackup')?.click();return;}
+    if(action==='clear'){if(typeof window.clearAll==='function')window.clearAll();return;}
+  }
+  shell.addEventListener('click',event=>{
+    const nav=event.target.closest('[data-stitch-nav]');
+    if(nav){active=nav.dataset.stitchNav;render();view.scrollTop=0;return;}
+    const action=event.target.closest('[data-stitch-action]');
+    if(action){handleAction(action.dataset.stitchAction,action);return;}
+    const tab=event.target.closest('[data-stitch-type]');
+    if(tab){const form=overlay.querySelector('#stitchMovementForm'),values=form?Object.fromEntries(new FormData(form).entries()):{};openMovement(tab.dataset.stitchType,values);return;}
+    const txButton=event.target.closest('[data-stitch-transaction]');
+    if(txButton){const tx=transactions().find(item=>item.id===txButton.dataset.stitchTransaction);if(tx)openTransaction(tx);return;}
+    const savingButton=event.target.closest('[data-stitch-saving]');
+    if(savingButton){const saving=savings().find(item=>item.id===savingButton.dataset.stitchSaving);if(saving)openContribution(saving);return;}
+    const accountButton=event.target.closest('[data-stitch-account]');
+    if(accountButton){
+      const account=accounts().find(item=>item.id===accountButton.dataset.stitchAccount);
+      if(account){
+        const state=getState(),card=(state.cards||[]).find(item=>item.wallet_id===account.id||item.id===account.card_id);
+        const plans=card?(state.msiPlans||[]).filter(plan=>plan.cardId===card.id&&(plan.installments||[]).some(item=>!item.paid)):[];
+        const msiMarkup=plans.map(plan=>`<div class="stitch-card"><div class="stitch-card-title">${escapeHtml(plan.concept)}<small>MSI</small></div>${(plan.installments||[]).map((installment,index)=>installment.paid?'':`<button type="button" class="stitch-row" data-stitch-msi="${escapeHtml(plan.id)}" data-index="${index}"><span class="stitch-row-icon">↻</span><span class="stitch-row-body"><strong>Mensualidad ${installment.number}</strong><small>${dateLabel(installment.due)}</small></span><span class="stitch-row-amount">${displayAmount(installment.amount)} · Pagar</span></button>`).join('')}</div>`).join('');
+        const paymentForm=account.type==='crédito'&&Number(account.balance)>0&&!plans.length?`<form class="stitch-form" id="stitchCreditPaymentForm"><input type="hidden" name="accountId" value="${escapeHtml(account.id)}"><label>Pagar deuda<input name="amount" type="number" min="0.01" step="0.01" max="${Number(account.balance)}" required placeholder="$0.00"></label><label>Desde<select name="sourceAccountId" required>${optionList(liquidAccounts())}</select></label><button class="stitch-button stitch-full" type="submit">Registrar pago</button></form>`:'';
+        openSheet(account.name,`<section class="stitch-card"><div class="stitch-settings-row"><span><strong>Tipo</strong></span><span>${escapeHtml(account.type||'Cuenta')}</span></div><div class="stitch-settings-row"><span><strong>${account.type==='crédito'?'Deuda':'Saldo'}</strong></span><span>${displayAmount(account.balance)}</span></div>${account.limit?`<div class="stitch-settings-row"><span><strong>Límite</strong></span><span>${displayAmount(account.limit)}</span></div>`:''}</section>${plans.length?msiMarkup:''}${paymentForm}`);
+      }
+    }
+    const msiButton=event.target.closest('[data-stitch-msi]');
+    if(msiButton){const {stitchMsi,index}=msiButton.dataset;closeSheet();window.toggleMsiInstallment?.(stitchMsi,Number(index));setTimeout(render,80);return;}
+  });
+  overlay.addEventListener('change',event=>{
+    if(event.target.matches('#stitchAccountForm [name="type"]')){
+      const credit=event.target.value==='crédito',balanceLabel=overlay.querySelector('#stitchAccountBalanceLabel'),limitField=overlay.querySelector('#stitchAccountLimitField'),limitInput=limitField?.querySelector('input[name="limit"]');
+      if(balanceLabel)balanceLabel.firstChild.textContent=credit?'Deuda inicial':'Saldo inicial';
+      limitField?.classList.toggle('hidden',!credit);
+      if(limitInput)limitInput.required=credit;
+    }
+  });
+  overlay.addEventListener('click',event=>{if(event.target===overlay)closeSheet();});
+  overlay.addEventListener('submit',event=>{
+    event.preventDefault();const form=event.target,data=Object.fromEntries(new FormData(form).entries()),S=services();
+    try{
+      if(form.id==='stitchMovementForm'){
+        if(movementType==='gasto')S.expense({amount:data.amount,description:data.description,category:data.category,accountId:data.accountId,date:data.date,source:'stitch'});
+        else if(movementType==='ingreso')S.income({amount:data.amount,description:data.description,accountId:data.accountId,date:data.date,source:'stitch'});
+        else S.transfer({fromId:data.fromId,toId:data.toId,amount:data.amount,date:data.date});
+        closeSheet();toastMessage('Movimiento guardado');render();
+      }else if(form.id==='stitchAccountForm'){
+        S.createAccount({name:data.name,type:data.type,balance:data.balance,limit:data.limit});closeSheet();toastMessage('Cuenta agregada');render();
+      }else if(form.id==='stitchSavingForm'){
+        S.createSaving(data);closeSheet();toastMessage('Meta creada');render();
+      }else if(form.id==='stitchContributionForm'){
+        S.saveContribution(data.savingId,data.amount,{accountId:data.accountId});closeSheet();toastMessage('Aporte registrado');render();
+      }else if(form.id==='stitchCreditPaymentForm'){
+        S.payCredit(data);closeSheet();toastMessage('Pago registrado');render();
+      }
+    }catch(error){toastMessage(error.message||'No se pudo guardar');}
+  });
+  window.onNativeBiometricResult=(mode,success,message)=>{
+    if(success&&mode==='enable'){toastMessage('Acceso biométrico activado');}
+    else if(success&&mode==='disable'){toastMessage('Acceso biométrico desactivado');}
+    else if(message&&mode==='enable'){toastMessage(message);}
+    render();
+  };
+  window.stitchRender=render;
+  const observer=new MutationObserver(activate);
+  if(panels)observer.observe(panels,{attributes:true,attributeFilter:['class']});
+  if(panels&&!panels.classList.contains('hidden'))activate();
+  const priorSave=window.save;
+  if(typeof priorSave==='function'){
+    window.save=function(){const result=priorSave.apply(this,arguments);if(!renderQueued&&!shell.classList.contains('hidden')){renderQueued=true;setTimeout(()=>{renderQueued=false;render();},0);}return result;};
+  }
+  const priorBack=window.handleAndroidBack;
+  window.handleAndroidBack=function(){
+    if(overlay.classList.contains('open')){closeSheet();return;}
+    if(active!=='home'){active='home';render();return;}
+    if(typeof priorBack==='function')priorBack.apply(this,arguments);
+  };
+})();
 </script>
 </body>
 </html>
