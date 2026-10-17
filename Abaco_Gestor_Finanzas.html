@@ -1428,6 +1428,44 @@ input, select, textarea { font-size: 16px; }
 .month-info-cube:focus-visible { outline:2px solid var(--green); outline-offset:2px; }
 .month-info-cube:active { transform:translateY(1px) scale(.985); }
 
+.month-feed-wrap { padding:12px; }
+.month-feed-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+.month-feed-header h3 { margin:0; font-size:16px; }
+.month-feed-controls { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:11px; font-variant-numeric:tabular-nums; }
+.month-feed-controls button {
+  width:32px; min-height:32px; height:32px; padding:0; border-radius:50%;
+  background:var(--bg)!important; color:var(--text)!important; box-shadow:var(--neo-out-sm)!important;
+}
+.month-info-cubes {
+  display:flex; flex-direction:column; gap:10px; height:clamp(320px,58vh,520px);
+  margin:0; padding:2px; overflow-y:auto; overscroll-behavior:contain;
+  scroll-snap-type:y mandatory; scroll-behavior:smooth; scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+}
+.month-info-cubes::-webkit-scrollbar { display:none; }
+.month-info-cubes .month-info-cube {
+  flex:0 0 100%; height:100%; aspect-ratio:auto; padding:clamp(20px,6vw,36px);
+  align-items:flex-start; justify-content:center; gap:14px; text-align:left;
+  border:1px solid rgba(120,133,154,.14); border-radius:20px;
+  background:linear-gradient(145deg,var(--card),var(--green-soft))!important;
+  color:var(--text)!important; box-shadow:var(--neo-out)!important;
+  scroll-snap-align:start; scroll-snap-stop:always; transition:transform .28s ease, box-shadow .28s ease;
+}
+.month-info-cubes .month-info-cube:nth-child(3n+2) { background:linear-gradient(145deg,var(--card),var(--gold-soft))!important; }
+.month-info-cubes .month-info-cube:nth-child(3n) { background:linear-gradient(145deg,var(--card),rgba(124,107,196,.14))!important; }
+.month-info-cubes .month-info-cube .mic-icon { font-size:clamp(24px,7vw,36px); }
+.month-info-cubes .month-info-cube small { color:var(--muted)!important; font-size:12px; font-weight:650; letter-spacing:.08em; text-transform:uppercase; }
+.month-info-cubes .month-info-cube b { max-width:100%; color:var(--text)!important; font-size:clamp(30px,8vw,48px); line-height:1.08; overflow-wrap:anywhere; }
+.month-info-cubes .month-info-cube.is-current { transform:scale(.985); }
+.month-insights-label,#profilesBox { display:none; }
+@media(max-height:650px) {
+  .month-info-cubes { height:clamp(180px,42vh,300px); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .month-info-cubes { scroll-behavior:auto; }
+  .month-info-cube { transition:none; }
+}
+
 </style>
 
 </head>
@@ -1599,24 +1637,29 @@ input, select, textarea { font-size: 16px; }
         <div id="personalSummary" style="font-size:13px;font-weight:600"></div>
       </div>
 
-      <div class="wrapped" id="wrappedBox">
-        <h3>Resumen del mes <span class="live-emoji">✨</span></h3>
-        <div class="month-info-cubes">
-          <button type="button" class="month-info-cube" data-home-action="charts" aria-label="Ver categoría principal y gráficas"><span class="mic-icon">🏷️</span><small>Principal</small><b id="wTopCat">—</b></button>
+      <div class="wrapped month-feed-wrap" id="wrappedBox">
+        <div class="month-feed-header">
+          <h3>Tu mes</h3>
+          <div class="month-feed-controls">
+            <button type="button" id="monthFeedPrevious" aria-label="Ficha anterior">↑</button>
+            <span id="monthFeedProgress" aria-live="polite">1 / 6</span>
+            <button type="button" id="monthFeedNext" aria-label="Ficha siguiente">↓</button>
+          </div>
+        </div>
+        <div class="month-info-cubes" id="monthInfoCubes" aria-label="Resumen mensual deslizable">
+          <button type="button" class="month-info-cube" data-home-action="charts" aria-label="Ver categoría principal"><span class="mic-icon">🏷️</span><small>Principal</small><b id="wTopCat">—</b></button>
           <button type="button" class="month-info-cube" data-home-action="recordatorios" aria-label="Ver recordatorios"><span class="mic-icon">🔔</span><small>Recordatorios</small><b id="wReminders">0</b></button>
           <button type="button" class="month-info-cube" data-home-action="suscripciones" aria-label="Ver suscripciones"><span class="mic-icon">🔄</span><small>Suscripciones</small><b id="wSubs">0</b></button>
           <button type="button" class="month-info-cube" data-home-action="tarjetas" aria-label="Ver compras a meses"><span class="mic-icon">🛍️</span><small>Compras a meses</small><b id="wMsi">0</b></button>
           <button type="button" class="month-info-cube" data-home-action="tarjetas" aria-label="Ver crédito pendiente"><span class="mic-icon">💳</span><small>Crédito pendiente</small><b id="wCreditPending">$0</b></button>
-          <button type="button" class="month-info-cube" data-home-action="ingresos" aria-label="Ver ingresos del mes"><span class="mic-icon">💰</span><small>Ingresos del mes</small><b id="wIncome">$0</b></button>
+          <button type="button" class="month-info-cube" data-home-action="ingresos" aria-label="Ver ingresos del mes"><span class="mic-icon">💰</span><small>Ingresos</small><b id="wIncome">$0</b></button>
         </div>
-        <div class="w-big" id="wLine">Sigue así</div>
-        <div class="w-emoji">💚</div>
       </div>
-<div class="section-title">Lectura rápida</div>
+<div class="section-title month-insights-label">Lectura rápida</div>
       <div class="profiles compact-insights" id="profilesBox"></div>
 
       <button type="button" class="chart-cube" id="btnToggleCharts" aria-label="Abrir panel de gráficas">
-        <span class="chart-cube-icon">📊</span><span><b>Mis gráficas</b><small>Salud y distribución de mi gasto</small></span><span class="chart-cube-arrow">↗</span>
+        <span class="chart-cube-icon">📊</span><span><b>Mis gráficas</b><small>Distribución</small></span><span class="chart-cube-arrow">↗</span>
       </button>
       <div class="charts-modal-backdrop hidden" id="chartsModalBackdrop"></div>
       <div class="charts-block hidden-soft" id="chartsBlock">
@@ -3353,6 +3396,39 @@ function renderHormiga() {
   });
 }
 
+function setupMonthCarousel() {
+  const feed = $('monthInfoCubes');
+  const progress = $('monthFeedProgress');
+  const previous = $('monthFeedPrevious');
+  const next = $('monthFeedNext');
+  if (!feed || feed.dataset.carouselReady === '1') return;
+  feed.dataset.carouselReady = '1';
+  const slides = Array.from(feed.querySelectorAll('.month-info-cube'));
+  let frame = 0;
+  const stride = slides[1] ? slides[1].offsetTop - slides[0].offsetTop : feed.clientHeight;
+  const update = () => {
+    frame = 0;
+    const index = Math.min(slides.length - 1, Math.round(feed.scrollTop / stride));
+    if (progress) progress.textContent = `${index + 1} / ${slides.length}`;
+    slides.forEach((slide, i) => {
+      slide.classList.toggle('is-current', i === index);
+      slide.setAttribute('aria-current', i === index ? 'true' : 'false');
+    });
+    if (previous) previous.disabled = index === 0;
+    if (next) next.disabled = index === slides.length - 1;
+  };
+  const goTo = offset => {
+    const index = Math.min(slides.length - 1, Math.max(0, Math.round(feed.scrollTop / stride) + offset));
+    feed.scrollTo({top:index * stride, behavior:'smooth'});
+  };
+  feed.addEventListener('scroll', () => {
+    if (!frame) frame = requestAnimationFrame(update);
+  }, {passive:true});
+  previous?.addEventListener('click', () => goTo(-1));
+  next?.addEventListener('click', () => goTo(1));
+  update();
+}
+
 function renderInicio() {
   ensureFinancialCore();
   const chips = $('accountViewChips');
@@ -3424,7 +3500,8 @@ function renderInicio() {
   $('wMsi').textContent = String(pendingMsi);
   $('wCreditPending').textContent = money(pendingCredit);
   $('wIncome').textContent = money(totalInc);
-  $('wLine').textContent = motto;
+  if ($('wLine')) $('wLine').textContent = motto;
+  setupMonthCarousel();
 
   // Profiles
   const myExp = state.expenses.filter(e=>e.user_id===state.user_id).reduce((s,e)=>s+e.amount,0);
@@ -5616,7 +5693,7 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
 /* ===== ABACO UNIFICACIÓN UI v6: el motor alimenta las pantallas existentes ===== */
 (function(){
   const _renderInicio = window.renderInicio;
-  function setWrappedCube(index,label,value,icon){
+  function setWrappedCube(index,label,value,icon,action){
     const box=document.getElementById('wrappedBox');
     if(!box)return;
     const cubes=box.querySelectorAll('.month-info-cube');
@@ -5625,11 +5702,15 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
     if(small)small.textContent=label;
     if(b)b.textContent=value;
     if(i)i.textContent=icon;
+    c.setAttribute('aria-label','Ver '+label.toLowerCase());
+    if(action)c.dataset.homeAction=action;
   }
   function renderEngineDashboard(){
     try{
+      const F=window.Abaco?.Finance;
+      if(!F){console.warn('Abaco finance engine unavailable');return;}
       const d=F.dashboard(new Date()), cap=F.dailyCapacity(new Date()), fc=F.forecast(new Date()), health=F.health(new Date()), cf=F.cashFlow(new Date()), events=F.events(new Date()), commitments=F.commitmentsDetailed(new Date()), goals=F.goals();
-      setWrappedCube(0,'Capacidad diaria',money(cap.dailyLimit),'🎯'); setWrappedCube(1,'Comprometido',money(d.commitments||0),'📌'); setWrappedCube(2,'Salud financiera',health.score+'/100','💚'); setWrappedCube(3,'Proyección fin de mes',money(fc.projectedEnd),'🔮'); setWrappedCube(4,'Patrimonio',money(F.netWorth()),'🏦'); setWrappedCube(5,'Flujo neto',money(cf.net),'↕️');
+      setWrappedCube(0,'Capacidad diaria',money(cap.dailyLimit),'🎯','presupuesto'); setWrappedCube(1,'Comprometido',money(d.commitments||0),'📌','presupuesto'); setWrappedCube(2,'Salud financiera',health.score+'/100','💚','charts'); setWrappedCube(3,'Proyección',money(fc.projectedEnd),'🔮','charts'); setWrappedCube(4,'Patrimonio',money(F.netWorth()),'🏦','cuentas'); setWrappedCube(5,'Flujo neto',money(cf.net),'↕️','historial');
       const profiles=document.getElementById('profilesBox'); if(profiles){const status=fc.status==='riesgo'?'Ajustar ritmo':fc.status==='ajustar'?'Vigilar gasto':'Mes saludable',next=events[0],active=goals.find(g=>g.active!==false&&!g.completedAt),pct=active&&safeNum(active.target)>0?Math.min(100,Math.round(safeNum(active.current)/safeNum(active.target)*100)):0;profiles.innerHTML=[{n:status,t:'Lectura del motor'},{n:next?money(next.amount):'—',t:next?'Próximo: '+next.title:'Sin próximos avisos'},{n:active?pct+'%':'—',t:active?'Meta activa':'Sin meta activa'}].map(x=>`<div class="profile-card"><div class="pn">${esc(x.n)}</div><div class="pt">${esc(x.t)}</div></div>`).join('');}
       const banner=document.getElementById('cutoffBanner'); if(banner){const n=commitments[0];if(n){const dt=new Date(n.date),when=Number.isNaN(dt.getTime())?'Próximo':dt.toLocaleDateString([],{day:'2-digit',month:'short'});banner.textContent=`Próximo compromiso · ${n.title} · ${money(n.amount)} · ${when}`;banner.classList.remove('hidden');}else if(fc.status==='riesgo'){banner.textContent='Atención · el ritmo actual proyecta un cierre negativo del mes.';banner.classList.remove('hidden');}else banner.classList.add('hidden');}
       const upcoming=document.getElementById('upcomingList'); if(upcoming){const visible=events.slice(0,5);upcoming.innerHTML=visible.length?visible.map(e=>{const dt=new Date(e.date),date=Number.isNaN(dt.getTime())?'':dt.toLocaleDateString([],{day:'2-digit',month:'short'}),icon=e.type==='msi'?'🛍️':e.type==='loan'?'💳':e.type==='subscription'?'🔄':'⚠️';return `<div class="item"><div class="item-icon task">${icon}</div><div class="item-body"><div class="item-title">${esc(e.title)}</div><div class="item-meta">${esc(date)} · ${e.priority==='high'?'Prioridad alta':'Compromiso'}</div></div><div class="item-amount neg">${e.amount?money(e.amount):''}</div></div>`;}).join(''):'<div class="note">Sin compromisos próximos. Tu mes está despejado.</div>';}
