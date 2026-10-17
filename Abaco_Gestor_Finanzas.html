@@ -1444,14 +1444,14 @@ input, select, textarea { font-size: 16px; }
   <div class="menu-scroll" id="menuScroll">
     <div class="menu-list" id="menuList"></div>
     <div class="menu-footer">
-      <div class="menu-section" style="margin-top:0">Apariencia y cuenta</div>
+      <div class="menu-section" style="margin-top:0">Preferencias</div>
       <div class="menu-item" id="btnThemeMenu"><span class="ico">◐</span><span class="menu-item-label">Tema</span></div>
       <div class="menu-item" id="btnPronounMenu"><span class="ico">Aa</span><span class="menu-item-label">Pronombres</span></div>
-      <div class="menu-item" id="btnClearMine"><span class="ico">−</span><span class="menu-item-label">Borrar mis movimientos</span></div>
-      <div class="menu-item" id="btnClearAll"><span class="ico">×</span><span class="menu-item-label">Vaciar datos</span></div>
-      <div class="menu-section">Respaldo</div>
-      <div class="menu-item" id="btnExportBackup"><span class="ico">↓</span><span class="menu-item-label">Exportar respaldo</span></div>
-      <div class="menu-item" id="btnImportBackup"><span class="ico">↑</span><span class="menu-item-label">Importar respaldo</span></div>
+      <div class="menu-item" id="btnClearMine"><span class="ico">−</span><span class="menu-item-label">Borrar movimientos</span></div>
+      <div class="menu-item" id="btnClearAll"><span class="ico">×</span><span class="menu-item-label">Borrar todos los datos</span></div>
+      <div class="menu-section">Copias</div>
+      <div class="menu-item" id="btnExportBackup"><span class="ico">↓</span><span class="menu-item-label">Exportar copia</span></div>
+      <div class="menu-item" id="btnImportBackup"><span class="ico">↑</span><span class="menu-item-label">Importar copia</span></div>
       <input type="file" id="inputImportBackup" accept="application/json" style="display:none">
       <div class="menu-item" id="menuBackupStatus" style="opacity:.65;pointer-events:none">
         <span class="ico">•</span><span class="menu-item-label" id="menuBackupStatusLabel">Sin respaldo</span>
@@ -1515,7 +1515,7 @@ input, select, textarea { font-size: 16px; }
     <div class="onboard-card hidden" id="step-wallet">
       <div class="emoji">🧾</div>
       <h2>Antes de empezar</h2>
-      <p>Cuéntame qué ya tienes. Puedes completar todo ahora o elegir <b>Saltar</b> y hacerlo después desde cada sección.</p>
+      <p>Agrega tus cuentas, pagos y deudas ahora o después.</p>
       <div class="wallet-quiz-progress"><span id="walletQuizProgress">1 de 3</span></div>
       <div id="walletQuizBody"></div>
       <div class="row mt-6">
@@ -1633,11 +1633,10 @@ input, select, textarea { font-size: 16px; }
         </div>
         <div class="budget-health" id="budgetHealth">
           <h4>💡 ¿Qué tan sano va tu gasto?</h4>
-          <div class="bh-sub">Comparamos tus gastos del mes con una división recomendada sobre tu ingreso (regla 50 / 30 / 20).</div>
+          <div class="bh-sub">Distribución de gastos según la regla 50 / 30 / 20.</div>
           <div class="bh-track" id="bhTrack"></div>
           <div class="bh-advice ok" id="bhAdvice">
-            <div class="bh-title">✨ Registra tu salario y gastos para ver tu diagnóstico</div>
-            <div>Cuando haya números del mes, aquí te diremos si te acercas o te alejas de un buen balance.</div>
+            <div class="bh-title">Registra tus ingresos y gastos para ver el resumen.</div>
           </div>
           <div class="bh-salary-note" id="bhSalaryNote"></div>
         </div>
@@ -1857,7 +1856,7 @@ input, select, textarea { font-size: 16px; }
           <select id="kanbanCol"><option value="todo">Por hacer</option><option value="doing">En curso</option><option value="done">Hecho</option></select>
         </div>
         <button class="btn btn-purple mt-6" id="btnAddKanban" type="button">Agregar</button>
-        <p class="note">Toca la tarjeta para avanzar. Botón blanco = editar · rojo = borrar.</p>
+        <p class="note">Toca para avanzar. Blanco: editar · rojo: borrar.</p>
       </div>
       <div class="section-title">Individual</div>
       <div class="kanban" id="kanbanIndividual"></div>
@@ -1911,7 +1910,7 @@ input, select, textarea { font-size: 16px; }
       </div>
       <div class="form-card hidden" id="budgetEntryPanel">
         <h3>Captura tipo tabla</h3>
-        <p class="note">Una fila por gasto. Usa concepto, descripción y costo; puedes agregar todas las filas que necesites.</p>
+        <p class="note">Una fila por gasto: concepto, descripción y costo.</p>
         <div class="excel-grid excel-head"><span>Concepto</span><span>Descripción</span><span>Costo</span><span></span></div>
         <div id="budgetRows"></div>
         <button class="btn btn-ghost btn-sm mt-6" id="btnBudgetAddRow" type="button">＋ Añadir fila</button>
@@ -2839,12 +2838,12 @@ const MENU_GROUPS = [
   {label:'Consulta', items:['historial','categorias']}
 ];
 const NAV_META = {
-  hormiga:{label:'Anotar gasto'}, inicio:{label:'Ver mi mes'}, presupuesto:{label:'Planear mi mes'}, compras:{label:'Ir de compras'},
-  lista:{label:'Qué comprar'},
-  ingresos:{label:'Anotar ingreso'}, ahorros:{label:'Guardar dinero'}, tarjetas:{label:'Mis tarjetas'},
-  cuentas:{label:'Mis cuentas'}, prestamos:{label:'Mis préstamos'}, suscripciones:{label:'Mis suscripciones'}, inversiones:{label:'Mis inversiones'}, deudores:{label:'Quién me debe'},
-  kanban:{label:'Mis pendientes'}, recordatorios:{label:'Recordarme algo'},
-  historial:{label:'Historial completo'}, categorias:{label:'Mis categorías'},
+  hormiga:{label:'Gasto rápido'}, inicio:{label:'Inicio'}, presupuesto:{label:'Presupuesto'}, compras:{label:'Compras'},
+  lista:{label:'Lista de compras'},
+  ingresos:{label:'Ingresos'}, ahorros:{label:'Ahorros'}, tarjetas:{label:'Tarjetas'},
+  cuentas:{label:'Cuentas'}, prestamos:{label:'Préstamos'}, suscripciones:{label:'Suscripciones'}, inversiones:{label:'Inversiones'}, deudores:{label:'Por cobrar'},
+  kanban:{label:'Pendientes'}, recordatorios:{label:'Recordatorios'},
+  historial:{label:'Historial'}, categorias:{label:'Categorías'},
 };
 const NAV_ICON_PATHS = {
   hormiga:'<path d="M5 3h14v18l-3-2-4 2-4-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -2895,71 +2894,71 @@ function renderActivePanel(name) {
 const PANEL_HELP = {
   hormiga: {
     title: 'Anotar gasto',
-    body: 'Anota gastos chiquitos al momento: elige categoría, monto y desliza la tarjeta o toca Guardar. Ideal para el café, el transporte o lo que no quieres olvidar. Puedes elegir de qué cuenta sale el dinero.'
+    body: 'Elige categoría, monto y cuenta. Guarda con el botón o desliza.'
   },
   inicio: {
     title: 'Ver mi mes',
-    body: 'Tu panorama del día: saldo, resumen del mes, próximos cobros y la gráfica de salud del gasto (50/30/20 vs tu salario). Te dice con colores y consejos si te apegas o te alejas de una buena división.'
+    body: 'Consulta tu saldo, resumen, pagos próximos y distribución de gastos.'
   },
   presupuesto: {
     title: 'Planear mi mes',
-    body: 'Planea antes de gastar. Captura conceptos y montos como en una tablita, elige si es mensual, quincenal o semanal, y ve cuánto te queda del plan.'
+    body: 'Define gastos por periodo y consulta cuánto te queda.'
   },
   compras: {
     title: 'Ir de compras',
-    body: 'Arma una lista de espera o entra al modo carrito con un presupuesto. Al confirmar, los productos pasan a tus gastos reales sin que se te escape nada del super.'
+    body: 'Crea una lista o usa el carrito. Al confirmar, los productos se registran como gastos.'
   },
   lista: {
     title: 'Qué comprar',
-    body: 'Anota lo que necesitas comprar durante la semana: súper, papelería o despensa. Marca ✓ cuando lo compres; no afecta tus gastos, es solo para no olvidar nada.'
+    body: 'Anota productos y márcalos al comprarlos. No afectan tus gastos.'
   },
   ingresos: {
     title: 'Anotar ingreso',
-    body: 'Registra lo que entra: salario, freela, extras. Elige a qué cuenta llega (efectivo, débito o abono a tarjeta) para que tus saldos cuadren solos.'
+    body: 'Registra el monto, tipo y cuenta de destino.'
   },
   ahorros: {
     title: 'Guardar dinero',
-    body: 'Crea metas con o sin objetivo, aporta cuando puedas y, si pusiste rendimiento anual, puedes aplicar el estimado. Las gráficas te muestran cómo va cada ahorro.'
+    body: 'Crea metas, registra aportes y consulta su avance.'
   },
   tarjetas: {
     title: 'Mis tarjetas',
-    body: 'Lleva tus tarjetas y los meses sin intereses. Marca mensualidades pagadas aquí para no duplicar el gasto en reportes. Ideal para no perder de vista lo que aún debes a plazos.'
+    body: 'Registra tarjetas y compras MSI. Marca pagos para evitar duplicados.'
   },
   cuentas: {
     title: 'Mis cuentas',
-    body: 'Efectivo, débito, crédito u otras. Transfiere entre ellas sin inventar ingresos ni gastos: solo mueve el saldo de un lado a otro.'
+    body: 'Registra tus cuentas y transfiere saldo entre ellas.'
   },
   prestamos: {
     title: 'Mis préstamos',
-    body: 'Anota hipoteca, auto o préstamo personal. Marca cada pago aquí para avanzar el saldo de la deuda sin volver a registrarlo como gasto suelto.'
+    body: 'Registra deudas y pagos sin duplicar gastos.'
   },
   suscripciones: {
     title: 'Mis suscripciones',
-    body: 'Netflix, gym, apps… pon nombre, monto, fecha de cobro y si es semanal, quincenal o mensual. El calendario te recuerda cuándo te van a cargar.'
+    body: 'Registra monto y fecha de cobro; consulta las próximas fechas.'
   },
   inversiones: {
     title: 'Mis inversiones',
-    body: 'Registra CETES, fondos o lo que tengas invertido, con monto y rendimiento opcional. Sirve para ver tu portafolio junto al resto de tu dinero.'
+    body: 'Registra monto y rendimiento para consultar tus inversiones.'
   },
   deudores: {
     title: 'Quién me debe',
-    body: 'Cuando prestas dinero a alguien, anótalo aquí con o sin fecha. Cuando te paguen, márcalo como cobrado. No afecta tu gasto del mes: es un recordatorio amable.'
+    body: 'Anota préstamos y márcalos como cobrados. No afectan tus gastos.'
   },
   kanban: {
     title: 'Mis pendientes',
-    body: 'Organiza pendientes en columnas. Toca una tarjeta para avanzar de etapa. Ideal para tareas personales, del hogar o proyectos chicos.'
+    body: 'Organiza tareas y toca una tarjeta para cambiar su estado.'
   },
   recordatorios: {
     title: 'Recordarme algo',
-    body: 'Anota lo que no quieres olvidar, con fecha y hora. Perfecto para el pago del internet, la cita o devolver algo.'
+    body: 'Añade una fecha y hora para recibir recordatorios.'
   },
   historial: {
     title: 'Historial completo',
-    body: 'El registro completo de entradas y salidas. Aquí puedes repasar qué pasó y cuándo, sin filtrar por sección.'
+    body: 'Consulta tus entradas y salidas.'
   },
   categorias: {
     title: 'Mis categorías',
-    body: 'Personaliza tus categorías con un nombre y un símbolo.'
+    body: 'Crea y organiza tus categorías.'
   }
 };
 
@@ -4695,8 +4694,8 @@ function deleteReminder(id){if(!confirm('¿Borrar recordatorio?'))return;const r
 function renderHistorial(){const el=$('historialList');if(!el)return;const h=[...state.historial].sort((a,b)=>(b.created_at||0)-(a.created_at||0));if(!h.length){el.innerHTML='<div class="empty"><p>Sin historial</p></div>';return;}el.innerHTML=h.map(x=>`<div class="item" data-hid="${esc(x.id)}"><div class="item-icon shop">🛒</div><div class="item-body"><div class="item-title">${esc(x.description||'Compra')}</div><div class="item-meta">${esc(whoLabel(x.user_id))} · ${formatDate(x.created_at)}</div></div><div class="item-amount neg">-${money(x.amount)}</div></div>`).join('');el.querySelectorAll('.item').forEach(e=>e.onclick=()=>{const h=state.historial.find(x=>x.id===e.dataset.hid);if(h)showDetail('Compra',[{lbl:'Descripción',val:h.description||''},{lbl:'Monto',val:money(h.amount)},{lbl:'Fecha',val:formatDate(h.created_at)}],[{label:'🗑️ Borrar',danger:true,onClick:()=>deleteHistorialItem(h.id)}]);});}
 function renderCategories(){const el=$('catList');if(!el)return;el.innerHTML=state.categories.map(c=>`<div class="item" data-cid="${esc(c.id)}"><div class="item-icon shop">${esc(c.icon)}</div><div class="item-body"><div class="item-title">${esc(c.name)}</div><div class="item-meta">Categoría</div></div>${DEFAULT_CATS.some(d=>d.id===c.id)?'':'<button type="button" class="btn btn-ghost btn-sm" data-cat-del="'+esc(c.id)+'">✕</button>'}</div>`).join('');el.querySelectorAll('[data-cat-del]').forEach(b=>b.onclick=()=>deleteCategory(b.dataset.catDel));}
 function addCategory(){const name=($('catName')?.value||'').trim(),icon=($('catIcon')?.value||'📦').trim();if(!name){toast('Escribe el nombre');return;}const id=name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||uid();if(state.categories.some(c=>c.id===id)){toast('Esa categoría ya existe');return;}const c={id,name,icon};state.categories.push(c);save();renderCategories();renderHormiga();renderInicio();$('catName').value='';$('catIcon').value='📦';toast('Categoría creada');}
-function deleteCategory(id){if(DEFAULT_CATS.some(c=>c.id===id)){toast('Las categorías base no se pueden borrar');return;}if(!confirm('¿Borrar categoría? Los movimientos conservarán sus datos.'))return;state.categories=state.categories.filter(c=>c.id!==id);if(state.hormCat===id)state.hormCat='general';save();renderCategories();renderHormiga();renderInicio();toast('Categoría borrada');}
-function clearMine(){if(!ensureUser())return;if(!confirm('¿Borrar tus movimientos? Esta acción no se puede deshacer.'))return;state.expenses=state.expenses.filter(e=>e.user_id!==state.user_id);
+function deleteCategory(id){if(DEFAULT_CATS.some(c=>c.id===id)){toast('Las categorías base no se pueden borrar');return;}if(!confirm('¿Borrar categoría? Se conserva en el historial.'))return;state.categories=state.categories.filter(c=>c.id!==id);if(state.hormCat===id)state.hormCat='general';save();renderCategories();renderHormiga();renderInicio();toast('Categoría borrada');}
+function clearMine(){if(!ensureUser())return;if(!confirm('¿Borrar tus movimientos? No se puede deshacer.'))return;state.expenses=state.expenses.filter(e=>e.user_id!==state.user_id);
 state.incomes=state.incomes.filter(i=>i.user_id!==state.user_id);
 save(true);updateUI();closeMenu();toast('Tus movimientos fueron borrados');}
 /* Respaldo/Restauración: usa PERSISTED_KEYS (la misma lista que clearAll) para
@@ -4777,7 +4776,7 @@ function importBackup(file){
         incoming=payload.state;
       }
       validateBackupData(incoming);
-      if(!confirm('Esto reemplazará tus datos actuales con los de esta copia de seguridad. ¿Continuar?'))return;
+      if(!confirm('¿Reemplazar tus datos con esta copia?'))return;
       PERSISTED_KEYS.forEach(k=>{if(k in incoming)state[k]=incoming[k];});
       if(Array.isArray(incoming.transactions))state.transactions=incoming.transactions;
       if(!save(true))return;
@@ -4794,7 +4793,7 @@ function updateBackupStatusLabel(){
   const ts=safeNum(LS('last_backup_at'));
   el.textContent=ts?('Última copia: '+timeAgo(ts)):'Sin respaldo';
 }
-function clearAll(){if(!confirm('¿Vaciar TODOS los datos locales? Esta acción no se puede deshacer.'))return;PERSISTED_KEYS.concat(['transactions','abaco_db_updated_at']).forEach(k=>localStorage.removeItem(k));state.expenses=[];state.incomes=[];state.shop=[];state.checklist=[];state.cart=[];state.shopMode=null;state.historial=[];state.savings=[];state.budgets=[];state.budgetPeriod='mensual';state.cards=[];state.msiPlans=[];state.accounts=[];state.transfers=[];state.loans=[];state.subscriptions=[];state.debtors=[];state.investments=[];state.accountView='todas';state.kanban=[];state.reminders=[];state.reactions={};state.transactions=[];save(true);try{window.Abaco?.DB?.clear?.();}catch(e){console.warn('No se pudo limpiar la base local',e)}closeMenu();updateUI();toast('Datos vaciados');}
+function clearAll(){if(!confirm('¿Borrar todos los datos? No se puede deshacer.'))return;PERSISTED_KEYS.concat(['transactions','abaco_db_updated_at']).forEach(k=>localStorage.removeItem(k));state.expenses=[];state.incomes=[];state.shop=[];state.checklist=[];state.cart=[];state.shopMode=null;state.historial=[];state.savings=[];state.budgets=[];state.budgetPeriod='mensual';state.cards=[];state.msiPlans=[];state.accounts=[];state.transfers=[];state.loans=[];state.subscriptions=[];state.debtors=[];state.investments=[];state.accountView='todas';state.kanban=[];state.reminders=[];state.reactions={};state.transactions=[];save(true);try{window.Abaco?.DB?.clear?.();}catch(e){console.warn('No se pudo limpiar la base local',e)}closeMenu();updateUI();toast('Datos vaciados');}
 
 
 /* ===== Núcleo financiero v2 =====
