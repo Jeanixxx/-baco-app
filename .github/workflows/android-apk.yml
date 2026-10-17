@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - agent/android-kotlin-wrapper
+      - feature/month-for-you-carousel
   pull_request:
     branches:
       - main
