@@ -6428,7 +6428,7 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
   function settingsView(){
     const native=window.AndroidBridge,availability=native?.biometricAvailability?.()||'unsupported';
     const enabled=!!native?.biometricLockEnabled?.(),dark=document.documentElement.dataset.theme==='dark';
-    const bioLabel=availability==='available'?'Usa huella o biometría al abrir':availability==='none_enrolled'?'Configura una huella en Android':availability==='no_hardware'?'Este dispositivo no tiene biometría':availability==='unavailable'?'Biometría no disponible en este momento':'Disponible solo en la app Android';
+    const bioLabel=availability==='available'?'Usa Face ID, Touch ID o biometría al abrir':availability==='none_enrolled'?'Configura biometría en los ajustes del dispositivo':availability==='no_hardware'?'Este dispositivo no tiene biometría':availability==='unavailable'?'Biometría no disponible en este momento':'Disponible solo en la app móvil';
     const unavailable=availability==='unsupported'||availability==='no_hardware'||availability==='unavailable';
     const chev=`<span class="st-chev">${icon('chevron')}</span>`;
     return `${heading('Ajustes')}
