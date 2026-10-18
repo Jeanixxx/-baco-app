@@ -36,7 +36,7 @@ jobs:
           cp Abaco_Gestor_Finanzas.html ios/Abaco/Resources/index.html
 
       - name: Generate Xcode project
-        run: xcodegen generate --spec ios/project.yml
+        run: cd ios && xcodegen generate --spec project.yml
 
       - name: Build iOS app without signing
         run: |
