@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private var pendingFileCallback: ValueCallback<Array<Uri>>? = null
     private var pageReady = false
     private var biometricPromptActive = false
+    private var biometricEnrollmentPending = false
     private var appLocked = false
 
     private val backupPicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -162,7 +163,16 @@ class MainActivity : AppCompatActivity() {
         if (::webView.isInitialized) {
             webView.onResume()
             webView.evaluateJavascript("try { checkReminders(); } catch(e) {}", null)
-            if (pageReady && appLocked && isBiometricLockEnabled() && !biometricPromptActive) authenticateBiometric("unlock")
+            if (pageReady && biometricEnrollmentPending && !biometricPromptActive) {
+                biometricEnrollmentPending = false
+                if (biometricAvailability() == "available") {
+                    authenticateBiometric("enable")
+                } else {
+                    sendBiometricResult("enable", false, "No se registró ninguna huella. Puedes intentarlo de nuevo desde Ajustes.")
+                }
+            } else if (pageReady && appLocked && isBiometricLockEnabled() && !biometricPromptActive) {
+                authenticateBiometric("unlock")
+            }
         }
     }
 
@@ -274,6 +284,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setBiometricLock(enabled: Boolean) {
         if (!enabled) {
+            biometricEnrollmentPending = false
             getSharedPreferences(SECURITY_PREFS, MODE_PRIVATE).edit().putBoolean(KEY_BIOMETRIC_LOCK, false).apply()
             appLocked = false
             if (::privacyCover.isInitialized) privacyCover.visibility = android.view.View.GONE
@@ -281,6 +292,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         if (biometricAvailability() == "none_enrolled") {
+            biometricEnrollmentPending = true
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     startActivity(Intent(Settings.ACTION_BIOMETRIC_ENROLL).putExtra(
@@ -291,8 +303,13 @@ class MainActivity : AppCompatActivity() {
                     startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
                 }
             } catch (_: Exception) {
+                biometricEnrollmentPending = false
                 sendBiometricResult("enable", false, "No se pudieron abrir los ajustes de biometría.")
             }
+            return
+        }
+        if (biometricAvailability() != "available") {
+            sendBiometricResult("enable", false, "La biometría no está disponible en este momento.")
             return
         }
         authenticateBiometric("enable")
