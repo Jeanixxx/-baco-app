@@ -1469,10 +1469,16 @@ input, select, textarea { font-size: 16px; }
 /* Stitch-inspired app shell */
 .app.stitch-mode>header,.app.stitch-mode .pinned-bar,.app.stitch-mode #menuPage,
 .app.stitch-mode #menuOverlay,.app.stitch-mode #menuEdgeHint,.app.stitch-mode #calcEdgeHint,
-.app.stitch-mode .calc-page,.app.stitch-mode .calc-overlay { display:none!important; }
+.app.stitch-mode:not(.calc-open) .calc-page,.app.stitch-mode:not(.calc-open) .calc-overlay { display:none!important; }
 .app.stitch-mode .content { flex:1; min-height:0; padding:0; overflow:hidden; }
 .app.stitch-mode #onboarding { display:none!important; }
 .app.stitch-mode #appPanels { display:none!important; }
+/* Herramientas: el panel original se abre a pantalla completa sobre la interfaz Stitch */
+.app.stitch-mode.stitch-tool-open #appPanels { display:block!important; position:fixed; z-index:15; inset:0; overflow-y:auto; overscroll-behavior:contain; padding:calc(var(--safe-top) + 62px) 16px max(28px,var(--safe-bottom)); background:var(--bg); }
+.stitch-toolbar { display:none; }
+.app.stitch-mode.stitch-tool-open .stitch-toolbar { position:fixed; z-index:16; top:0; right:0; left:0; display:flex; align-items:center; gap:10px; padding:calc(var(--safe-top) + 6px) 14px 8px; background:var(--bg); border-bottom:1px solid var(--card-border); }
+.stitch-toolbar button { display:grid; width:44px; height:44px; place-items:center; padding:0; border:1px solid var(--card-border)!important; border-radius:50%; background:var(--card)!important; color:var(--green)!important; box-shadow:none!important; cursor:pointer; }
+.stitch-toolbar strong { color:var(--text); font-size:18px; font-weight:700; letter-spacing:-.02em; }
 /* ===== Ábaco · interfaz Stitch =====
    Nota: el CSS global pinta todo <button> habilitado con degradado verde y texto blanco
    (!important) y fuerza a sus hijos a heredar ese color. Las reglas `.stitch-shell button…`
@@ -1568,7 +1574,8 @@ input, select, textarea { font-size: 16px; }
 .stitch-shell button.stitch-row:last-child { border-bottom:0!important; }
 .stitch-shell button.stitch-row:active { background:var(--green-soft)!important; }
 .st-ico { display:grid; width:44px; height:44px; flex:0 0 auto; place-items:center; border-radius:15px; background:var(--green-soft); color:var(--green); }
-.st-ico .si { width:21px; height:21px; }
+.st-ico .si, .st-ico svg { width:21px; height:21px; }
+.st-ico svg { fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .stitch-row.is-out .st-ico { background:var(--st-out-soft); color:var(--st-out); }
 .stitch-row.is-neutral .st-ico { color:var(--muted); }
 .stitch-row-body { flex:1; min-width:0; }
@@ -1665,10 +1672,10 @@ input, select, textarea { font-size: 16px; }
 .stitch-switch.on::after { transform:translateX(20px); }
 
 /* Navegación inferior */
-.stitch-nav { display:grid; flex:0 0 auto; grid-template-columns:repeat(4,1fr); padding:6px 8px max(8px,var(--safe-bottom)); border-top:1px solid var(--card-border); background:var(--card); }
+.stitch-nav { display:grid; flex:0 0 auto; grid-template-columns:repeat(5,1fr); padding:6px 8px max(8px,var(--safe-bottom)); border-top:1px solid var(--card-border); background:var(--card); }
 .stitch-shell .stitch-nav button { display:flex; min-height:58px; flex-direction:column; align-items:center; justify-content:flex-start; gap:4px; padding:6px 0 0; border:0!important; border-radius:0; background:transparent!important; color:var(--muted)!important; box-shadow:none!important; font:600 12px/1.2 Manrope,-apple-system,sans-serif; cursor:pointer; }
 .stitch-shell .stitch-nav button.active { color:var(--green)!important; font-weight:700; }
-.stitch-nav-ico { display:grid; width:60px; height:32px; place-items:center; border-radius:16px; transition:background .18s ease; }
+.stitch-nav-ico { display:grid; width:52px; height:32px; place-items:center; border-radius:16px; transition:background .18s ease; }
 .stitch-nav button.active .stitch-nav-ico { background:var(--green-soft); }
 .stitch-nav button.active .si { stroke-width:2.1; }
 
@@ -2404,6 +2411,7 @@ input, select, textarea { font-size: 16px; }
       <div id="subList"></div>
     </div>
   </div>
+  <div class="stitch-toolbar" id="stitchToolbar"><button type="button" id="stitchToolBack" aria-label="Volver"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6"/></svg></button><strong id="stitchToolTitle"></strong></div>
   <section class="stitch-shell hidden" id="stitchShell" aria-label="Ábaco">
     <div class="stitch-topbar">
       <div class="stitch-brand"><span class="stitch-mark" aria-hidden="true">a</span><div><strong>Ábaco</strong><small id="stitchGreeting">Tu dinero, en calma</small></div></div>
@@ -2414,6 +2422,7 @@ input, select, textarea { font-size: 16px; }
       <button type="button" data-stitch-nav="home"><span class="stitch-nav-ico"></span>Inicio</button>
       <button type="button" data-stitch-nav="wallet"><span class="stitch-nav-ico"></span>Billetera</button>
       <button type="button" data-stitch-nav="stats"><span class="stitch-nav-ico"></span>Estadísticas</button>
+      <button type="button" data-stitch-nav="tools"><span class="stitch-nav-ico"></span>Más</button>
       <button type="button" data-stitch-nav="settings"><span class="stitch-nav-ico"></span>Ajustes</button>
     </nav>
     <div class="stitch-overlay" id="stitchOverlay" aria-hidden="true"></div>
@@ -6188,7 +6197,11 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
     upload:'<path d="M12 15.5V4.5"/><path d="M7.5 9 12 4.5 16.5 9"/><path d="M5 19.5h14"/>',
     lock:'<rect x="5.5" y="10.5" width="13" height="9.5" rx="2.2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
     trash:'<path d="M5 7h14"/><path d="M10 7V4.8h4V7"/><path d="M7 7l.8 12.2h8.4L17 7"/><path d="M10.5 10.5v6M13.5 10.5v6"/>',
-    close:'<path d="M6.5 6.5l11 11"/><path d="M17.5 6.5l-11 11"/>'
+    close:'<path d="M6.5 6.5l11 11"/><path d="M17.5 6.5l-11 11"/>',
+    grid:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/>',
+    back:'<path d="M14.5 6 8.5 12l6 6"/>',
+    user:'<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+    calc:'<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M8.5 7.5h7"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01"/>'
   };
   const icon=name=>`<svg class="si" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name]||ICONS.dots}</svg>`;
 
@@ -6365,6 +6378,28 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
       <section class="stitch-card"><div class="stitch-card-title"><span>Gastos por categoría</span><small>${escapeHtml(monthName())}</small></div>${catRows||emptyState('Registra un gasto para ver el desglose.','Registrar gasto','movement')}</section>
       <section class="stitch-card"><div class="stitch-card-title"><span>Movimientos del mes</span><small>${month.length}</small></div>${txList(month,statsLimit)}${more}</section>`;
   }
+  const TOOLS=[
+    {group:'Planear',items:[['presupuesto','Presupuesto','Planea tu mes'],['categorias','Categorías','Organiza tus gastos'],['recordatorios','Recordatorios','Pagos y avisos'],['kanban','Pendientes','Tu tablero de tareas']]},
+    {group:'Compras',items:[['compras','Compras','Ir al súper con total'],['lista','Lista de compras','Qué comprar']]},
+    {group:'Deudas y crédito',items:[['tarjetas','Tarjetas','Pagos y meses sin intereses'],['prestamos','Préstamos','Lo que debes'],['deudores','Quién me debe','Lo que te deben'],['suscripciones','Suscripciones','Cobros recurrentes']]},
+    {group:'Crecer',items:[['inversiones','Inversiones','Tu portafolio']]},
+    {group:'Consultar',items:[['historial','Historial','Todos tus movimientos'],['__calc','Calculadora','Haz cuentas rápido']]}
+  ];
+  const toolIcon=key=>key==='__calc'?icon('calc'):(typeof window.navIconSvg==='function'?window.navIconSvg(key):icon('dots'));
+  function toolsView(){
+    const chev=`<span class="st-chev">${icon('chevron')}</span>`;
+    return `${heading('Más herramientas','Todo lo que ya tenías en Ábaco')}${TOOLS.map(g=>`<section class="stitch-card"><div class="stitch-card-title"><span>${escapeHtml(g.group)}</span></div>${g.items.map(([key,label,hint])=>row({icon:toolIcon(key),title:label,subtitle:hint,trailing:chev,attrs:`data-stitch-tool="${key}" data-label="${escapeHtml(label)}"`})).join('')}</section>`).join('')}`;
+  }
+  let toolOpen=false;
+  function openTool(key,label){
+    if(key==='__calc'){if(typeof window.openCalc==='function')window.openCalc();return;}
+    toolOpen=true;root.classList.add('stitch-tool-open');
+    document.getElementById('stitchToolTitle').textContent=label||'';
+    if(typeof window.goPanel==='function')window.goPanel(key);
+    const area=document.getElementById('appPanels');if(area)area.scrollTop=0;
+    document.getElementById('stitchToolBack')?.focus({preventScroll:true});
+  }
+  function closeTool(){toolOpen=false;root.classList.remove('stitch-tool-open');render();}
   function settingsView(){
     const native=window.AndroidBridge,availability=native?.biometricAvailability?.()||'unsupported';
     const enabled=!!native?.biometricLockEnabled?.(),dark=document.documentElement.dataset.theme==='dark';
@@ -6379,13 +6414,15 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
       <section class="stitch-card"><div class="stitch-card-title"><span>Tus datos</span></div>
         ${row({icon:icon('download'),title:'Exportar copia',subtitle:'Guarda tus datos en un archivo',trailing:chev,action:'export'})}
         ${row({icon:icon('upload'),title:'Importar copia',subtitle:'Restaura un archivo de Ábaco',trailing:chev,action:'import'})}
+        ${row({icon:icon('user'),title:'Pronombres',subtitle:'Cómo te trata la app',trailing:chev,action:'pronoun'})}
+        ${row({icon:icon('trash'),title:'Borrar mis movimientos',subtitle:'Conserva cuentas y ajustes',trailing:chev,action:'clear-mine'})}
         ${row({icon:icon('trash'),title:'Borrar datos',subtitle:'Elimina lo guardado en este dispositivo',trailing:chev,action:'clear',danger:true,tone:'out'})}
       </section>
       <p class="stitch-note">Tus datos financieros permanecen en este dispositivo.</p>`;
   }
   function render(){
     if(!shell.classList.contains('hidden')){
-      const content={home:homeView,wallet:walletView,stats:statsView,settings:settingsView}[active]||homeView;
+      const content={home:homeView,wallet:walletView,stats:statsView,tools:toolsView,settings:settingsView}[active]||homeView;
       view.innerHTML=content();
       shell.querySelectorAll('[data-stitch-nav]').forEach(button=>{const on=button.dataset.stitchNav===active;button.classList.toggle('active',on);if(on)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');});
       const privacyButton=shell.querySelector?.('.stitch-icon-btn');
@@ -6484,6 +6521,8 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
     }
     if(action==='export'){if(typeof window.exportBackup==='function')window.exportBackup();else toastMessage('No se pudo preparar la copia');return;}
     if(action==='import'){document.getElementById('inputImportBackup')?.click();return;}
+    if(action==='pronoun'){document.getElementById('btnPronounMenu')?.click();return;}
+    if(action==='clear-mine'){document.getElementById('btnClearMine')?.click();return;}
     if(action==='clear'){if(typeof window.clearAll==='function')window.clearAll();return;}
   }
   shell.addEventListener('click',event=>{
@@ -6497,6 +6536,8 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
     if(txButton){const tx=transactions().find(item=>item.id===txButton.dataset.stitchTransaction);if(tx)openTransaction(tx);return;}
     const savingButton=event.target.closest('[data-stitch-saving]');
     if(savingButton){const saving=savings().find(item=>item.id===savingButton.dataset.stitchSaving);if(saving)openContribution(saving);return;}
+    const toolButton=event.target.closest('[data-stitch-tool]');
+    if(toolButton){openTool(toolButton.dataset.stitchTool,toolButton.dataset.label);return;}
     const accountButton=event.target.closest('[data-stitch-account]');
     if(accountButton){const account=accounts().find(item=>item.id===accountButton.dataset.stitchAccount);if(account)openAccount(account);return;}
     const msiButton=event.target.closest('[data-stitch-msi]');
@@ -6540,7 +6581,8 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
   window.stitchRender=render;
 
   /* Íconos de la navegación (una sola fuente de verdad) */
-  const NAV_ICONS={home:'home',wallet:'wallet',stats:'stats',settings:'settings'};
+  const NAV_ICONS={home:'home',wallet:'wallet',stats:'stats',tools:'grid',settings:'settings'};
+  document.getElementById('stitchToolBack')?.addEventListener('click',closeTool);
   shell.querySelectorAll('[data-stitch-nav]').forEach(button=>{const slot=button.querySelector('.stitch-nav-ico');if(slot)slot.innerHTML=icon(NAV_ICONS[button.dataset.stitchNav]);});
   const privacyButton=shell.querySelector('.stitch-icon-btn');if(privacyButton)privacyButton.innerHTML=icon('eye');
 
@@ -6554,6 +6596,7 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
   const priorBack=window.handleAndroidBack;
   window.handleAndroidBack=function(){
     if(overlay.classList.contains('open')){closeSheet();return;}
+    if(toolOpen){closeTool();return;}
     if(active!=='home'){active='home';render();return;}
     if(typeof priorBack==='function')priorBack.apply(this,arguments);
   };
