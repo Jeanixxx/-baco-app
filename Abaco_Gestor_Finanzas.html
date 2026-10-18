@@ -1665,6 +1665,30 @@ input, select, textarea { font-size: 16px; }
 .st-goal-head span { color:var(--muted); font-size:14px; font-variant-numeric:tabular-nums; }
 .stitch-note { margin:8px 8px 0; color:var(--muted); font-size:13px; line-height:1.45; text-align:center; }
 
+/* Simulador: controles compactos, proyección legible y movimiento discreto. */
+.st-sim-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
+.st-sim-fields label { min-width:0; }
+.st-sim-fields .st-money input { min-height:58px; padding-left:36px; font-size:23px; }
+.st-sim-fields .st-money b { left:13px; font-size:21px; }
+.st-sim-result { margin-top:16px; animation:st-sim-enter .2s ease-out both; }
+.st-sim-primary { display:grid; gap:4px; margin:10px 0 4px; }
+.st-sim-primary span { color:var(--muted); font-size:13px; font-weight:600; }
+.st-sim-primary strong { color:var(--text); font-size:clamp(28px,8vw,36px); font-weight:750; letter-spacing:-.04em; line-height:1.1; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.st-sim-chart { margin-top:16px; padding:12px 10px 4px; border:1px solid var(--card-border); border-radius:18px; background:var(--bg); }
+.st-sim-chart svg { display:block; width:100%; height:112px; overflow:visible; }
+.st-sim-area { fill:var(--green); opacity:.09; }
+.st-sim-line { fill:none; stroke:var(--green); stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; stroke-dashoffset:1; animation:st-sim-draw .72s cubic-bezier(.22,1,.36,1) .04s forwards; }
+.st-sim-dot { fill:var(--card); stroke:var(--green); stroke-width:2.4; }
+.st-sim-axis { display:flex; justify-content:space-between; gap:4px; color:var(--muted); font-size:11px; font-weight:600; }
+.st-sim-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:14px; }
+.st-sim-metrics>div { min-width:0; padding:12px; border-radius:15px; background:var(--green-soft); }
+.st-sim-metrics span { display:block; color:var(--muted); font-size:12px; line-height:1.3; }
+.st-sim-metrics strong { display:block; margin-top:5px; color:var(--text); font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.st-sim-message { margin:12px 2px 0; color:var(--muted); font-size:13px; line-height:1.45; }
+.st-sim-message.warning { color:var(--st-out); }
+@keyframes st-sim-enter { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+@keyframes st-sim-draw { to { stroke-dashoffset:0; } }
+
 /* Interruptor */
 .stitch-switch { position:relative; display:block; width:48px; height:28px; flex:0 0 auto; border-radius:99px; background:var(--st-bar); transition:background .18s ease; }
 .stitch-switch::after { position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); content:""; transition:transform .18s ease; }
@@ -1680,8 +1704,8 @@ input, select, textarea { font-size: 16px; }
 .stitch-nav button.active .si { stroke-width:2.1; }
 
 @keyframes stitch-sheet-in { from { transform:translateY(24px); opacity:.6; } to { transform:translateY(0); opacity:1; } }
-@media(max-width:350px) { .st-duo { grid-template-columns:1fr; } .stitch-view { padding-right:14px; padding-left:14px; } }
-@media(prefers-reduced-motion:reduce) { .stitch-sheet { animation:none; } .stitch-switch, .stitch-switch::after, .stitch-nav-ico, .stitch-shell button.stitch-action, .stitch-shell button.stitch-button { transition:none; } }
+@media(max-width:350px) { .st-duo,.st-sim-fields { grid-template-columns:1fr; } .stitch-view { padding-right:14px; padding-left:14px; } }
+@media(prefers-reduced-motion:reduce) { .stitch-sheet,.st-sim-result { animation:none; } .st-sim-line { animation:none; stroke-dashoffset:0; } .stitch-switch, .stitch-switch::after, .stitch-nav-ico, .stitch-shell button.stitch-action, .stitch-shell button.stitch-button { transition:none; } }
 
 </style>
 
@@ -6379,13 +6403,13 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
       <section class="stitch-card"><div class="stitch-card-title"><span>Movimientos del mes</span><small>${month.length}</small></div>${txList(month,statsLimit)}${more}</section>`;
   }
   const TOOLS=[
-    {group:'Planear',items:[['presupuesto','Presupuesto','Planea tu mes'],['categorias','Categorías','Organiza tus gastos'],['recordatorios','Recordatorios','Pagos y avisos'],['kanban','Pendientes','Tu tablero de tareas']]},
+    {group:'Planear',items:[['__sim','Simulador','Proyecta inversión, deuda y suscripciones'],['presupuesto','Presupuesto','Planea tu mes'],['categorias','Categorías','Organiza tus gastos'],['recordatorios','Recordatorios','Pagos y avisos'],['kanban','Pendientes','Tu tablero de tareas']]},
     {group:'Compras',items:[['compras','Compras','Ir al súper con total'],['lista','Lista de compras','Qué comprar']]},
     {group:'Deudas y crédito',items:[['tarjetas','Tarjetas','Pagos y meses sin intereses'],['prestamos','Préstamos','Lo que debes'],['deudores','Quién me debe','Lo que te deben'],['suscripciones','Suscripciones','Cobros recurrentes']]},
     {group:'Crecer',items:[['inversiones','Inversiones','Tu portafolio']]},
     {group:'Consultar',items:[['historial','Historial','Todos tus movimientos'],['__calc','Calculadora','Haz cuentas rápido']]}
   ];
-  const toolIcon=key=>key==='__calc'?icon('calc'):(typeof window.navIconSvg==='function'?window.navIconSvg(key):icon('dots'));
+  const toolIcon=key=>key==='__calc'?icon('calc'):key==='__sim'?icon('trend'):(typeof window.navIconSvg==='function'?window.navIconSvg(key):icon('dots'));
   function toolsView(){
     const chev=`<span class="st-chev">${icon('chevron')}</span>`;
     return `${heading('Más herramientas','Todo lo que ya tenías en Ábaco')}${TOOLS.map(g=>`<section class="stitch-card"><div class="stitch-card-title"><span>${escapeHtml(g.group)}</span></div>${g.items.map(([key,label,hint])=>row({icon:toolIcon(key),title:label,subtitle:hint,trailing:chev,attrs:`data-stitch-tool="${key}" data-label="${escapeHtml(label)}"`})).join('')}</section>`).join('')}`;
@@ -6393,6 +6417,7 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
   let toolOpen=false;
   function openTool(key,label){
     if(key==='__calc'){if(typeof window.openCalc==='function')window.openCalc();return;}
+    if(key==='__sim'){openSimulator();return;}
     toolOpen=true;root.classList.add('stitch-tool-open');
     document.getElementById('stitchToolTitle').textContent=label||'';
     if(typeof window.goPanel==='function')window.goPanel(key);
@@ -6454,6 +6479,89 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
   }
   const richest=list=>list.slice().sort((a,b)=>(Number(b.balance)||0)-(Number(a.balance)||0))[0];
   const moneyField=(label,attrs)=>`<label>${label}<div class="st-money"><b>$</b><input ${attrs}></div></label>`;
+  function monthlySubscriptionCost(subscription){
+    const value=Math.max(0,Number(subscription.amount)||0);
+    if(subscription.range==='semanal')return value*52/12;
+    if(subscription.range==='quincenal')return value*2;
+    if(subscription.range==='anual')return value/12;
+    return value;
+  }
+  function simulatorDefaults(mode){
+    const F=finance(),state=getState();
+    if(mode==='investment'){
+      const investments=Array.isArray(state.investments)?state.investments:[];
+      const principal=investments.reduce((sum,item)=>sum+Math.max(0,Number(item.current??item.amount)||0),0);
+      const rate=principal?investments.reduce((sum,item)=>sum+(Math.max(0,Number(item.current??item.amount)||0)*(Number(item.rate)||0)),0)/principal:0;
+      return {principal,monthly:0,rate:Math.max(-100,Math.min(100,rate))};
+    }
+    if(mode==='debt'){
+      const loans=Array.isArray(state.loans)?state.loans:[];
+      const loanPrincipal=loans.reduce((sum,item)=>sum+Math.max(0,Number(item.current??item.principal)||0),0);
+      const rate=loanPrincipal?loans.reduce((sum,item)=>sum+(Math.max(0,Number(item.current??item.principal)||0)*(Number(item.annualRate)||0)),0)/loanPrincipal:0;
+      const creditBalance=Math.max(0,Number(F?.creditDebt?.())||0);
+      return {principal:Math.max(0,Number(F?.debt?.())||0),rate:creditBalance?0:Math.max(0,Math.min(200,rate)),payment:loans.reduce((sum,item)=>sum+Math.max(0,Number(item.payment)||0),0),creditBalance};
+    }
+    const subscriptions=(state.subscriptions||[]).filter(item=>item.active!==false);
+    return {amount:subscriptions.reduce((sum,item)=>sum+monthlySubscriptionCost(item),0),frequency:'mensual',count:subscriptions.length};
+  }
+  function simulatorFields(mode){
+    const defaults=simulatorDefaults(mode),value=number=>escapeHtml(Number.isFinite(Number(number))?Number(number):0);
+    if(mode==='investment')return `${moneyField('Capital inicial',`data-sim-field="principal" type="number" inputmode="decimal" min="0" step="0.01" value="${value(defaults.principal)}"`)}${moneyField('Aportación mensual',`data-sim-field="monthly" type="number" inputmode="decimal" min="0" step="0.01" value="${value(defaults.monthly)}"`)}<label>Rendimiento anual estimado (%)<input data-sim-field="rate" type="number" inputmode="decimal" min="-100" max="100" step="0.1" value="${value(defaults.rate)}"></label>`;
+    if(mode==='debt')return `${moneyField('Saldo de la deuda',`data-sim-field="principal" type="number" inputmode="decimal" min="0" step="0.01" value="${value(defaults.principal)}"`)}${moneyField('Pago mensual',`data-sim-field="payment" type="number" inputmode="decimal" min="0" step="0.01" value="${value(defaults.payment)}"`)}<label>Interés anual estimado (%)<input data-sim-field="rate" type="number" inputmode="decimal" min="0" max="200" step="0.1" value="${value(defaults.rate)}"></label>${defaults.creditBalance?'<p class="st-sim-message" style="grid-column:1/-1;margin:0">El saldo incluye tarjetas; la tasa y el pago de la tarjeta no se obtienen automáticamente. Ajústalos para afinar el escenario.</p>':''}`;
+    return `${moneyField('Costo por cobro',`data-sim-field="amount" type="number" inputmode="decimal" min="0" step="0.01" value="${value(defaults.amount)}"`)}<label>Frecuencia<select data-sim-field="frequency"><option value="mensual" selected>Mensual</option><option value="quincenal">Quincenal</option><option value="semanal">Semanal</option><option value="anual">Anual</option></select></label><p class="st-sim-message" style="grid-column:1/-1;margin:0">${defaults.count?`${defaults.count} suscripciones activas sumadas como equivalente mensual. Puedes ajustar el escenario.`:'Agrega un costo para calcular cuánto representa a lo largo del plazo.'}</p>`;
+  }
+  function simulatorChart(series,horizon,label){
+    const values=series.filter(Number.isFinite),low=Math.min(...values),high=Math.max(...values),span=high-low||Math.max(1,Math.abs(high)*.15),ticks=[...new Set(Array.from({length:6},(_,index)=>Math.round(horizon*index/5)))];
+    const points=ticks.map(month=>{const x=10+(month/Math.max(1,horizon))*300,y=88-((Number(series[month])||0)-low)/span*70;return{x,y,month};});
+    const path=points.map((point,index)=>`${index?'L':'M'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' '),last=points[points.length-1];
+    const area=`${path} L ${last.x.toFixed(1)} 92 L ${points[0].x.toFixed(1)} 92 Z`;
+    return `<div class="st-sim-chart"><svg viewBox="0 0 320 100" role="img" aria-label="${escapeHtml(label)}"><path class="st-sim-area" d="${area}"></path><path class="st-sim-line" pathLength="1" d="${path}"></path><circle class="st-sim-dot" cx="${last.x.toFixed(1)}" cy="${last.y.toFixed(1)}" r="4"></circle></svg><div class="st-sim-axis">${ticks.map(month=>`<span>${month===0?'Hoy':`${month} m`}</span>`).join('')}</div></div>`;
+  }
+  function renderSimulatorResult(){
+    const result=document.getElementById('stitchSimResult'),mode=document.getElementById('stitchSimMode')?.value||'investment',horizon=Math.max(3,Math.min(60,Math.floor(Number(document.getElementById('stitchSimHorizon')?.value)||12)));
+    if(!result)return;
+    const input=name=>document.querySelector(`#stitchOverlay [data-sim-field="${name}"]`),num=name=>Number(input(name)?.value)||0;
+    let title='',mainLabel='',mainValue=0,metrics=[],series=[0],message='',warning=false;
+    if(mode==='investment'){
+      const principal=Math.max(0,num('principal')),monthly=Math.max(0,num('monthly')),annualRate=Math.max(-100,Math.min(100,num('rate'))),monthlyRate=annualRate/1200;
+      let balance=principal,contributed=principal;
+      for(let month=1;month<=horizon;month++){balance=Math.max(0,balance*(1+monthlyRate)+monthly);contributed+=monthly;series.push(balance);}
+      const gain=balance-contributed;
+      title='Inversión';mainLabel=`Valor estimado en ${horizon} meses`;mainValue=balance;
+      metrics=[['Aportado en total',displayAmount(contributed)],['Rendimiento estimado',displayAmount(gain)]];
+      message='Proyección compuesta aproximada; las aportaciones se consideran al final de cada mes. El rendimiento real puede variar.';
+    }else if(mode==='debt'){
+      const principal=Math.max(0,num('principal')),payment=Math.max(0,num('payment')),annualRate=Math.max(0,Math.min(200,num('rate'))),monthlyRate=annualRate/1200;
+      let balance=principal,totalInterest=0,totalPaid=0,payoffMonth=balance<=.005?0:null;
+      for(let month=1;month<=horizon;month++){
+        const interest=balance*monthlyRate,paid=Math.min(balance+interest,payment);
+        totalInterest+=interest;totalPaid+=paid;balance=Math.max(0,balance+interest-paid);
+        if(balance<=.005){balance=0;if(payoffMonth===null)payoffMonth=month;}
+        series.push(balance);
+      }
+      const payoff=payoffMonth===0?'Ya liquidada':payoffMonth!==null?plural(payoffMonth,'mes','meses'):'Fuera del plazo';
+      title='Deuda';mainLabel=`Saldo restante en ${horizon} meses`;mainValue=balance;
+      metrics=[['Pagos realizados',displayAmount(totalPaid)],['Interés estimado',displayAmount(totalInterest)],['Liquidación',payoff]];
+      warning=principal>0&&payoffMonth===null&&payment<=principal*monthlyRate+.005;
+      message=warning?'Con este pago la deuda no disminuye dentro del plazo. Aumenta el pago o revisa la tasa para probar otro escenario.':'La estimación asume tasa y pago mensual constantes; las comisiones o pagos extra pueden cambiar el resultado.';
+    }else{
+      const amount=Math.max(0,num('amount')),frequency=input('frequency')?.value||'mensual',factor={mensual:1,quincenal:2,semanal:52/12,anual:1/12}[frequency]||1,monthlyCost=amount*factor,total=monthlyCost*horizon;
+      series=Array.from({length:horizon+1},(_,month)=>monthlyCost*month);
+      title='Suscripciones';mainLabel=`Costo acumulado en ${horizon} meses`;mainValue=total;
+      metrics=[['Equivalente mensual',displayAmount(monthlyCost)],['Proyección anual',displayAmount(monthlyCost*12)]];
+      message='La proyección supone que el costo y la frecuencia se mantienen iguales durante todo el plazo.';
+    }
+    const metricMarkup=metrics.map(([label,value])=>`<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('');
+    result.innerHTML=`<section class="stitch-card st-sim-result" aria-live="polite"><div class="stitch-card-title"><span>${title}</span><small>${horizon} meses</small></div><div class="st-sim-primary"><span>${mainLabel}</span><strong>${displayAmount(mainValue)}</strong></div>${simulatorChart(series,horizon,`${title}: proyección a ${horizon} meses`)}<div class="st-sim-metrics">${metricMarkup}</div><p class="st-sim-message${warning?' warning':''}">${message}</p></section>`;
+    const context=document.getElementById('stitchSimulatorContext');
+    if(context)context.innerHTML=`Disponible registrado: <strong>${displayAmount(finance()?.available?.()||0)}</strong>. Tus datos sirven para prellenar el escenario; este cálculo no modifica saldos ni crea movimientos.`;
+  }
+  function openSimulator(){
+    const horizons=[3,6,12,24,36,60];
+    const content=`<p class="st-sim-message" style="margin:0 2px 14px;text-align:left">Explora cómo cambia una decisión financiera según el plazo. Ajusta cualquier valor antes de comparar.</p><div class="stitch-form"><label>¿Qué quieres simular?<select id="stitchSimMode"><option value="investment">Inversión</option><option value="debt">Deuda</option><option value="subscriptions">Suscripciones</option></select></label><label>Plazo<select id="stitchSimHorizon">${horizons.map(months=>`<option value="${months}"${months===12?' selected':''}>${months} meses</option>`).join('')}</select></label></div><div class="stitch-form st-sim-fields" id="stitchSimFields">${simulatorFields('investment')}</div><div id="stitchSimResult"></div><p class="st-sim-message" id="stitchSimulatorContext"></p><p class="stitch-note">Estimación orientativa, no asesoría financiera. No se guarda ni cambia ningún dato.</p>`;
+    openSheet('Simulador financiero',content,{focusField:true});
+    renderSimulatorResult();
+  }
   function openMovement(type='gasto',values={}){
     movementType=type;const liquid=liquidAccounts(),movementAccounts=liquid,categorySource=getState().categories||[];
     const categories=categorySource.filter(c=>c.active!==false).map(c=>({id:c.id||c.name,name:c.name||c.id}));
@@ -6543,7 +6651,16 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
     const msiButton=event.target.closest('[data-stitch-msi]');
     if(msiButton){const {stitchMsi,index}=msiButton.dataset;closeSheet();window.toggleMsiInstallment?.(stitchMsi,Number(index));setTimeout(render,80);return;}
   });
+  overlay.addEventListener('input',event=>{
+    if(event.target.matches('[data-sim-field]'))renderSimulatorResult();
+  });
   overlay.addEventListener('change',event=>{
+    if(event.target.matches('#stitchSimMode')){
+      const fields=overlay.querySelector('#stitchSimFields');
+      if(fields)fields.innerHTML=simulatorFields(event.target.value);
+      renderSimulatorResult();return;
+    }
+    if(event.target.matches('#stitchSimHorizon,[data-sim-field]'))renderSimulatorResult();
     if(event.target.matches('#stitchAccountForm [name="type"]')){
       const credit=event.target.value==='crédito',balanceLabel=overlay.querySelector('#stitchAccountBalanceLabel'),limitField=overlay.querySelector('#stitchAccountLimitField'),limitInput=limitField?.querySelector('input[name="limit"]');
       if(balanceLabel)balanceLabel.firstChild.textContent=credit?'Deuda inicial':'Saldo inicial';
