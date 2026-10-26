@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - agent/android-kotlin-wrapper
+      - feature/android-updates-signing
   pull_request:
     branches:
       - main
@@ -16,6 +17,11 @@ permissions:
 jobs:
   build-debug-apk:
     runs-on: ubuntu-latest
+    env:
+      ABACO_RELEASE_KEYSTORE_BASE64: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 }}
+      ABACO_RELEASE_STORE_PASSWORD: ${{ secrets.ABACO_RELEASE_STORE_PASSWORD }}
+      ABACO_RELEASE_KEY_ALIAS: ${{ secrets.ABACO_RELEASE_KEY_ALIAS }}
+      ABACO_RELEASE_KEY_PASSWORD: ${{ secrets.ABACO_RELEASE_KEY_PASSWORD }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -32,12 +38,37 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
-      - name: Build debug APK
-        run: gradle --no-daemon :app:assembleDebug
-      - name: Publish APK artifact
+
+      - name: Build debug APK with increasing version
+        run: gradle --no-daemon :app:assembleDebug -PVERSION_CODE=${{ github.run_number }} -PVERSION_NAME=1.0.${{ github.run_number }}
+
+      - name: Publish debug APK
         uses: actions/upload-artifact@v4
         with:
           name: abaco-android-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Prepare persistent release signing key
+        if: env.ABACO_RELEASE_KEYSTORE_BASE64 != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          KEYSTORE_PATH="$RUNNER_TEMP/abaco-release-key.jks"
+          printf '%s' "$ABACO_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          echo "ABACO_RELEASE_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
+
+      - name: Build release APK with persistent signature
+        if: env.ABACO_RELEASE_KEYSTORE_BASE64 != ''
+        run: gradle --no-daemon :app:assembleRelease -PVERSION_CODE=${{ github.run_number }} -PVERSION_NAME=1.0.${{ github.run_number }}
+
+      - name: Publish release APK
+        if: env.ABACO_RELEASE_KEYSTORE_BASE64 != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: abaco-android-release-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 30

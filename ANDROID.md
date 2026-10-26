@@ -12,10 +12,48 @@ La app Android usa un WebView local. La interfaz está separada en `index.html`,
 - Los datos y recordatorios quedan en el almacenamiento privado local de la app; no se añade backend ni sincronización remota. La exportación solo comparte datos cuando la persona pulsa Exportar.
 - En el menú se puede configurar opcionalmente un PIN de 4 a 8 dígitos o un patrón de al menos 4 puntos. Ábaco guarda una derivación PBKDF2 con sal aleatoria, no el PIN/patrón original, y solicita desbloqueo al volver a abrirse. Esta capa es una barrera de acceso local; no sustituye el cifrado del dispositivo ni protege frente a alguien con acceso técnico al almacenamiento de la app.
 
-## Compilar
+## Versiones y actualizaciones instalables encima de la versión anterior
 
-Requisitos: JDK 17, Android SDK con la plataforma 35 y Gradle 8.10.2. Desde la raíz del repositorio, ejecuta:
+- No cambiar `applicationId = "mx.abaco.app"`: Android usa este identificador para reconocer que se trata de la misma app.
+- El workflow asigna automáticamente `versionCode` creciente y una etiqueta como `1.0.15`, basada en el número de ejecución de GitHub Actions.
+- El artefacto `abaco-android-debug-apk` es solo para pruebas. No usarlo como APK de actualización estable: la firma de depuración no es una identidad de firma persistente garantizada entre ejecuciones.
+- Para obtener `abaco-android-release-apk`, hay que configurar una clave privada persistente con los secretos de GitHub que se indican abajo. Esa misma clave debe conservarse para cada versión futura. No subir el archivo de clave al repositorio ni compartirlo.
 
+### Configurar una clave de firma (solo una vez, en Windows)
+
+1. En la PC, abre PowerShell en una carpeta privada donde guardarás la clave. Comprueba que JDK 17 esté instalado con `keytool -help`.
+2. Crea la clave. El comando pedirá una contraseña y datos del certificado; guarda la contraseña en un gestor seguro:
+
+   ```powershell
+   keytool -genkeypair -v -keystore abaco-release-key.jks -alias abaco -keyalg RSA -keysize 2048 -validity 10000
+   ```
+
+3. No subas `abaco-release-key.jks` a GitHub ni la incluyas en el código. Guarda una copia segura de la clave y de sus contraseñas: si se pierde, no podrás firmar actualizaciones compatibles con esa identidad.
+4. Convierte la clave a Base64 para guardarla como secreto de GitHub (esto copia el texto codificado al portapapeles):
+
+   ```powershell
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("$PWD\abaco-release-key.jks")) | Set-Clipboard
+   ```
+
+5. Abre el repositorio en GitHub: **Settings → Secrets and variables → Actions → New repository secret**. Crea estos cuatro secretos:
+
+   - `ABACO_RELEASE_KEYSTORE_BASE64`: pega el contenido Base64 del portapapeles.
+   - `ABACO_RELEASE_STORE_PASSWORD`: contraseña del almacén de claves.
+   - `ABACO_RELEASE_KEY_ALIAS`: escribe `abaco`.
+   - `ABACO_RELEASE_KEY_PASSWORD`: contraseña de la clave para el alias `abaco` (puede ser la misma si así la configuraste).
+
+6. Ejecuta el workflow desde **Actions → Build Android APK → Run workflow**. Si los secretos están completos, la ejecución producirá tanto el APK de prueba como el artefacto `abaco-android-release-apk`. En adelante, usa siempre el APK de release para actualizar el instalado.
+
+### Primera instalación con la firma persistente
+
+Las versiones de prueba creadas antes de configurar esta clave pueden estar firmadas con una clave de depuración distinta. Android no permite reemplazarlas con una firma diferente. Como se ha elegido comenzar con una instalación nueva, desinstala una sola vez la versión de prueba anterior, instala el APK de release y después instala cada nueva versión encima de la anterior. **Desinstalar borra los datos privados locales de Ábaco**, así que exporta un respaldo JSON antes de hacerlo si necesitas conservar información.
+
+## Compilar manualmente
+
+Requisitos: JDK 17, Android SDK con la plataforma 35 y Gradle 8.10.2. Desde la raíz del repositorio:
+
+```bash
 gradle --no-daemon :app:assembleDebug
+```
 
-El APK de prueba queda en app/build/outputs/apk/debug/app-debug.apk. El workflow de GitHub Actions compila el mismo APK en cada push a main o a la rama de integración, y en cada pull request a main. Descárgalo desde el artefacto abaco-android-debug-apk de la ejecución de Actions. Es un APK de depuración para probar; no es una versión firmada para publicar en Google Play.
+El APK de prueba queda en `app/build/outputs/apk/debug/app-debug.apk`. El workflow de GitHub Actions compila en cada push a las ramas configuradas, en cada pull request a `main` y manualmente desde Actions.
