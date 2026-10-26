@@ -1,0 +1,26 @@
+name: Abaco
+options:
+  bundleIdPrefix: mx.abaco
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  Abaco:
+    type: application
+    platform: iOS
+    sources:
+      - path: Abaco
+        excludes:
+          - Info.plist
+          - Resources
+    resources:
+      - path: Abaco/Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: mx.abaco.app
+        PRODUCT_NAME: Abaco
+        INFOPLIST_FILE: Abaco/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        SWIFT_VERSION: "5.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        CODE_SIGN_STYLE: Automatic

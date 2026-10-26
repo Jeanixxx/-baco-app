@@ -1,0 +1,69 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches:
+      - main
+      - agent/android-kotlin-wrapper
+      - feature/month-for-you-carousel
+      - feature/stitch-interface-integration
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    runs-on: macos-15
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Verify Apple build tools
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Copy the current HTML app into iOS resources
+        run: |
+          mkdir -p ios/Abaco/Resources
+          cp Abaco_Gestor_Finanzas.html ios/Abaco/Resources/index.html
+
+      - name: Generate Xcode project
+        run: cd ios && xcodegen generate --spec project.yml
+
+      - name: Build iOS app without signing
+        run: |
+          xcodebuild \
+            -project ios/Abaco.xcodeproj \
+            -scheme Abaco \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package unsigned IPA
+        run: |
+          APP_PATH="$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos/Abaco.app"
+          test -d "$APP_PATH"
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$APP_PATH" "$RUNNER_TEMP/ipa/Payload/Abaco.app"
+          (cd "$RUNNER_TEMP/ipa" && /usr/bin/zip -qry "$GITHUB_WORKSPACE/Abaco-iOS-unsigned.ipa" Payload)
+
+      - name: Publish iOS build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: abaco-ios-unsigned-ipa
+          path: |
+            Abaco-iOS-unsigned.ipa
+            ${{ runner.temp }}/DerivedData/Build/Products/Release-iphoneos/Abaco.app
+          if-no-files-found: error
+          retention-days: 14
