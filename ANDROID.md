@@ -1,6 +1,6 @@
 # Ábaco para Android (Kotlin)
 
-La app Android usa un WebView local; el archivo fuente de interfaz sigue siendo Abaco_Gestor_Finanzas.html en la raíz. Gradle lo copia a los assets en cada build, así que no hay una segunda copia del HTML que pueda quedar desactualizada.
+La app Android usa un WebView local. La interfaz está separada en `index.html`, `styles.css`, `js/boot.js`, `js/app.js` y `js/security.js`. Gradle copia estos archivos al directorio de assets en cada build; las rutas relativas se mantienen y el HTML antiguo `Abaco_Gestor_Finanzas.html` redirige a `index.html`.
 
 ## Funciones Android
 
@@ -10,6 +10,7 @@ La app Android usa un WebView local; el archivo fuente de interfaz sigue siendo 
 - Vibración háptica, color de las barras del sistema y manejo del botón Atrás.
 - Exportación de respaldos JSON mediante el menú nativo para compartir e importación con el selector de archivos.
 - Los datos y recordatorios quedan en el almacenamiento privado local de la app; no se añade backend ni sincronización remota. La exportación solo comparte datos cuando la persona pulsa Exportar.
+- En el menú se puede configurar opcionalmente un PIN de 4 a 8 dígitos o un patrón de al menos 4 puntos. Ábaco guarda una derivación PBKDF2 con sal aleatoria, no el PIN/patrón original, y solicita desbloqueo al volver a abrirse. Esta capa es una barrera de acceso local; no sustituye el cifrado del dispositivo ni protege frente a alguien con acceso técnico al almacenamiento de la app.
 
 ## Compilar
 
