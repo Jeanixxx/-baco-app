@@ -33,13 +33,14 @@ dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
 }
 
-// El HTML raíz es la única fuente de interfaz: Gradle lo copia al paquete Android.
-tasks.register<Copy>("copyAbacoHtml") {
-    from(rootProject.file("Abaco_Gestor_Finanzas.html"))
+// Fuentes web separadas: se copian juntas para mantener rutas relativas en WebView.
+tasks.register<Copy>("copyAbacoWebAssets") {
+    from(rootProject.file("index.html"))
+    from(rootProject.file("styles.css"))
+    from(rootProject.file("js")) { into("js") }
     into(layout.projectDirectory.dir("src/main/assets"))
-    rename { "index.html" }
 }
 
 tasks.named("preBuild") {
-    dependsOn("copyAbacoHtml")
+    dependsOn("copyAbacoWebAssets")
 }
