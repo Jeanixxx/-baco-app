@@ -332,16 +332,17 @@
 
     /* ---------- préstamos ---------- */
 
-    loan({ name, principal, annualRate = 0, term, type = 'personal', disburse = false, accountId } = {}) {
+    loan({ name, principal, annualRate = 0, term, type = 'personal', disburse = false, accountId, paymentCents } = {}) {
       const label = String(name || '').trim() || 'Préstamo';
       const p = toCents(principal);
       const n = Math.max(1, Math.floor(Number(term) || 0));
       const rate = Number(annualRate) || 0;
+      const scheduledC = paymentCents ? Math.round(paymentCents) : monthlyPaymentCents(p, rate, n);
       const id = this.uid();
       this._internal(id, label, 'loan');
       // Con disburse=false se registra una deuda ya existente (saldo inicial, como en la app actual).
       const counterpart = disburse ? this._liquidOrFirst(accountId).id : EXT.OPENING;
-      this.loans.set(id, { id, name: label, type, principalC: p, annualRate: rate, term: n, paymentC: monthlyPaymentCents(p, rate, n), paid: 0 });
+      this.loans.set(id, { id, name: label, type, principalC: p, annualRate: rate, term: n, paymentC: scheduledC, paid: 0 });
       this.post('prestamo', `Deuda: ${label}`, [
         { account: id, amount: -p },
         { account: counterpart, amount: p }
@@ -388,7 +389,7 @@
     }
 
     /* Compra a meses. Las cuotas ya pagadas antes (paidBefore) no generan movimientos. */
-    msiPurchase({ cardId, concept = 'Compra MSI', total, months, paidBefore = 0, purchaseDate } = {}) {
+    msiPurchase({ cardId, concept = 'Compra MSI', total, months, paidBefore = 0, paidNumbers = [], purchaseDate } = {}) {
       const card = this._card(cardId);
       const totalC = toCents(total);
       const n = Math.max(2, Math.floor(Number(months) || 0));
@@ -399,7 +400,8 @@
       const installments = amounts.map((amount, i) => {
         const due = new Date(base);
         due.setMonth(due.getMonth() + i + 1);
-        return { number: i + 1, amount, due: due.getTime(), paid: i < paid, entryId: null, paymentAccountId: null };
+        const isPaid = i < paid || paidNumbers.includes(i + 1);
+        return { number: i + 1, amount, due: due.getTime(), paid: isPaid, entryId: null, paymentAccountId: null };
       });
       const unpaidC = installments.filter((i) => !i.paid).reduce((s, i) => s + i.amount, 0);
       const id = this.uid();
@@ -524,6 +526,48 @@
       const check = ledger.verify();
       if (!check.ok) throw new CoreError('CORRUPT_DATA', 'Los datos no cuadran: ' + JSON.stringify(check.issues.slice(0, 3)));
       return ledger;
+    }
+
+    /* ---------- importación de saldos existentes (migración) ----------
+     * Registran el saldo actual como apertura, sin mover ninguna cuenta líquida. */
+
+    importReceivable({ person, concept = 'Préstamo', amount, date = '' } = {}) {
+      const c = toCents(amount);
+      const name = String(person || '').trim() || 'Sin nombre';
+      const id = this.uid();
+      this._internal(id, 'Por cobrar: ' + name, 'receivable');
+      this.post('saldo_inicial', 'Por cobrar (saldo inicial): ' + name, [
+        { account: id, amount: c },
+        { account: EXT.OPENING, amount: -c }
+      ], { debtorId: id });
+      this.debtors.set(id, { id, person: name, concept, amountC: c, settled: false, date });
+      return this.debtors.get(id);
+    }
+
+    importGoal({ name, type = 'open', targetAmount = 0, amount = 0 } = {}) {
+      const label = String(name || '').trim() || 'Ahorro';
+      const c = toCents(amount, { allowZero: true });
+      const id = this.uid();
+      this._internal(id, label, 'goal');
+      this.goals.set(id, { id, name: label, type, targetC: toCents(targetAmount, { allowZero: true }) });
+      if (c > 0) this.post('saldo_inicial', 'Ahorro (saldo inicial): ' + label, [
+        { account: id, amount: c },
+        { account: EXT.OPENING, amount: -c }
+      ], { goalId: id });
+      return this.goals.get(id);
+    }
+
+    importInvestment({ name, amount = 0, rate = 0, date = '', note = '' } = {}) {
+      const label = String(name || '').trim() || 'Inversión';
+      const c = toCents(amount, { allowZero: true });
+      const id = this.uid();
+      this._internal(id, label, 'investment');
+      this.investments.set(id, { id, name: label, rate: Number(rate) || 0, date, note });
+      if (c > 0) this.post('saldo_inicial', 'Inversión (saldo inicial): ' + label, [
+        { account: id, amount: c },
+        { account: EXT.OPENING, amount: -c }
+      ], { investmentId: id });
+      return this.investments.get(id);
     }
 
     /* ---------- internos ---------- */
