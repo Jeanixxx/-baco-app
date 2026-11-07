@@ -944,7 +944,7 @@ function renderPinned(){
     const meta=NAV_META[t]||{label:t};
     return `<button type="button" class="pinned-chip ${t===active?'active-pin':''}" data-go="${t}" title="${meta.label}" aria-label="${meta.label}"><span class="pin-ico">${navIconSvg(t)}</span><span class="pin-label">${meta.label}</span></button>`;
   }).join('');
-  bar.querySelectorAll('.pinned-chip').forEach(btn=>btn.onclick=()=>{closeMenu();goPanel(btn.dataset.go);});
+  
 }
 
 function setupMenuSwipe() {
@@ -1044,7 +1044,7 @@ function renderInicio() {
     const views = [{id:'todas',label:'Todas'},{id:'efectivo',label:'Efectivo'},{id:'débito',label:'Débito'},{id:'crédito',label:'Crédito'},{id:'liquidez',label:'Efectivo + Débito'}];
     const cur = state.accountView || 'todas';
     chips.innerHTML = views.map(v=>`<button type="button" class="chip ${cur===v.id?'active':''}" data-av="${v.id}">${v.label}</button>`).join('');
-    chips.querySelectorAll('[data-av]').forEach(ch=>ch.onclick=()=>{state.accountView=ch.dataset.av;LS_SET('account_view',state.accountView);save();renderInicio();});
+    
   }
   const incomesForBalance = state.incomes;
   const expBalance = state.expenses;
@@ -1451,7 +1451,7 @@ function renderCart() {
     <div class="item-amount neg">${money(c.price)}</div>
     <button class="btn btn-ghost btn-sm" type="button" data-cart-remove="${i}">✕</button></div>`).join('') : '<div class="empty"><p>Carrito vacío</p></div>';
   $('cartList').querySelectorAll('[data-cart-remove]').forEach(btn => {
-    btn.onclick = () => removeCart(Number(btn.dataset.cartRemove));
+    
   });
 }
 
@@ -1538,7 +1538,7 @@ function renderDebtors(){
   const items=(state.debtors||[]).filter(d=>!d.settled).sort((a,b)=>(b.created_at||0)-(a.created_at||0));
   if(!items.length){list.innerHTML='<div class="empty"><p>Nadie te debe por ahora</p></div>';return;}
   list.innerHTML=items.map(d=>`<div class="item" data-debt-id="${d.id}"><div class="item-icon inc">🤝</div><div class="item-body"><div class="item-title">${esc(d.person)}</div><div class="item-meta">${esc(d.concept||'Préstamo')}${d.date?' · '+d.date:''}</div></div><div class="item-amount pos">${money(d.amount)}</div><button type="button" class="btn btn-ghost btn-sm" data-debt-del="${d.id}">✕</button></div>`).join('');
-  list.querySelectorAll('[data-debt-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteDebtor(b.dataset.debtDel);});
+  
   list.querySelectorAll('.item').forEach(el=>{
     const d=(state.debtors||[]).find(x=>x.id===el.dataset.debtId); if(!d)return;
     el.onclick=e=>{ if(e.target.closest('[data-debt-del]'))return;
@@ -1551,7 +1551,7 @@ function renderInvestments(){
   const items=[...(state.investments||[])].sort((a,b)=>(b.created_at||0)-(a.created_at||0));
   if(!items.length){list.innerHTML='<div class="empty"><p>Sin inversiones aún</p></div>';return;}
   list.innerHTML=items.map(inv=>`<div class="item" data-inv-id="${inv.id}"><div class="item-icon inc">📈</div><div class="item-body"><div class="item-title">${esc(inv.name)}</div><div class="item-meta">${inv.rate?inv.rate+'% anual':'Sin tasa'}${inv.date?' · '+inv.date:''}</div></div><div class="item-amount pos">${money(inv.amount)}</div><button type="button" class="btn btn-ghost btn-sm" data-inv-del="${inv.id}">✕</button></div>`).join('');
-  list.querySelectorAll('[data-inv-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteInvestment(b.dataset.invDel);});
+  
   list.querySelectorAll('.item').forEach(el=>{
     const inv=(state.investments||[]).find(x=>x.id===el.dataset.invId); if(!inv)return;
     el.onclick=e=>{ if(e.target.closest('[data-inv-del]'))return;
@@ -1872,8 +1872,8 @@ function renderChecklist(){
   doneTitle.classList.toggle('hidden', done.length===0);
   doneEl.innerHTML = done.map(checklistItemHtml).join('');
   [pendEl, doneEl].forEach(el=>{
-    el.querySelectorAll('[data-lista-toggle]').forEach(b=>b.onclick=()=>toggleChecklistItem(b.dataset.listaToggle));
-    el.querySelectorAll('[data-lista-del]').forEach(b=>b.onclick=()=>deleteChecklistItem(b.dataset.listaDel));
+    
+    
   });
 }
 function startShopMode(){
@@ -1973,8 +1973,8 @@ function renderBudget(){
     const pct=b.amount?Math.min(100,Math.round(safeNum(b.spent)/b.amount*100)):0;
     return `<div class="budget-row"><div class="budget-row-top"><div class="item-title">${esc(b.concept)}<div class="budget-desc">${esc(b.description||'Sin descripción')}</div></div><div class="item-amount">${money(b.amount)}</div></div><div class="progress"><div style="width:${pct}%"></div></div><div class="module-kpis"><span>Gastado <b>${money(b.spent||0)}</b></span><span>Queda <b>${money(safeNum(b.amount)-safeNum(b.spent))}</b></span><button type="button" class="btn btn-ghost btn-sm" data-budget-spend="${b.id}">Actualizar</button><button type="button" class="btn btn-ghost btn-sm" data-budget-del="${b.id}">×</button></div></div>`;
   }).join(''):'<div class="empty"><p>Tu plan está vacío. Captura tu primer gasto planeado.</p></div>';
-  $('budgetList').querySelectorAll('[data-budget-spend]').forEach(b=>b.onclick=()=>adjustBudgetSpent(b.dataset.budgetSpend));
-  $('budgetList').querySelectorAll('[data-budget-del]').forEach(b=>b.onclick=()=>deleteBudget(b.dataset.budgetDel));
+  
+  
 }
 
 function renderCardSelect(){
@@ -1989,9 +1989,9 @@ function renderCards(){
     const plans=state.msiPlans.filter(p=>p.cardId===card.id);
     return `<div class="form-card" data-card-id="${card.id}"><div class="budget-row-top"><div><div class="item-title">💳 ${esc(card.name)}</div><div class="account-type">${esc(card.type)} · Límite ${money(card.limit||0)}</div></div><div class="account-balance">${money(card.balance||0)}</div></div><div class="row mt-6"><button type="button" class="btn btn-ghost btn-sm" data-card-edit="${card.id}">Editar</button><button type="button" class="btn btn-ghost btn-sm" data-card-del="${card.id}">Borrar</button></div>${plans.length?plans.map(p=>{const paid=p.installments.filter(i=>i.paid).length;return `<div class="module-note mt-6"><div class="budget-row-top"><b>${esc(p.concept)}</b><b>${money(p.monthly)}/mes</b></div><div class="module-kpis"><span>${paid}/${p.months} mensualidades pagadas</span><span>Total ${money(p.total)}</span></div>${p.installments.map((i,idx)=>`<div class="msi-row"><div class="item-body"><b>Mes ${i.number}</b><div class="item-meta">${formatDate(i.due)}</div></div><span class="status-pill ${i.paid?'paid':''}">${i.paid?'Pagada':'Pendiente'}</span><button class="btn btn-ghost btn-sm" type="button" data-msi-paid="${p.id}:${idx}">${i.paid?'Desmarcar':'Marcar pagada'}</button></div>`).join('')}</div>`;}).join(''):'<p class="note mt-6">Sin compras a MSI.</p>'}</div>`;
   }).join('');
-  list.querySelectorAll('[data-msi-paid]').forEach(btn=>{const [id,index]=btn.dataset.msiPaid.split(':');btn.onclick=()=>toggleMsiInstallment(id,Number(index));});
-  list.querySelectorAll('[data-card-edit]').forEach(btn=>btn.onclick=()=>editCard(btn.dataset.cardEdit));
-  list.querySelectorAll('[data-card-del]').forEach(btn=>btn.onclick=()=>deleteCard(btn.dataset.cardDel));
+  
+  
+  
 }
 
 
@@ -2003,7 +2003,7 @@ function loanPayment(principal,annualRate,months){
 function renderLoans(){
   const list=$('loanList');if(!list)return;
   list.innerHTML=state.loans.length?state.loans.map(l=>{const pct=Math.round(l.paid/l.term*100),remaining=Math.max(0,l.term-l.paid);return `<div class="form-card"><div class="budget-row-top"><div><div class="item-title">🏦 ${esc(l.name)}</div><div class="account-type">${esc(l.type)} · ${l.annualRate||0}% anual</div></div><div class="loan-payment">${money(l.payment)}/mes</div></div><div class="progress"><div style="width:${pct}%"></div></div><div class="module-kpis"><span>${l.paid}/${l.term} pagos</span><span>Restan ${remaining}</span><button type="button" class="btn btn-purple btn-sm" data-loan-pay="${l.id}" ${remaining?'':'disabled'}>${remaining?'Marcar pago':'Liquidado'}</button></div></div>`;}).join(''):'<div class="empty"><p>Sin préstamos por ahora. Cuando tengas uno, agrégalo aquí.</p></div>';
-  list.querySelectorAll('[data-loan-pay]').forEach(btn=>btn.onclick=()=>markLoanPayment(btn.dataset.loanPay));
+  
 }
 
 const SUB_RANGE_LABELS = {mensual:'Mensual', quincenal:'Quincenal', semanal:'Semanal'};
@@ -2174,8 +2174,8 @@ function renderKanban(){
   const groups={individual:$('kanbanIndividual')};
   Object.entries(groups).forEach(([scope,el])=>{if(!el)return;const items=state.kanban.filter(k=>k.scope===scope);el.innerHTML=['todo','doing','done'].map(col=>`<div class="kanban-col"><h4>${col==='todo'?'Por hacer':col==='doing'?'En curso':'Hecho'}</h4>${items.filter(k=>k.col===col).map(k=>`<div class="kanban-card" data-kid="${k.id}"><div class="kc-text">${esc(k.text)}</div><div class="kc-meta">${formatDate(k.created_at)}</div><div class="kanban-actions"><button type="button" class="edit" data-edit="${k.id}" aria-label="Editar"></button><button type="button" class="del" data-del="${k.id}" aria-label="Borrar"></button></div></div>`).join('')}</div>`).join('');
     el.querySelectorAll('.kanban-card').forEach(card=>card.addEventListener('click',e=>{if(e.target.closest('[data-edit],[data-del]'))return;const k=state.kanban.find(x=>x.id===card.dataset.kid);if(!k)return;k.col=k.col==='todo'?'doing':k.col==='doing'?'done':'todo';save();renderKanban();}));
-    el.querySelectorAll('[data-edit]').forEach(b=>b.onclick=e=>{e.stopPropagation();editKanban(b.dataset.edit);});
-    el.querySelectorAll('[data-del]').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteKanban(b.dataset.del);});
+    
+    
   });
 }
 function addKanban(){const text=($('kanbanText')?.value||'').trim();if(!text){toast('Escribe una tarea');return;}const item={id:uid(),text,scope:$('kanbanScope')?.value||'individual',col:$('kanbanCol')?.value||'todo',user_id:state.user_id,created_at:Date.now()};state.kanban.push(item);save();renderKanban();$('kanbanText').value='';toast('Tarea agregada');}
@@ -2254,7 +2254,7 @@ function renderAccounts(){
   }
   const list=$('accountList'); if(!list)return;
   list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="item" data-account-edit="${a.id}"><div class="item-icon shop">💼</div><div class="item-body"><div class="item-title">${esc(a.name)}</div><div class="account-type">${esc(a.type)}${isCreditAccount(a)?' · deuda':''}</div></div><div class="account-balance">${money(a.balance)}</div></div>`).join(''):'<div class="empty"><p>Agrega tu primera cuenta.</p></div>';
-  list.querySelectorAll('[data-account-edit]').forEach(el=>el.onclick=()=>editAccount(el.dataset.accountEdit));
+  
 }
 
 

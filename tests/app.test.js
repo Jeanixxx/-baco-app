@@ -294,3 +294,58 @@ test('formato de montos: separador de miles mexicano (12,345 y no 12.345)', asyn
   const s = await page.evaluate(() => money(12345));
   assert.equal(s, '$12,345');
 });
+
+/* ---------- delegación de eventos: los botones de las listas funcionan con clics reales ---------- */
+
+test('delegación: el botón de borrar un cobro en la lista funciona con un clic', async () => {
+  await open();
+  await register();
+  await setBalance('Efectivo', 1000);
+  await fields({ debtPerson: 'Ana', debtConcept: 'Comida', debtAmount: '300', debtDate: '2026-11-01' });
+  await act('addDebtor');
+  await page.evaluate(() => goPanel('deudores'));
+  await page.waitForTimeout(350);
+  await page.click('[data-debt-del]');
+  await page.waitForSelector('.abaco-dialog');
+  await page.click('.abaco-dialog-actions .btn-danger, .abaco-dialog-actions .btn-primary');
+  await page.waitForTimeout(150);
+  assert.equal(await page.evaluate(() => state.debtors.length), 0);
+  assert.equal(await balance('Efectivo'), 1000);
+});
+
+test('delegación: pagar una cuota MSI con un clic en la lista de tarjetas', async () => {
+  await open();
+  await register();
+  await setBalance('Efectivo', 5000);
+  await fields({ cardName: 'Oro', cardType: 'crédito', cardLimit: '20000' });
+  await act('addCard');
+  const cardId = await page.evaluate(() => state.cards[0].id);
+  await fields({ msiCardSelect: cardId, msiConcept: 'TV', msiTotal: '6000', msiMonths: '6', msiPaidBefore: '0', msiPurchaseDate: '2026-11-01' });
+  await act('addMsi');
+  await page.evaluate(() => goPanel('tarjetas'));
+  await page.waitForTimeout(350);
+  await page.click('[data-msi-paid]');
+  await page.waitForTimeout(150);
+  assert.equal(await page.evaluate(() => state.msiPlans[0].installments[0].paid), true);
+});
+
+test('delegación: los botones siguen funcionando después de repintar la lista', async () => {
+  await open();
+  await register();
+  await setBalance('Efectivo', 1000);
+  await fields({ debtPerson: 'Ana', debtConcept: 'A', debtAmount: '100', debtDate: '2026-11-01' });
+  await act('addDebtor');
+  await fields({ debtPerson: 'Luis', debtConcept: 'B', debtAmount: '50', debtDate: '2026-11-01' });
+  await act('addDebtor');
+  await page.evaluate(() => goPanel('deudores'));
+  await page.waitForTimeout(350);
+  // Repintar varias veces no debe duplicar ni perder el manejador.
+  await page.evaluate(() => { renderDebtors(); renderDebtors(); });
+  const buttons = await page.locator('[data-debt-del]').count();
+  assert.equal(buttons, 2);
+  await page.click('[data-debt-del]');
+  await page.waitForSelector('.abaco-dialog');
+  await page.click('.abaco-dialog-actions .btn-danger, .abaco-dialog-actions .btn-primary');
+  await page.waitForTimeout(150);
+  assert.equal(await page.evaluate(() => state.debtors.length), 1, 'un clic borra exactamente un registro');
+});
