@@ -1,3 +1,5 @@
+/* Nombres asignados más abajo en un IIFE; se declaran aquí para no crear globales implícitas. */
+var addDebtor, addIncome, addInvestment, addLoan, addMsi, addSaving, contributeSaving, markLoanPayment, settleDebtor, transferFunds;
 /* ===== Safe areas (APK / WebView) =====
    En muchos Android env(safe-area-inset-*) = 0.
    Forzamos mínimos y afinamos con JS. */
@@ -601,20 +603,6 @@ function resetSwipeCard() {
   updateSwipePreview();
   requestAnimationFrame(()=>{ card.style.transition='transform .15s, opacity .15s'; });
 }
-function registerHormiga() {
-  const amount=parseInt($('hormAmount').value,10);
-  if(!amount||amount<=0){ toast('Indica un monto'); resetSwipeCard(); return; }
-  const desc=$('hormDesc').value.trim()||'Gasto rápido';
-  const selected=$('hormFromAccount')?.value||'';
-  const acc=applyExpenseFromAccount(selected, amount);
-  const fromAcc=acc?.id||selected||null;
-  const item={id:uid(),description:desc,amount,category:state.hormCat,shared:false,hormiga:true,user_id:state.user_id,created_at:Date.now(),accountId:fromAcc};
-  state.expenses.push(item);
-  try{ pushHistorial({type:'gasto',description:desc,amount,direction:'out',source:'hormiga',refId:item.id,accountId:fromAcc}); }catch(e){}
-  $('hormAmount').value=''; $('hormDesc').value='';
-  updateUI(); toast('✓ Guardado $'+amount);
-  $('hormAmount').focus();
-}
 $('btnSwipeOk').onclick = () => commitSwipe(true);
 $('btnSwipeNo').onclick = () => commitSwipe(false);
 
@@ -881,45 +869,6 @@ function renderUpcoming(){
   }
 }
 
-function openMenu() {
-  try { closeCalc(); } catch (e) {}
-  const menu = $('menuPage');
-  const ov = $('menuOverlay');
-  if (menu) {
-    menu.style.top = '';
-    menu.style.height = '';
-    menu.style.bottom = '';
-    menu.style.transition = '';
-    menu.style.transform = '';
-    requestAnimationFrame(() => menu.classList.add('open'));
-  }
-  if (ov) {
-    ov.style.transition = '';
-    ov.style.opacity = '';
-    ov.classList.add('open');
-  }
-  try { renderMenu(); } catch (e) {}
-  document.querySelector('.app')?.classList.add('menu-open');
-}
-function closeMenu() {
-  const menu = $('menuPage');
-  const ov = $('menuOverlay');
-  if (menu) {
-    menu.style.top = '';
-    menu.style.height = '';
-    menu.style.bottom = '';
-    menu.style.transition = '';
-    menu.style.transform = '';
-    menu.classList.remove('open');
-  }
-  if (ov) {
-    ov.style.transition = '';
-    ov.style.opacity = '';
-    ov.style.pointerEvents = '';
-    ov.classList.remove('open');
-  }
-  document.querySelector('.app')?.classList.remove('menu-open');
-}
 
 /* Navegación Android: el botón del sistema controla la app, no el historial web. */
 let lastAndroidBack = 0;
@@ -1654,16 +1603,6 @@ function applyExpenseFromAccount(accountId, amount){
   else acc.balance=safeNum(acc.balance)-amount;
   return acc;
 }
-function walletLiquidity(){
-  return (state.accounts||[]).filter(a=>['efectivo','débito','debito'].includes((a.type||'').toLowerCase())).reduce((s,a)=>s+safeNum(a.balance),0);
-}
-function walletDebt(){
-  const credit=(state.accounts||[]).filter(a=>['crédito','credito'].includes((a.type||'').toLowerCase())).reduce((s,a)=>s+Math.max(0,safeNum(a.balance)),0);
-  const loans=(state.loans||[]).reduce((s,l)=>s+Math.max(0,safeNum(l.current)),0);
-  const msi=(state.msiPlans||[]).reduce((s,p)=>s+(p.installments||[]).filter(i=>!i.paid).reduce((x,i)=>x+safeNum(i.amount),0),0);
-  return credit+loans+msi;
-}
-function walletNet(){ return walletLiquidity()-walletDebt(); }
 let calcValue='0', calcPrev=null, calcOp=null, calcFresh=true, calcExpressionText='';
 function openCalc(){ $('calcPage')?.classList.add('open'); $('calcOverlay')?.classList.add('open'); document.querySelector('.app')?.classList.add('calc-open'); }
 function closeCalc(){ $('calcPage')?.classList.remove('open'); $('calcOverlay')?.classList.remove('open'); document.querySelector('.app')?.classList.remove('calc-open'); }
@@ -1710,18 +1649,6 @@ function setupCalculator(){
   if($('calcOverlay')) $('calcOverlay').onclick=closeCalc;
   // Apertura solo por botón (header), sin gesto de borde
 }
-function addDebtor(){
-  if(!ensureUser()) return;
-  const person=($('debtPerson')?.value||'').trim(); const amount=safeNum($('debtAmount')?.value);
-  if(!person){toast('Escribe el nombre');return;} if(amount<=0){toast('Indica un monto');return;}
-  const item={id:uid(),person,concept:($('debtConcept')?.value||'').trim(),amount,date:$('debtDate')?.value||'',settled:false,user_id:state.user_id,created_at:Date.now()};
-  state.debtors=state.debtors||[]; state.debtors.push(item); 
-  pushHistorial({type:'deudor',description:'Me debe: '+person,amount,direction:'memo',source:'deudores',refId:item.id});
-  save(); renderDebtors(); closeOpForm('debtFormPanel');
-  ['debtPerson','debtConcept','debtAmount','debtDate'].forEach(id=>{if($(id))$(id).value='';}); toast('Registrado');
-}
-function settleDebtor(id){ const d=(state.debtors||[]).find(x=>x.id===id); if(!d)return; d.settled=true;  save(); renderDebtors(); closeDetail(); toast('Marcado como cobrado'); }
-function deleteDebtor(id){ if(!confirm('¿Borrar este registro?'))return; state.debtors=(state.debtors||[]).filter(x=>x.id!==id);  save(); renderDebtors(); closeDetail(); toast('Borrado'); }
 function renderDebtors(){
   const list=$('debtorsList'); if(!list)return;
   const items=(state.debtors||[]).filter(d=>!d.settled).sort((a,b)=>(b.created_at||0)-(a.created_at||0));
@@ -1735,19 +1662,6 @@ function renderDebtors(){
         {label:'✓ Ya me pagó',onClick:()=>settleDebtor(d.id)},{label:'🗑️ Borrar',danger:true,onClick:()=>deleteDebtor(d.id)}]); };
   });
 }
-function addInvestment(){
-  if(!ensureUser())return;
-  const name=($('invName')?.value||'').trim(); const amount=safeNum($('invAmount')?.value);
-  if(!name){toast('Escribe un nombre');return;} if(amount<=0){toast('Indica un monto');return;}
-  const item={id:uid(),name,amount,rate:safeNum($('invRate')?.value),date:$('invDate')?.value||'',note:($('invNote')?.value||'').trim(),user_id:state.user_id,created_at:Date.now()};
-  state.investments=state.investments||[]; state.investments.push(item); 
-  pushHistorial({type:'inversion',description:'Inversión: '+name,amount,direction:'out',source:'inversiones',refId:item.id});
-  const cash=(state.accounts||[]).find(a=>(a.type||'').toLowerCase()==='efectivo');
-  if(cash) applyExpenseFromAccount(cash.id, amount);
-  save(); renderInvestments(); closeOpForm('invFormPanel');
-  ['invName','invAmount','invRate','invDate','invNote'].forEach(id=>{if($(id))$(id).value='';}); toast('Inversión guardada');
-}
-function deleteInvestment(id){ if(!confirm('¿Borrar esta inversión?'))return; state.investments=(state.investments||[]).filter(x=>x.id!==id);  save(); renderInvestments(); closeDetail(); toast('Borrada'); }
 function renderInvestments(){
   const list=$('investList'); if(!list)return;
   const items=[...(state.investments||[])].sort((a,b)=>(b.created_at||0)-(a.created_at||0));
@@ -2104,17 +2018,6 @@ function confirmShop(){
   state.shopMode=null; state.cart=[]; save(); updateUI(); showConfetti(); toast('Compra registrada: '+money(total));
 }
 
-function addIncome(){
-  if(!ensureUser())return;
-  const desc=($('incDesc')?.value||'').trim(), amount=safeNum($('incAmount')?.value);
-  if(!desc){toast('Escribe el concepto');return;} if(amount<=0){toast('Indica un monto válido');return;}
-  const dest=$('incDestAccount')?.value||'__efectivo__';
-  const item={id:uid(),description:desc,amount,type:$('incType')?.value||'otro',note:($('incNote')?.value||'').trim(),shared:false,user_id:state.user_id,created_at:Date.now()};
-  state.incomes.push(item); 
-  try{ const acc=applyIncomeToAccount(dest, amount); pushHistorial({type:'ingreso',description:desc,amount,direction:'in',source:'ingresos',refId:item.id,accountId:acc&&acc.id}); }catch(e){}
-  save(); updateUI();
-  ['incDesc','incAmount','incNote'].forEach(id=>{if($(id))$(id).value='';}); try{closeOpForm('incFormPanel');}catch(e){} toast('Ingreso guardado');
-}
 function savingsYieldEstimate(s){
   const rate=safeNum(s.annualRate);
   if(rate<=0||safeNum(s.current)<=0)return 0;
@@ -2156,14 +2059,7 @@ function renderSavings(){
   renderSaveSelect();
 }
 function renderSaveSelect(){ const sel=$('saveSelect'); if(!sel)return; sel.innerHTML=(state.savings||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''); }
-function addSaving(){
-  const name=($('saveName')?.value||'').trim(), type=state.saveType||'target', target=safeNum($('saveTarget')?.value), current=safeNum($('saveCurrent')?.value);
-  if(!name){toast('Escribe un nombre');return;} if(type==='target'&&target<=0){toast('Indica una meta');return;} if(current<0){toast('Actual inválido');return;}
-  const item={id:uid(),name,type,target: type==='target'?target:0,current,annualRate:safeNum($('saveRate')?.value),note:($('saveNote')?.value||'').trim(),user_id:state.user_id,created_at:Date.now()}; state.savings.push(item);  save(); renderSavings(); ['saveName','saveTarget','saveRate','saveNote'].forEach(id=>{if($(id))$(id).value='';}); if($('saveCurrent'))$('saveCurrent').value='0'; toast('Ahorro creado');
-}
-function contributeSaving(){ const id=$('saveSelect')?.value, amount=safeNum($('saveAdd')?.value); const s=state.savings.find(x=>x.id===id); if(!s){toast('Crea un ahorro primero');return;} if(amount<=0){toast('Indica un aporte');return;} s.current=safeNum(s.current)+amount;  save(); renderSavings(); $('saveAdd').value=''; $('saveAddNote').value=''; toast('Aporte registrado'); if(s.type==='target'&&s.current>=s.target)showConfetti(); }
 function deleteSaving(id){if(!confirm('¿Borrar este ahorro?'))return;state.savings=state.savings.filter(x=>x.id!==id);save();closeDetail();renderSavings();toast('Ahorro borrado');}
-function applySavingYield(id){const s=state.savings.find(x=>x.id===id);if(!s)return;const gain=savingsYieldEstimate(s);if(gain<=0){toast('Aún no hay rendimiento para aplicar');return;}s.current=safeNum(s.current)+gain;s.lastYieldAt=Date.now();save();closeDetail();renderSavings();toast('Rendimiento aplicado: '+money(gain));}
 function toggleSaveMenu(){ $('saveMenuPanel')?.classList.toggle('hidden'); renderSaveSelect(); }
 function switchSaveTab(tab){ const isNew=tab==='new'; $('saveTabNew')?.classList.toggle('active',isNew); $('saveTabAdd')?.classList.toggle('active',!isNew); $('saveFormNew')?.classList.toggle('hidden',!isNew); $('saveFormAdd')?.classList.toggle('hidden',isNew); }
 
@@ -2243,30 +2139,9 @@ function renderBudget(){
   $('budgetList').querySelectorAll('[data-budget-del]').forEach(b=>b.onclick=()=>deleteBudget(b.dataset.budgetDel));
 }
 
-function addCard(){
-  const name=($('cardName')?.value||'').trim(), limit=safeNum($('cardLimit')?.value);
-  if(!name){toast('Escribe el nombre de la cuenta');return;}
-  const walletId=uid();const card={id:uid(),name,type:$('cardType')?.value||'crédito',limit,balance:0,wallet_id:walletId,user_id:state.user_id,created_at:Date.now()};
-  state.cards.push(card);save();renderCards();$('cardName').value='';$('cardLimit').value='';closeOpForm('cardFormPanel');toast('Cuenta agregada');
-}
 function renderCardSelect(){
   const select=$('msiCardSelect'); if(!select)return;
   select.innerHTML=state.cards.length?state.cards.map(c=>`<option value="${c.id}">${esc(c.name)} · ${esc(c.type)}</option>`).join(''):'<option value="">Primero agrega una tarjeta</option>';
-}
-function addMsi(){
-  const cardId=$('msiCardSelect')?.value, concept=($('msiConcept')?.value||'').trim(), total=safeNum($('msiTotal')?.value), months=Math.floor(safeNum($('msiMonths')?.value)), paidBefore=Math.min(months,Math.max(0,Math.floor(safeNum($('msiPaidBefore')?.value))));
-  if(!cardId){toast('Agrega una tarjeta primero');return;} if(!concept){toast('Escribe el concepto');return;} if(total<=0||months<2){toast('Indica total y mínimo 2 meses');return;}
-  const monthly=total/months;
-  const purchaseRaw=$('msiPurchaseDate')?.value||todayInputValue();
-  const purchaseDate=new Date(purchaseRaw+'T12:00:00');
-  if(Number.isNaN(purchaseDate.getTime())){toast('Fecha de compra inválida');return;}
-  const installments=Array.from({length:months},(_,i)=>{const due=new Date(purchaseDate);due.setMonth(due.getMonth()+i+1);return {number:i+1,amount:monthly,due:due.getTime(),paid:i<paidBefore};});
-  const plan={id:uid(),cardId,concept,total,months,monthly,installments,purchase_date:purchaseDate.getTime(),created_at:purchaseDate.getTime(),user_id:state.user_id};
-  state.msiPlans.push(plan);const card=state.cards.find(c=>c.id===cardId);if(card){card.balance=safeNum(card.balance)+total;}save();renderCards();['msiConcept','msiTotal','msiMonths','msiPaidBefore'].forEach(id=>{if($(id))$(id).value='';});if($('msiPurchaseDate'))$('msiPurchaseDate').value=todayInputValue();toast('Plan MSI creado');
-}
-function toggleMsiInstallment(planId,index){
-  const plan=state.msiPlans.find(p=>p.id===planId); if(!plan||!plan.installments[index])return;
-  const wasPaid=plan.installments[index].paid;plan.installments[index].paid=!wasPaid;const card=state.cards.find(c=>c.id===plan.cardId);if(card){card.balance=Math.max(0,safeNum(card.balance)+(wasPaid?plan.installments[index].amount:-plan.installments[index].amount));}save();renderCards();
 }
 function renderCards(){
   renderCardSelect();
@@ -2281,41 +2156,13 @@ function renderCards(){
   list.querySelectorAll('[data-card-del]').forEach(btn=>btn.onclick=()=>deleteCard(btn.dataset.cardDel));
 }
 function editCard(id){const c=state.cards.find(x=>x.id===id);if(!c)return;const name=prompt('Nombre de la tarjeta',c.name);if(name===null)return;const limit=prompt('Límite',String(c.limit||0));if(limit===null)return;c.name=name.trim()||c.name;c.limit=Math.max(0,safeNum(limit));save();renderCards();renderInicio();toast('Tarjeta actualizada');}
-function deleteCard(id){const c=state.cards.find(x=>x.id===id);if(!c)return;if(!confirm('¿Borrar esta tarjeta? Sus compras a MSI se conservarán.'))return;state.cards=state.cards.filter(x=>x.id!==id);save();renderCards();renderInicio();toast('Tarjeta borrada');}
 
 
-function addAccount(){
-  const name=($('accountName')?.value||'').trim(), balance=safeNum($('accountBalance')?.value);
-  if(!name){toast('Escribe el nombre de la cuenta');return;}
-  const walletId=uid();const account={id:walletId,name,type:$('accountType')?.value||'débito',balance,user_id:state.user_id,created_at:Date.now(),wallet_id:walletId};
-  state.accounts.push(account);save();renderAccounts();$('accountName').value='';$('accountBalance').value='';closeOpForm('accountFormPanel');toast('Cuenta agregada');
-}
-function renderAccounts(){
-  const options=state.accounts.length?state.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join(''):'<option value="">Sin cuentas</option>';
-  ['transferFrom','transferTo'].forEach(id=>{if($(id))$(id).innerHTML=options;});
-  const list=$('accountList'); if(!list)return;
-  list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="item" data-account-edit="${a.id}"><div class="item-icon shop">💼</div><div class="item-body"><div class="item-title">${esc(a.name)}</div><div class="account-type">${esc(a.type)}</div></div><div class="account-balance">${money(a.balance)}</div></div>`).join(''):'<div class="empty"><p>Agrega tu primera cuenta.</p></div>';list.querySelectorAll('[data-account-edit]').forEach(el=>el.onclick=()=>editAccount(el.dataset.accountEdit));
-}
 function editAccount(id){const a=state.accounts.find(x=>x.id===id);if(!a)return;const name=prompt('Nombre de la cuenta',a.name);if(name===null)return;const balance=prompt('Saldo actual',String(a.balance||0));if(balance===null)return;a.name=name.trim()||a.name;a.balance=safeNum(balance);save();renderAccounts();renderInicio();toast('Cuenta actualizada');}
-function transferFunds(){
-  const from=state.accounts.find(a=>a.id===$('transferFrom')?.value), to=state.accounts.find(a=>a.id===$('transferTo')?.value), amount=safeNum($('transferAmount')?.value);
-  if(!from||!to||from.id===to.id){toast('Elige dos cuentas distintas');return;} if(amount<=0){toast('Indica un monto válido');return;} if(from.balance<amount){toast('El saldo de origen no alcanza');return;}
-  from.balance-=amount;to.balance+=amount;const transfer={id:uid(),from:from.id,to:to.id,amount,created_at:Date.now(),user_id:state.user_id};state.transfers.push(transfer);save();renderAccounts();$('transferAmount').value='';toast('Transferencia realizada');
-}
 
 function loanPayment(principal,annualRate,months){
   const rate=safeNum(annualRate)/100/12;
   return rate?principal*rate/(1-Math.pow(1+rate,-months)):principal/months;
-}
-function addLoan(){
-  const name=($('loanName')?.value||'').trim(), principal=safeNum($('loanPrincipal')?.value), annualRate=safeNum($('loanRate')?.value), term=Math.floor(safeNum($('loanTerm')?.value));
-  if(!name||principal<=0||term<1){toast('Completa concepto, monto y plazo');return;}
-  const loan={id:uid(),name,type:$('loanType')?.value||'personal',principal,annualRate,term,payment:loanPayment(principal,annualRate,term),paid:0,created_at:Date.now(),user_id:state.user_id};
-  state.loans.push(loan);save();renderLoans();['loanName','loanPrincipal','loanRate','loanTerm'].forEach(id=>{if($(id))$(id).value='';});closeOpForm('loanFormPanel');toast('Préstamo guardado');
-}
-function markLoanPayment(id){
-  const loan=state.loans.find(l=>l.id===id);if(!loan||loan.paid>=loan.term)return;
-  loan.paid+=1;save();renderLoans();toast('Pago marcado sin duplicar el gasto');
 }
 function renderLoans(){
   const list=$('loanList');if(!list)return;
@@ -2492,7 +2339,6 @@ function deleteReminder(id){if(!confirm('¿Borrar recordatorio?'))return;const r
 
 
 
-function renderHistorial(){const el=$('historialList');if(!el)return;const h=[...state.historial].sort((a,b)=>(b.created_at||0)-(a.created_at||0));if(!h.length){el.innerHTML='<div class="empty"><p>Sin historial</p></div>';return;}el.innerHTML=h.map(x=>`<div class="item" data-hid="${esc(x.id)}"><div class="item-icon shop">🛒</div><div class="item-body"><div class="item-title">${esc(x.description||'Compra')}</div><div class="item-meta">${esc(whoLabel(x.user_id))} · ${formatDate(x.created_at)}</div></div><div class="item-amount neg">-${money(x.amount)}</div></div>`).join('');el.querySelectorAll('.item').forEach(e=>e.onclick=()=>{const h=state.historial.find(x=>x.id===e.dataset.hid);if(h)showDetail('Compra',[{lbl:'Descripción',val:h.description||''},{lbl:'Monto',val:money(h.amount)},{lbl:'Fecha',val:formatDate(h.created_at)}],[{label:'🗑️ Borrar',danger:true,onClick:()=>deleteHistorialItem(h.id)}]);});}
 function renderCategories(){const el=$('catList');if(!el)return;el.innerHTML=state.categories.map(c=>`<div class="item" data-cid="${esc(c.id)}"><div class="item-icon shop">${esc(c.icon)}</div><div class="item-body"><div class="item-title">${esc(c.name)}</div><div class="item-meta">Categoría</div></div>${DEFAULT_CATS.some(d=>d.id===c.id)?'':'<button type="button" class="btn btn-ghost btn-sm" data-cat-del="'+esc(c.id)+'">✕</button>'}</div>`).join('');el.querySelectorAll('[data-cat-del]').forEach(b=>b.onclick=()=>deleteCategory(b.dataset.catDel));}
 function addCategory(){const name=($('catName')?.value||'').trim(),icon=($('catIcon')?.value||'📦').trim();if(!name){toast('Escribe el nombre');return;}const id=name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||uid();if(state.categories.some(c=>c.id===id)){toast('Esa categoría ya existe');return;}const c={id,name,icon};state.categories.push(c);save();renderCategories();renderHormiga();renderInicio();$('catName').value='';$('catIcon').value='📦';toast('Categoría creada');}
 function deleteCategory(id){if(DEFAULT_CATS.some(c=>c.id===id)){toast('Las categorías base no se pueden borrar');return;}if(!confirm('¿Borrar categoría? Se conserva en el historial.'))return;state.categories=state.categories.filter(c=>c.id!==id);if(state.hormCat===id)state.hormCat='general';save();renderCategories();renderHormiga();renderInicio();toast('Categoría borrada');}
@@ -2728,16 +2574,6 @@ function addAccount(){
   ensureFinancialCore(); state.accounts.push({id:uid(),name,type,balance,user_id:state.user_id,created_at:Date.now(),wallet_id:uid()});
   save();renderAccounts();renderInicio();$('accountName').value='';$('accountBalance').value='';closeOpForm('accountFormPanel');toast('Cuenta agregada');
 }
-function transferFunds(){
-  ensureFinancialCore(); const from=coreAccount($('transferFrom')?.value),to=coreAccount($('transferTo')?.value),amount=safeNum($('transferAmount')?.value);
-  if(!from||!to||from.id===to.id){toast('Elige dos cuentas distintas');return;} if(amount<=0){toast('Indica un monto válido');return;}
-  if(!isLiquidAccount(from)||!isLiquidAccount(to)){toast('Las transferencias usan cuentas de dinero disponible');return;}
-  if(safeNum(from.balance)<amount){toast('El saldo de origen no alcanza');return;}
-  from.balance-=amount;to.balance+=amount;
-  state.transfers.push({id:uid(),from:from.id,to:to.id,amount,created_at:Date.now(),user_id:state.user_id});
-  pushHistorial({type:'transferencia',description:`Transferencia: ${from.name} → ${to.name}`,amount,direction:'transfer',source:'cuentas',accountId:to.id,refId:state.transfers[state.transfers.length-1].id});
-  save();renderAccounts();renderInicio();renderHistorial();$('transferAmount').value='';toast('Transferencia realizada');
-}
 
 function registerHormiga(){
   const amount=safeNum($('hormAmount')?.value); if(amount<=0){toast('Indica un monto');resetSwipeCard();return;}
@@ -2758,33 +2594,12 @@ window.deleteIncome=id=>{
   state.historial=(state.historial||[]).filter(h=>!(h.refId===id));state.transactions=(state.transactions||[]).filter(t=>t.refId!==id);save();closeDetail();updateUI();toast('Ingreso borrado y saldo corregido');
 };
 
-function addIncome(){
-  if(!ensureUser())return; const desc=($('incDesc')?.value||'').trim(),amount=safeNum($('incAmount')?.value);
-  if(!desc){toast('Escribe el concepto');return;}if(amount<=0){toast('Indica un monto válido');return;}
-  ensureFinancialCore(); const dest=$('incDestAccount')?.value||coreFirstLiquid()?.id,acc=coreIncomeToAccount(dest,amount);
-  if(!acc){toast('Agrega una cuenta primero');return;}
-  const item={id:uid(),description:desc,amount,type:$('incType')?.value||'otro',note:($('incNote')?.value||'').trim(),shared:false,user_id:state.user_id,created_at:Date.now(),accountId:acc.id};
-  state.incomes.push(item);pushHistorial({type:'ingreso',description:desc,amount,direction:'in',source:'ingresos',refId:item.id,accountId:acc.id});
-  save();updateUI();['incDesc','incAmount','incNote'].forEach(id=>{if($(id))$(id).value='';});closeOpForm('incFormPanel');toast('Ingreso guardado');
-}
 
 function addCard(){
   const name=($('cardName')?.value||'').trim(),limit=safeNum($('cardLimit')?.value),type=$('cardType')?.value||'crédito';
   if(!name){toast('Escribe el nombre de la cuenta');return;}if(limit<0){toast('Límite inválido');return;}
   ensureFinancialCore(); const card={id:uid(),name,type,limit,balance:0,wallet_id:null,user_id:state.user_id,created_at:Date.now()};state.cards.push(card);coreAccountForCard(card);
   save();renderCards();renderAccounts();renderInicio();$('cardName').value='';$('cardLimit').value='';closeOpForm('cardFormPanel');toast('Cuenta agregada y conectada');
-}
-function addMsi(){
-  ensureFinancialCore(); const cardId=$('msiCardSelect')?.value,concept=($('msiConcept')?.value||'').trim(),total=safeNum($('msiTotal')?.value),months=Math.floor(safeNum($('msiMonths')?.value)),paidBefore=Math.min(months,Math.max(0,Math.floor(safeNum($('msiPaidBefore')?.value))));
-  if(!cardId){toast('Agrega una tarjeta primero');return;}if(!concept){toast('Escribe el concepto');return;}if(total<=0||months<2){toast('Indica total y mínimo 2 meses');return;}
-  const card=state.cards.find(c=>c.id===cardId);if(!card){toast('Tarjeta no encontrada');return;}if(financialType(card.type)!=='credito'){toast('Los MSI solo se pueden registrar en una tarjeta de crédito');return;}const acc=coreCreditAccountForCard(card);if(!acc){toast('No se pudo conectar la tarjeta');return;}
-  const monthly=total/months,purchaseRaw=$('msiPurchaseDate')?.value||todayInputValue(),purchaseDate=new Date(purchaseRaw+'T12:00:00');
-  if(Number.isNaN(purchaseDate.getTime())){toast('Fecha de compra inválida');return;}
-  const installments=Array.from({length:months},(_,i)=>{const due=new Date(purchaseDate);due.setMonth(due.getMonth()+i+1);return {number:i+1,amount:monthly,due:due.getTime(),paid:i<paidBefore};});
-  const plan={id:uid(),cardId,concept,total,months,monthly,installments,purchase_date:purchaseDate.getTime(),created_at:purchaseDate.getTime(),user_id:state.user_id};state.msiPlans.push(plan);
-  const unpaid=installments.filter(i=>!i.paid).reduce((s,i)=>s+safeNum(i.amount),0);coreChangeAccount(acc.id,unpaid);syncCardDebt(card);
-  pushHistorial({type:'msi',description:'MSI: '+concept,amount:total,direction:'memo',source:'tarjetas',refId:plan.id,accountId:acc.id});
-  save();renderCards();renderAccounts();renderInicio();['msiConcept','msiTotal','msiMonths','msiPaidBefore'].forEach(id=>{if($(id))$(id).value='';});if($('msiPurchaseDate'))$('msiPurchaseDate').value=todayInputValue();toast('Plan MSI conectado a tu crédito');
 }
 function toggleMsiInstallment(planId,index){
   ensureFinancialCore();const plan=state.msiPlans.find(p=>p.id===planId),inst=plan?.installments?.[index];if(!plan||!inst)return;const card=state.cards.find(c=>c.id===plan.cardId),credit=coreCreditAccountForCard(card);if(!credit)return;
@@ -2800,47 +2615,11 @@ function deleteCard(id){
   save();renderCards();renderAccounts();renderInicio();closeDetail();toast('Tarjeta eliminada');
 }
 
-function addDebtor(){
-  if(!ensureUser())return;const person=($('debtPerson')?.value||'').trim(),amount=safeNum($('debtAmount')?.value);if(!person){toast('Escribe el nombre');return;}if(amount<=0){toast('Indica un monto');return;}
-  const source=coreFirstLiquid();if(!source){toast('Agrega una cuenta primero');return;}if(safeNum(source.balance)<amount){toast('El saldo disponible no alcanza');return;}
-  source.balance-=amount;const item={id:uid(),person,concept:($('debtConcept')?.value||'').trim(),amount,remaining:amount,date:$('debtDate')?.value||'',settled:false,accountId:source.id,user_id:state.user_id,created_at:Date.now()};state.debtors.push(item);
-  pushHistorial({type:'deudor',description:'Prestado a: '+person,amount,direction:'memo',source:'deudores',refId:item.id,accountId:source.id});save();renderDebtors();renderAccounts();renderInicio();closeOpForm('debtFormPanel');['debtPerson','debtConcept','debtAmount','debtDate'].forEach(id=>{if($(id))$(id).value='';});toast('Préstamo registrado');
-}
-function settleDebtor(id){
-  const d=state.debtors.find(x=>x.id===id);if(!d||d.settled)return;const amount=safeNum(d.remaining??d.amount);if(amount<=0){d.settled=true;save();renderDebtors();return;}
-  const target=coreFirstLiquid();if(!target){toast('Agrega una cuenta para recibir el pago');return;}target.balance+=amount;d.remaining=0;d.settled=true;d.settled_at=Date.now();pushHistorial({type:'cobro_deudor',description:'Cobro: '+d.person,amount,direction:'in',source:'deudores',refId:d.id,accountId:target.id});save();renderDebtors();renderAccounts();renderInicio();closeDetail();renderHistorial();toast('Pago recibido');
-}
 function deleteDebtor(id){if(!confirm('¿Borrar este registro?'))return;const d=state.debtors.find(x=>x.id===id);if(d&&!d.settled&&d.accountId){coreChangeAccount(d.accountId,safeNum(d.remaining??d.amount));}state.debtors=state.debtors.filter(x=>x.id!==id);save();renderDebtors();renderAccounts();renderInicio();closeDetail();toast('Registro borrado');}
 
-function addInvestment(){
-  if(!ensureUser())return;const name=($('invName')?.value||'').trim(),amount=safeNum($('invAmount')?.value);if(!name){toast('Escribe un nombre');return;}if(amount<=0){toast('Indica un monto');return;}
-  const source=coreFirstLiquid();if(!source||safeNum(source.balance)<amount){toast('El saldo disponible no alcanza');return;}source.balance-=amount;
-  const item={id:uid(),name,amount,current:amount,rate:safeNum($('invRate')?.value),date:($('invDate')?.value||''),note:($('invNote')?.value||'').trim(),accountId:source.id,user_id:state.user_id,created_at:Date.now()};state.investments.push(item);pushHistorial({type:'inversion',description:'Inversión: '+name,amount,direction:'out',source:'inversiones',refId:item.id,accountId:source.id});save();renderInvestments();renderAccounts();renderInicio();closeOpForm('invFormPanel');['invName','invAmount','invRate','invDate','invNote'].forEach(id=>{if($(id))$(id).value='';});toast('Inversión conectada a tu dinero');
-}
 function deleteInvestment(id){if(!confirm('¿Borrar esta inversión?'))return;const inv=state.investments.find(x=>x.id===id);if(inv&&inv.accountId)coreChangeAccount(inv.accountId,safeNum(inv.current??inv.amount));state.investments=state.investments.filter(x=>x.id!==id);save();renderInvestments();renderAccounts();renderInicio();closeDetail();toast('Inversión borrada y dinero devuelto');}
 function applySavingYield(id){const s=state.savings.find(x=>x.id===id);if(!s)return;const gain=savingsYieldEstimate(s);if(gain<=0){toast('Aún no hay rendimiento para aplicar');return;}s.current=safeNum(s.current)+gain;s.lastYieldAt=Date.now();save();closeDetail();renderSavings();renderInicio();toast('Rendimiento aplicado: '+money(gain));}
-function contributeSaving(){
-  const id=$('saveSelect')?.value,amount=safeNum($('saveAdd')?.value),s=state.savings.find(x=>x.id===id);if(!s){toast('Crea un ahorro primero');return;}if(amount<=0){toast('Indica un aporte');return;}
-  const source=coreFirstLiquid();if(!source||safeNum(source.balance)<amount){toast('El saldo disponible no alcanza');return;}source.balance-=amount;s.current=safeNum(s.current)+amount;s.lastContributionAt=Date.now();pushHistorial({type:'ahorro',description:'Aporte a: '+s.name,amount,direction:'transfer',source:'ahorros',refId:s.id,accountId:source.id});save();renderSavings();renderAccounts();renderInicio();$('saveAdd').value='';if($('saveAddNote'))$('saveAddNote').value='';toast('Aporte registrado');if(s.type==='target'&&s.current>=s.target)showConfetti();
-}
-function addSaving(){
-  const name=($('saveName')?.value||'').trim(),type=state.saveType||'target',target=safeNum($('saveTarget')?.value),current=safeNum($('saveCurrent')?.value);if(!name){toast('Escribe un nombre');return;}if(type==='target'&&target<=0){toast('Indica una meta');return;}if(current<0){toast('Actual inválido');return;}
-  let openingAccount=null;if(current>0){openingAccount=coreFirstLiquid();if(!openingAccount||safeNum(openingAccount.balance)<current){toast('El saldo disponible no alcanza para ese ahorro inicial');return;}openingAccount.balance-=current;}
-  const item={id:uid(),name,type,target:type==='target'?target:0,current,annualRate:safeNum($('saveRate')?.value),note:($('saveNote')?.value||'').trim(),accountId:openingAccount?.id||null,user_id:state.user_id,created_at:Date.now()};state.savings.push(item);if(current>0)pushHistorial({type:'ahorro',description:'Ahorro inicial: '+name,amount:current,direction:'transfer',source:'ahorros',refId:item.id,accountId:openingAccount.id});save();renderSavings();renderAccounts();renderInicio();['saveName','saveTarget','saveRate','saveNote'].forEach(id=>{if($(id))$(id).value='';});if($('saveCurrent'))$('saveCurrent').value='0';toast('Ahorro creado');
-}
 
-function addLoan(){
-  const name=($('loanName')?.value||'').trim(),principal=safeNum($('loanPrincipal')?.value),annualRate=safeNum($('loanRate')?.value),term=Math.floor(safeNum($('loanTerm')?.value));if(!name||principal<=0||term<1){toast('Completa concepto, monto y plazo');return;}
-  const loan={id:uid(),name,type:$('loanType')?.value||'personal',principal,current:principal,annualRate,term,payment:loanPayment(principal,annualRate,term),paid:0,created_at:Date.now(),user_id:state.user_id};state.loans.push(loan);pushHistorial({type:'prestamo',description:'Deuda: '+name,amount:principal,direction:'memo',source:'prestamos',refId:loan.id});save();renderLoans();renderInicio();['loanName','loanPrincipal','loanRate','loanTerm'].forEach(id=>{if($(id))$(id).value='';});closeOpForm('loanFormPanel');toast('Deuda registrada');
-}
-function markLoanPayment(id){
-  const loan=state.loans.find(l=>l.id===id);if(!loan||safeNum(loan.current)<=0)return;const source=coreFirstLiquid();if(!source){toast('Agrega una cuenta para pagar el préstamo');return;}
-  const rate=safeNum(loan.annualRate)/100/12,remaining=safeNum(loan.current),payment=Math.min(safeNum(loan.payment)||remaining,remaining+(rate?remaining*rate:0)),interest=rate?Math.min(remaining,payment*0+remaining*rate):0,principalPaid=Math.min(remaining,Math.max(0,payment-interest));
-  if(safeNum(source.balance)<payment){toast('El saldo disponible no alcanza para este pago');return;}
-  source.balance-=payment;loan.current=Math.max(0,remaining-principalPaid);loan.paid=Math.min(loan.term,safeNum(loan.paid)+1);loan.lastPaymentAt=Date.now();
-  if(interest>0)state.expenses.push({id:uid(),description:'Interés: '+loan.name,amount:interest,category:'general',shared:false,hormiga:false,user_id:state.user_id,created_at:Date.now(),accountId:source.id,loanId:loan.id});
-  pushHistorial({type:'pago_prestamo',description:'Pago: '+loan.name,amount:payment,direction:'out',source:'prestamos',refId:loan.id,accountId:source.id});save();renderLoans();renderAccounts();renderInicio();renderHistorial();toast(loan.current>0?'Pago registrado':'Préstamo liquidado');
-}
 
 function renderHistorial(){
   const el=$('historialList');if(!el)return;const h=[...(state.historial||[])].sort((a,b)=>(b.created_at||0)-(a.created_at||0));if(!h.length){el.innerHTML='<div class="empty"><p>Sin historial</p></div>';return;}
