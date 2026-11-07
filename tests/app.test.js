@@ -19,7 +19,8 @@ after(async () => { if (browser) await browser.close(); });
 
 beforeEach(async () => {
   if (context) await context.close();
-  context = await browser.newContext();
+  // La app es para teléfono: las pruebas de interfaz usan la ventana de teléfono.
+  context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   await context.addInitScript(() => { /* las pruebas usan datos limpios salvo que indiquen lo contrario */ });
 });
 
@@ -348,4 +349,41 @@ test('delegación: los botones siguen funcionando después de repintar la lista'
   await page.click('.abaco-dialog-actions .btn-danger, .abaco-dialog-actions .btn-primary');
   await page.waitForTimeout(150);
   assert.equal(await page.evaluate(() => state.debtors.length), 1, 'un clic borra exactamente un registro');
+});
+
+/* ---------- tablero de Inicio: botones por delegación ---------- */
+
+test('tablero: el botón de gráficas abre y cierra el panel con clics', async () => {
+  await open();
+  await register();
+  await page.evaluate(() => goPanel('inicio'));
+  await page.waitForTimeout(350);
+  const open_ = () => page.evaluate(() => document.getElementById('chartsBlock').classList.contains('chart-modal-open'));
+  assert.equal(await open_(), false);
+  await page.click('#btnToggleCharts');
+  assert.equal(await open_(), true, 'se abre');
+  await page.click('#btnCloseCharts');
+  assert.equal(await open_(), false, 'se cierra con Cerrar');
+});
+
+test('tablero: el fondo oscuro cierra las gráficas abiertas', async () => {
+  await open();
+  await register();
+  await page.evaluate(() => goPanel('inicio'));
+  await page.waitForTimeout(350);
+  await page.click('#btnToggleCharts');
+  await page.evaluate(() => { const b = document.getElementById('chartsModalBackdrop'); b.style.pointerEvents = 'auto'; });
+  await page.click('#chartsModalBackdrop', { position: { x: 4, y: 4 } });
+  assert.equal(await page.evaluate(() => document.getElementById('chartsBlock').classList.contains('chart-modal-open')), false);
+});
+
+test('tablero: Ver todas abre el listado de categorías', async () => {
+  await open();
+  await register();
+  await page.evaluate(() => goPanel('inicio'));
+  await page.waitForTimeout(350);
+  await page.click('#btnToggleCharts');   // "Ver todas" vive dentro del panel de gráficas
+  await page.click('#btnAllCats');
+  await page.waitForTimeout(200);
+  assert.match(await page.evaluate(() => document.body.innerText), /Todas las categorías/);
 });

@@ -194,18 +194,18 @@
 <div class="section-title">Lectura rápida</div>
       <div class="profiles compact-insights" id="profilesBox"></div>
 
-      <button type="button" class="chart-cube" id="btnToggleCharts" aria-label="Abrir panel de gráficas">
+      <button type="button" class="chart-cube" id="btnToggleCharts" data-home="charts" aria-label="Abrir panel de gráficas">
         <span class="chart-cube-icon">📊</span><span><b>Mis gráficas</b><small>Salud y distribución de mi gasto</small></span><span class="chart-cube-arrow">↗</span>
       </button>
-      <div class="charts-modal-backdrop hidden" id="chartsModalBackdrop"></div>
+      <div class="charts-modal-backdrop hidden" id="chartsModalBackdrop" data-home="backdrop"></div>
       <div class="charts-block hidden-soft" id="chartsBlock">
         <div class="chart-modal-head">
           <h3>Mis gráficas</h3>
-          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseCharts">Cerrar</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseCharts" data-home="close">Cerrar</button>
         </div>
         <div class="section-title" style="margin-top:0">Top categorías</div>
         <div class="cat-scroll" id="catGrid"></div>
-        <button type="button" class="btn btn-ghost btn-sm" id="btnAllCats" style="margin:8px 0 12px;width:auto">Ver todas →</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnAllCats" data-home="all" style="margin:8px 0 12px;width:auto">Ver todas →</button>
         <div class="waterfall">
           <h4>Cascada ingresos → gastos</h4>
           <div class="wf-bars" id="waterfallBars"></div>

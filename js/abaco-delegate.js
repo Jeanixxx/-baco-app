@@ -27,7 +27,13 @@
     'data-account-edit': (v) => editAccount(v),
     'data-cart-remove': (v) => removeCart(Number(v)),
     'data-go': (v) => { closeMenu(); goPanel(v); },
-    'data-av': (v) => { state.accountView = v; LS_SET('account_view', state.accountView); save(); renderInicio(); }
+    'data-av': (v) => { state.accountView = v; LS_SET('account_view', state.accountView); save(); renderInicio(); },
+    'data-home': (v, el, e) => {
+      if (v === 'charts') toggleHomeCharts();
+      else if (v === 'close') closeHomeCharts();
+      else if (v === 'all') showAllCategoriesModal();
+      else if (v === 'backdrop' && e.target === el) closeHomeCharts();
+    }
   };
   const SELECTOR = Object.keys(ACTIONS).map((a) => '[' + a + ']').join(',');
 

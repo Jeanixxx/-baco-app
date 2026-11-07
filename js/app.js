@@ -1037,6 +1037,25 @@ function renderHormiga() {
   });
 }
 
+/* Gráficas del tablero de Inicio. Se atienden por delegación (data-home en index.html). */
+function toggleHomeCharts(){
+  const chartBlock=$('chartsBlock'), chartBack=$('chartsModalBackdrop');
+  if(!chartBlock) return;
+  const open=!chartBlock.classList.contains('chart-modal-open');
+  chartBlock.classList.toggle('hidden-soft',!open);
+  chartBlock.classList.toggle('chart-modal-open',open);
+  if(chartBack) chartBack.classList.toggle('hidden',!open);
+  document.querySelector('.app')?.classList.toggle('charts-open',open);
+  if(open) setTimeout(()=>chartBlock.scrollTop=0,20);
+}
+function closeHomeCharts(){
+  const chartBlock=$('chartsBlock'), chartBack=$('chartsModalBackdrop');
+  chartBlock?.classList.remove('chart-modal-open');
+  chartBlock?.classList.add('hidden-soft');
+  chartBack?.classList.add('hidden');
+  document.querySelector('.app')?.classList.remove('charts-open');
+}
+
 function renderInicio() {
   ensureFinancialCore();
   const chips = $('accountViewChips');
@@ -1139,29 +1158,6 @@ function renderInicio() {
       </div>`;
     }).join('');
   }
-  const btnAll = $('btnAllCats');
-  if (btnAll) btnAll.onclick = () => showAllCategoriesModal();
-  const chartBtn = $('btnToggleCharts');
-  const chartBlock = $('chartsBlock');
-  const chartBack = $('chartsModalBackdrop');
-  if(chartBtn && chartBlock){
-    chartBtn.onclick = () => {
-      const open = !chartBlock.classList.contains('chart-modal-open');
-      chartBlock.classList.toggle('hidden-soft', !open);
-      chartBlock.classList.toggle('chart-modal-open', open);
-      if(chartBack) chartBack.classList.toggle('hidden', !open);
-      document.querySelector('.app')?.classList.toggle('charts-open', open);
-      if(open) setTimeout(()=>chartBlock.scrollTop=0,20);
-    };
-  }
-  const closeCharts = () => {
-    chartBlock?.classList.remove('chart-modal-open');
-    chartBlock?.classList.add('hidden-soft');
-    chartBack?.classList.add('hidden');
-    document.querySelector('.app')?.classList.remove('charts-open');
-  };
-  $('btnCloseCharts') && ($('btnCloseCharts').onclick = closeCharts);
-  if(chartBack) chartBack.onclick = closeCharts;
 
   // Waterfall
   const maxV = Math.max(totalInc,totalExp,1);
@@ -2723,6 +2719,8 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
     if(i)i.textContent=icon;
   }
   function renderEngineDashboard(){
+    // El motor de lectura vive en window.Abaco.Finance; este bloque no ve la variable local F.
+    const F=window.Abaco&&window.Abaco.Finance; if(!F) return;
     try{
       const d=F.dashboard(new Date()), cap=F.dailyCapacity(new Date()), fc=F.forecast(new Date()), health=F.health(new Date()), cf=F.cashFlow(new Date()), events=F.events(new Date()), commitments=F.commitmentsDetailed(new Date()), goals=F.goals();
       setWrappedCube(0,'Capacidad diaria',money(cap.dailyLimit),'🎯'); setWrappedCube(1,'Comprometido',money(d.commitments||0),'📌'); setWrappedCube(2,'Salud financiera',health.score+'/100','💚'); setWrappedCube(3,'Proyección fin de mes',money(fc.projectedEnd),'🔮'); setWrappedCube(4,'Patrimonio',money(F.netWorth()),'🏦'); setWrappedCube(5,'Flujo neto',money(cf.net),'↕️');
@@ -2796,33 +2794,6 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
       },true);
     }
 
-    // Si por cualquier razón renderInicio no alcanzó a enlazar estos botones,
-    // aquí se les da una acción segura. No reemplazamos handlers existentes.
-    const charts=q('#btnToggleCharts');
-    if(charts && !charts.onclick){
-      charts.onclick=()=>{
-        const block=q('#chartsBlock'), back=q('#chartsModalBackdrop');
-        if(!block)return; const open=!block.classList.contains('chart-modal-open');
-        block.classList.toggle('hidden-soft',!open); block.classList.toggle('chart-modal-open',open);
-        back?.classList.toggle('hidden',!open);
-        document.querySelector('.app')?.classList.toggle('charts-open',open);
-      };
-    }
-    const allCats=q('#btnAllCats');
-    if(allCats && !allCats.onclick && typeof window.showAllCategoriesModal==='function'){
-      allCats.onclick=(ev)=>{ ev.preventDefault(); window.showAllCategoriesModal(); };
-    }
-
-    // Cierre seguro de la ventana de gráficas aunque el panel se haya reconstruido.
-    const closeCharts=q('#btnCloseCharts');
-    if(closeCharts && !closeCharts.onclick){
-      closeCharts.onclick=()=>{
-        q('#chartsBlock')?.classList.remove('chart-modal-open');
-        q('#chartsBlock')?.classList.add('hidden-soft');
-        q('#chartsModalBackdrop')?.classList.add('hidden');
-        document.querySelector('.app')?.classList.remove('charts-open');
-      };
-    }
   };
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind,{once:true}); else bind();
   // RenderInicio reconstruye varios controles; reaplicar después de cada actualización visual.
