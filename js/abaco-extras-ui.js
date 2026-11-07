@@ -38,20 +38,9 @@
   function viewForExtras() {
     return { budgets: state.budgets || [], savings: state.savings || [], totals: state.financeTotals || {}, expenses: state.expenses || [], incomes: state.incomes || [] };
   }
-  const momento = () => { const s = window.AbacoSky && AbacoSky.current(); return s ? s.momento : ''; };
 
   /* ---------- Inicio: saludo, avisos y brújula ---------- */
 
-  function renderGreeting() {
-    const hello = $('hgHello');
-    const chip = $('hgChip');
-    if (!hello || !chip) return;
-    const sky = window.AbacoSky && AbacoSky.current();
-    const real = sky && typeof sky.realHour === 'number' ? sky.realHour : new Date().getHours() + new Date().getMinutes() / 60;
-    const hh = String(Math.floor(real)).padStart(2, '0') + ':' + String(Math.floor((real % 1) * 60)).padStart(2, '0');
-    hello.textContent = (sky ? sky.saludo : 'Hola') + (state.user_name ? ', ' + state.user_name : '');
-    chip.textContent = (sky ? sky.momento + ' · ' : '') + hh;
-  }
 
   const notice = (title, sub, label, go) =>
     '<div class="x-notice"><div class="xn-body"><div class="xn-title">' + title + '</div><div class="xn-sub">' + sub +
@@ -298,7 +287,6 @@
 
   /* ---------- pantallas propias ---------- */
 
-  const head = (sub, title) => '<div class="x-head"><div class="xh-sub">' + esc(sub) + '</div><div class="xh-title">' + esc(title) + '</div></div>';
   const dayKey = (ts) => { const d = new Date(ts); return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
 
   function renderEstadisticas() {
@@ -329,16 +317,15 @@
     const eq = top ? X.equivalence(top[1], X.selectedUnit(e)) : null;
     const m = X.computeMetrics(viewForExtras(), t);
     const chosen = e.prefs.metrics.map((id) => X.METRICS.find((x) => x.id === id)).filter(Boolean);
-    box.innerHTML = head(momento(), 'Estadísticas') +
-      '<div class="x-card hi"><div class="xc-label">Gastos de la semana</div><div class="xc-big">' + money(total) + '</div><div class="x-bars">' + bars + '</div></div>' +
+    box.innerHTML = '<div class="x-card hi"><div class="xc-label">Gastos de la semana</div><div class="xc-big">' + money(total) + '</div><div class="x-bars">' + bars + '</div></div>' +
       '<div class="x-card"><div class="xc-title">' + (top ? 'Lo que más pesó: ' + esc(catLabel(top[0])) : 'Esta semana no hay gastos') + '</div>' +
       '<div class="xc-sub">' + (top ? money(top[1]) + (eq ? ' · ' + esc(eq.text) + ' en tu unidad' : '') : 'Cuando registres gastos, aquí verás lo que más pesó.') + '</div></div>' +
       '<div class="x-card"><div class="xc-label">Tus medidas elegidas</div>' +
       (chosen.length ? '<div class="x-metrics">' + chosen.map((c) => '<div><div class="xm-l">' + esc(c.label) + '</div><div class="xm-v">' + esc(X.formatMetric(c.id, m[c.id])) + '</div></div>').join('') + '</div>'
         : '<div class="xc-sub">Elige las que quieras ver en Configuración.</div>') +
       '<div class="x-actions"><button type="button" class="btn btn-ghost btn-sm" data-go="config">Cambiar medidas</button></div></div>' +
-      '<div class="x-card"><div class="xc-label">Contigo</div><div class="x-actions">' +
-      '<button type="button" class="btn btn-ghost btn-sm" data-go="cartas">Cartas</button><button type="button" class="btn btn-ghost btn-sm" data-go="decisiones">Decisiones</button><button type="button" class="btn btn-ghost btn-sm" data-go="pactos">Pactos</button></div></div>';
+      '<div class="x-tiles">' + [['charts', 'estadisticas', 'Gráficas'], ['cartas', 'cartas', 'Cartas'], ['decisiones', 'decisiones', 'Decisiones'], ['pactos', 'pactos', 'Pactos']]
+        .map(([to, icon, label]) => '<button type="button" class="x-tile" ' + (to === 'charts' ? 'data-x="charts"' : 'data-go="' + to + '"') + '>' + navIconSvg(icon) + '<span>' + label + '</span></button>').join('') + '</div>';
   }
 
   function decisionCard(d, t, due) {
@@ -369,8 +356,7 @@
     const skipped = e.decisions.filter((d) => d.kind === 'no-compre').sort((a, b) => b.ts - a.ts);
     const group = (title, items, fn) => (items.length ? '<div class="section-title">' + title + '</div>' + items.map(fn).join('') : '');
     const review = (d) => shortDate(d.ts + e.prefs.decisionDays * DAYMS + 0);
-    box.innerHTML = head(momento(), 'Decisiones') +
-      '<div class="x-note" style="margin:0 6px 10px">Anota por qué haces una compra grande. Meses después te pregunto si valió la pena; tú pones la respuesta.</div>' +
+    box.innerHTML = '<div class="x-note" style="margin:0 6px 10px">Anota por qué haces una compra grande. Meses después te pregunto si valió la pena; tú pones la respuesta.</div>' +
       due.map((d) => decisionCard(d, t, true)).join('') +
       '<button type="button" class="btn btn-primary" data-x="dec-add">＋ Anotar una decisión</button>' +
       group('Esperando su momento', waiting, (d) => decisionRow(d, money(d.amount) + ' · se revisa hacia el ' + review(d) + (d.reason ? ' · «' + esc(d.reason) + '»' : ''))) +
@@ -394,8 +380,7 @@
         '<button type="button" class="btn btn-ghost" data-x="pact-log" data-id="' + esc(p.id) + '" data-v="no">Lo rompí</button>' +
         '<button type="button" class="btn btn-ghost" aria-label="Quitar pacto" data-x="pact-del" data-id="' + esc(p.id) + '" style="flex:0 0 auto;min-width:0">×</button></div></div>';
     }).join('');
-    box.innerHTML = head(momento(), 'Pactos') +
-      '<div class="x-note" style="margin:0 6px 10px">Acuerdos que haces contigo. Los marcas tú; no hay castigos.</div>' + cards +
+    box.innerHTML = '<div class="x-note" style="margin:0 6px 10px">Acuerdos que haces contigo. Los marcas tú; no hay castigos.</div>' + cards +
       '<button type="button" class="btn btn-primary" data-x="pact-add">＋ Nuevo pacto</button>' +
       (e.pacts.length ? '' : '<div class="x-empty">Aún no tienes pactos. Por ejemplo: «No pedir comida a domicilio los martes».</div>');
   }
@@ -427,8 +412,7 @@
     const writers = [];
     if (!letters.some((l) => l.monthKey === prev)) writers.push('<button type="button" class="btn btn-ghost" data-x="letter-write" data-v="prev">Escribir la carta de ' + esc(X.monthName(prev)) + '</button>');
     if (!letters.some((l) => l.monthKey === cur)) writers.push('<button type="button" class="btn btn-ghost" data-x="letter-write" data-v="now">Escribir la carta de este mes (hasta hoy)</button>');
-    box.innerHTML = head(momento(), 'Cartas') +
-      (letters.length ? '<div class="x-chips" style="margin:0 0 12px">' + letters.map((l) => '<button type="button" class="' + (l.monthKey === viewMonth ? 'on' : '') + '" data-x="letter-view" data-v="' + esc(l.monthKey) + '">' + esc(cap(X.monthName(l.monthKey))) + (l.state === 'nueva' ? ' •' : '') + '</button>').join('') + '</div>' : '') +
+    box.innerHTML = (letters.length ? '<div class="x-chips" style="margin:0 0 12px">' + letters.map((l) => '<button type="button" class="' + (l.monthKey === viewMonth ? 'on' : '') + '" data-x="letter-view" data-v="' + esc(l.monthKey) + '">' + esc(cap(X.monthName(l.monthKey))) + (l.state === 'nueva' ? ' •' : '') + '</button>').join('') + '</div>' : '') +
       (sel ? letterPaper(sel) : '<div class="x-empty">Aún no hay cartas. Al cerrar cada mes te escribo una con lo que pasó; también puedes pedirla cuando quieras.</div>') +
       '<div class="x-actions" style="margin-top:14px">' + writers.join('') + '</div>';
   }
@@ -447,8 +431,7 @@
     const mode = window.AbacoSky ? AbacoSky.getMode() : 'auto';
     const silent = p.silenceUntil && t < p.silenceUntil;
     const untilTxt = silent ? new Date(p.silenceUntil).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' }) : '';
-    box.innerHTML = head(momento(), 'Configuración') +
-      '<div class="x-card"><div class="xc-label">Cómo te hablo</div>' + seg('tone', [{ v: 'directo', l: 'Directo' }, { v: 'amable', l: 'Amable' }, { v: 'silencioso', l: 'Silencioso' }], p.tone) +
+    box.innerHTML = '<div class="x-card"><div class="xc-label">Cómo te hablo</div>' + seg('tone', [{ v: 'directo', l: 'Directo' }, { v: 'amable', l: 'Amable' }, { v: 'silencioso', l: 'Silencioso' }], p.tone) +
       '<div class="xc-sub">' + (p.tone === 'directo' ? 'Cifras secas, sin adornos.' : p.tone === 'silencioso' ? 'Solo hablo cuando tú me tocas: sin avisos ni preguntas.' : 'Con contexto y calma.') + '</div></div>' +
       '<div class="x-card"><div class="xc-label">Cielo</div>' + seg('theme', [{ v: 'auto', l: 'Según la hora' }, { v: 'light', l: 'Día' }, { v: 'dark', l: 'Noche' }], mode) + '</div>' +
       '<div class="x-card"><div class="xc-label">Mi unidad de equivalencia</div><div class="xc-sub" style="margin:2px 0 0">Si eliges una, te muestro cuánto equivale cada gasto. Si no, no comparo nada.</div><div class="x-chips">' +
@@ -459,6 +442,7 @@
       '<div class="x-card"><div class="x-row"><div><div class="xc-title">Pausa antes de pagar</div><div class="xc-sub">Solo en compras que marques como impulso</div></div>' +
       '<button type="button" class="x-toggle ' + (p.pause ? 'on' : '') + '" role="switch" aria-checked="' + p.pause + '" aria-label="Pausa antes de pagar" data-x="pause"></button></div>' +
       (p.pause ? '<div class="xc-sub" style="margin-top:8px">Segundos de pausa</div>' + seg('pause-secs', [{ v: 3, l: '3 s' }, { v: 5, l: '5 s' }, { v: 10, l: '10 s' }], p.pauseSeconds) : '') + '</div>' +
+      quickCard() +
       '<div class="x-card"><div class="xc-title">Silencio por encargo</div><div class="xc-sub">' + (silent ? 'En silencio hasta el ' + esc(untilTxt) + '.' : 'Sin avisos ni preguntas hasta el lunes.') + '</div>' +
       '<div class="x-actions"><button type="button" class="btn btn-ghost" data-x="silence" data-v="' + (silent ? 'off' : 'on') + '">' + (silent ? 'Quitar el silencio' : 'No me hables hasta el lunes') + '</button></div></div>' +
       '<div class="x-card"><div class="xc-label">Mis medidas (en Estadísticas)</div><div class="x-chips">' +
@@ -466,6 +450,18 @@
       '<div class="x-card"><div class="xc-title">Tus datos</div><div class="xc-sub">Son tuyos: expórtalos o bórralos cuando quieras.</div><div class="x-actions">' +
       '<button type="button" class="btn btn-ghost" data-x="data" data-v="export">Exportar copia</button><button type="button" class="btn btn-ghost" data-x="data" data-v="import">Importar copia</button>' +
       '<button type="button" class="btn btn-ghost" data-x="data" data-v="clear" style="color:var(--bad)">Borrar todo</button></div></div>';
+  }
+
+  /* Notificación fija de Android para anotar gastos desde la barra (js/abaco-quick.js). */
+  function quickCard() {
+    const Q = window.AbacoQuick;
+    if (!Q || !Q.available()) {
+      return '<div class="x-card"><div class="xc-title">Anotar desde la barra de notificaciones</div><div class="xc-sub">Disponible en la app de Android: una notificación silenciosa donde escribes «85 tacos» y queda anotado.</div></div>';
+    }
+    const on = Q.enabled();
+    return '<div class="x-card"><div class="x-row"><div><div class="xc-title">Anotar desde la barra de notificaciones</div>' +
+      '<div class="xc-sub">Notificación fija y silenciosa. Escribe «85 tacos» y se guarda al abrir Ábaco.</div></div>' +
+      '<button type="button" class="x-toggle ' + (on ? 'on' : '') + '" role="switch" aria-checked="' + on + '" aria-label="Notificación para anotar gastos" data-x="quick"></button></div></div>';
   }
 
   const RENDERERS = { estadisticas: renderEstadisticas, decisiones: renderDecisiones, pactos: renderPactos, cartas: renderCartas, config: renderConfig };
@@ -521,6 +517,13 @@
       }
       case 'unit-del': X.removeUnit(e, id); after('config'); updateEquiv(); break;
       case 'pause': e.prefs.pause = !e.prefs.pause; after('config'); break;
+      case 'quick': {
+        const next = !window.AbacoQuick.enabled();
+        window.AbacoQuick.setEnabled(next);
+        toast(next ? 'Listo: la notificación queda en tu barra' : 'Quité la notificación de la barra');
+        setTimeout(() => render('config'), 200);
+        break;
+      }
       case 'pause-secs': e.prefs.pauseSeconds = Number(v) || 5; after('config'); break;
       case 'silence':
         if (v === 'on') { X.setSilence(e, X.nextMonday(t)); toast('Listo, hasta el lunes no te digo nada'); } else { X.clearSilence(e); toast('Volví a hablar'); }
@@ -581,6 +584,7 @@
         after('cartas'); renderNotices(); break;
       }
       case 'q': X.answerQuestion(e, id, v, t); persist(); renderQuestion(); if (v === 'no') toast('Anotado. Si quieres, la revisas en Suscripciones.'); else if (v === 'si') toast('Gracias'); break;
+      case 'charts': goPanel('inicio'); setTimeout(() => { if (typeof toggleHomeCharts === 'function') toggleHomeCharts(); }, 60); break;
       case 'borrow': await borrowDialog(); break;
       case 'borrow-undo': await undoBorrow(id); break;
       default: break;
@@ -598,7 +602,6 @@
     if (el) { ev.preventDefault(); onAction(el).catch((err) => { console.warn('Acción', el.dataset.x, err); toast('No se pudo completar'); }); }
   });
   document.addEventListener('input', (ev) => { if (ev.target && ev.target.id === 'hormAmount') updateEquiv(); });
-  window.addEventListener('abaco:sky', () => { if (started) renderGreeting(); });
 
   /* ---------- ciclo de vida ---------- */
 
@@ -606,7 +609,7 @@
     const app = document.querySelector('.app');
     if (app) app.classList.toggle('on-inicio', name === 'inicio');
     toggleCompass(false);
-    if (name === 'inicio') { renderGreeting(); renderNotices(); updateCompass(); }
+    if (name === 'inicio') { renderNotices(); updateCompass(); }
     if (name === 'hormiga') updateEquiv();
     if (name === 'presupuesto') renderBorrow();
     if (name === 'cuentas') renderQuestion();
@@ -615,7 +618,7 @@
   function afterRefresh() {
     if (!started || typeof state === 'undefined') return;
     const name = state.activePanel;
-    if (name === 'inicio') { renderGreeting(); renderNotices(); updateCompass(); }
+    if (name === 'inicio') { renderNotices(); updateCompass(); }
     if (name === 'hormiga') updateEquiv();
     if (name === 'presupuesto') renderBorrow();
     if (name === 'cuentas') renderQuestion();

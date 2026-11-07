@@ -353,15 +353,21 @@ test('delegación: los botones siguen funcionando después de repintar la lista'
 
 /* ---------- tablero de Inicio: botones por delegación ---------- */
 
+/* Con el rediseño, "Gráficas" se abre desde el mosaico de Estadísticas. */
+async function openCharts() {
+  await page.evaluate(() => goPanel('estadisticas'));
+  await page.click('#xv-estadisticas [data-x="charts"]');
+  await page.waitForFunction(() => document.getElementById('chartsBlock').classList.contains('chart-modal-open'));
+}
+
 test('tablero: el botón de gráficas abre y cierra el panel con clics', async () => {
   await open();
   await register();
-  await page.evaluate(() => goPanel('inicio'));
-  await page.waitForTimeout(350);
   const open_ = () => page.evaluate(() => document.getElementById('chartsBlock').classList.contains('chart-modal-open'));
   assert.equal(await open_(), false);
-  await page.click('#btnToggleCharts');
+  await openCharts();
   assert.equal(await open_(), true, 'se abre');
+  assert.equal(await page.evaluate(() => state.activePanel), 'inicio', 'las gráficas viven en Inicio');
   await page.click('#btnCloseCharts');
   assert.equal(await open_(), false, 'se cierra con Cerrar');
 });
@@ -369,9 +375,7 @@ test('tablero: el botón de gráficas abre y cierra el panel con clics', async (
 test('tablero: el fondo oscuro cierra las gráficas abiertas', async () => {
   await open();
   await register();
-  await page.evaluate(() => goPanel('inicio'));
-  await page.waitForTimeout(350);
-  await page.click('#btnToggleCharts');
+  await openCharts();
   // La hoja de gráficas cubre la pantalla después de su animación de entrada, así que un clic con el dedo
   // sobre el fondo solo cabría en los primeros milisegundos. Se dispara el evento directo sobre el fondo
   // para probar que el botón delegado lo atiende, sin depender del tiempo.
@@ -382,9 +386,7 @@ test('tablero: el fondo oscuro cierra las gráficas abiertas', async () => {
 test('tablero: Ver todas abre el listado de categorías', async () => {
   await open();
   await register();
-  await page.evaluate(() => goPanel('inicio'));
-  await page.waitForTimeout(350);
-  await page.click('#btnToggleCharts');   // "Ver todas" vive dentro del panel de gráficas
+  await openCharts();   // "Ver todas" vive dentro del panel de gráficas
   await page.click('#btnAllCats');
   await page.waitForTimeout(200);
   assert.match(await page.evaluate(() => document.body.innerText), /Todas las categorías/);

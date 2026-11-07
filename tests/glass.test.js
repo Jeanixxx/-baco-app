@@ -139,12 +139,13 @@ test('inicio: el saludo y el momento siguen la hora', async () => {
   await open(22);
   await register('Ana');
   await go('inicio');
-  assert.equal(await page.textContent('#hgHello'), 'Buenas noches, Ana');
-  assert.equal(await page.textContent('#hgChip'), 'Noche · 22:00');
+  assert.equal(await page.textContent('#tbSub'), 'Buenas noches, Ana');
+  assert.equal(await page.textContent('#tbChip'), 'Noche · 22:00');
+  assert.equal(await page.textContent('#tbTitle'), 'Inicio');
   await open(9.5); // la persona ya está registrada: los datos viven en el mismo contexto
   await go('inicio');
-  assert.equal(await page.textContent('#hgHello'), 'Buenos días, Ana');
-  assert.equal(await page.textContent('#hgChip'), 'Mañana · 09:30');
+  assert.equal(await page.textContent('#tbSub'), 'Buenos días, Ana');
+  assert.equal(await page.textContent('#tbChip'), 'Mañana · 09:30');
 });
 
 test('barra inferior y menú traen las pantallas del diseño', async () => {
@@ -154,7 +155,7 @@ test('barra inferior y menú traen las pantallas del diseño', async () => {
   assert.deepEqual(etiquetas, ['Inicio', 'Movimientos', 'Registrar', 'Estadísticas', 'Cuentas']);
   await page.evaluate(() => openMenu());
   const menu = await page.textContent('#menuList');
-  for (const t of ['Estadísticas', 'Cartas', 'Decisiones', 'Pactos', 'Configuración', 'Movimientos']) assert.match(menu, new RegExp(t));
+  for (const t of ['Estadísticas', 'Cartas', 'Decisiones', 'Pactos', 'Ajustes', 'Movimientos', 'Sobres']) assert.match(menu, new RegExp(t));
 });
 
 test('cada pantalla nueva se abre y pinta contenido sin errores', async () => {

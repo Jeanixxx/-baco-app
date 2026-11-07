@@ -15,6 +15,8 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/abaco-dialog.js` | Diálogos de confirmación y de datos con campos de texto, lista y área de texto (reemplazan `confirm()` y `prompt()`). |
 | `js/abaco-sky.js` | Cielo del día: paleta por hora, sol y luna que cruzan la pantalla, tema claro/oscuro automático. Parte pura probada en Node. |
 | `js/abaco-extras.js` | Lógica pura de convivencia: equivalencias, pausa, decisiones, pactos, cartas, préstamos entre sobres, preguntas, medidas, silencio y brújula. |
+| `js/abaco-shell.js` | Estructura del rediseño: cabecera de título grande (se compacta al desplazar), formularios como hojas inferiores, ayuda desde el menú. |
+| `js/abaco-quick.js` | Gastos anotados desde la notificación de Android: interpreta «85 tacos», guarda con su hora y confirma a Android. |
 | `js/abaco-extras-ui.js` | Interfaz de convivencia: avisos de Inicio, brújula flotante, pausa antes de pagar y las pantallas Estadísticas, Decisiones, Pactos, Cartas y Configuración. |
 | `styles.css` | Una sola hoja de estilo: variables de cristal (claro de día, oscuro de noche), componentes y cielo. |
 | `js/app.js` | Interfaz: navegación, pantallas, tablero y datos no financieros. |
@@ -22,7 +24,7 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/security.js` | Bloqueo opcional con PIN o patrón (solo barrera de acceso local). |
 | `js/boot.js` | Arranque mínimo del registro. |
 
-Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core`, `abaco-migrate`, `abaco-store`, `abaco-data`, `abaco-simulate`, `abaco-dialog`, `abaco-app`, `app`, `abaco-simulator-ui`, `abaco-delegate`, `abaco-extras-ui`, `security`.
+Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core`, `abaco-migrate`, `abaco-store`, `abaco-data`, `abaco-simulate`, `abaco-dialog`, `abaco-app`, `app`, `abaco-simulator-ui`, `abaco-delegate`, `abaco-shell`, `abaco-quick`, `abaco-extras-ui`, `security`. La tipografía Inter viene en `fonts/` para funcionar sin internet.
 
 ## Diseño: ciclo del día y convivencia
 
@@ -37,6 +39,8 @@ Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core
   - *Sobres*: porcentaje por sobre y préstamos entre sobres con nota.
   - *Preguntas sin prisa* en Cuentas, *silencio por encargo* hasta el lunes y *tono* (directo, amable, silencioso).
   - *Brújula* en Inicio: círculo flotante cuya aguja se sacude y apunta a donde conviene mirar; al tocarla muestra una nota, sin cambiar de pantalla.
+- **Estructura (canvas aprobado).** Cada pantalla tiene un título grande con el momento del día (en Inicio, el saludo y la hora). El menú es un mosaico de secciones. La barra inferior es fija: Inicio, Movimientos, Registrar, Estadísticas y Cuentas. Los formularios se abren como hojas inferiores.
+- **Notificación rápida (Android).** Una notificación fija y silenciosa con respuesta directa: escribes «85 tacos» en la barra de notificaciones y queda en una cola local; al abrir Ábaco se registra como gasto con la hora en que lo anotaste. Se apaga en Ajustes.
 - **Probar otra hora o fecha.** Abrir con `?hora=19` (o `?hora=19.5`) fija la hora del cielo; `window.__abacoNow = <ms>` fija la fecha de la capa de convivencia. No hay ningún control visible para esto.
 
 ## Datos
@@ -61,6 +65,8 @@ node --test tests/app.test.js           # integración de la interfaz
 node --test tests/sky.test.js           # cielo del día (funciones puras)
 node --test tests/extras.test.js        # lógica de convivencia
 node --test tests/glass.test.js         # cristal líquido y convivencia en Chromium, 390x844
+node --test tests/shell.test.js         # estructura del rediseño: cabecera, hojas, menú, barra
+node --test tests/quick.test.js         # notificación rápida con un puente de Android simulado
 ```
 
 `tests/fixtures/legacy-v2/` es una copia congelada de la app anterior. La prueba de migración la usa para generar datos del formato antiguo.

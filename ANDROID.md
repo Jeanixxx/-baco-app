@@ -1,6 +1,6 @@
 # Ábaco para Android (Kotlin)
 
-La app Android usa un WebView local. La interfaz está separada en `index.html`, `styles.css`, `js/boot.js`, `js/abaco-sky.js`, `js/abaco-extras.js`, `js/abaco-core.js`, `js/abaco-migrate.js`, `js/abaco-store.js`, `js/abaco-data.js`, `js/abaco-simulate.js`, `js/abaco-app.js`, `js/abaco-dialog.js`, `js/app.js`, `js/abaco-simulator-ui.js`, `js/abaco-delegate.js`, `js/abaco-extras-ui.js` y `js/security.js`. Gradle copia estos archivos al directorio de assets en cada build; las rutas relativas se mantienen y el HTML antiguo `Abaco_Gestor_Finanzas.html` redirige a `index.html`.
+La app Android usa un WebView local. La interfaz está separada en `index.html`, `styles.css`, `js/boot.js`, `js/abaco-sky.js`, `js/abaco-extras.js`, `js/abaco-core.js`, `js/abaco-migrate.js`, `js/abaco-store.js`, `js/abaco-data.js`, `js/abaco-simulate.js`, `js/abaco-app.js`, `js/abaco-dialog.js`, `js/app.js`, `js/abaco-simulator-ui.js`, `js/abaco-delegate.js`, `js/abaco-shell.js`, `js/abaco-quick.js`, `js/abaco-extras-ui.js` y `js/security.js`. Gradle copia estos archivos al directorio de assets en cada build; las rutas relativas se mantienen y el HTML antiguo `Abaco_Gestor_Finanzas.html` redirige a `index.html`.
 
 ## Funciones Android
 
@@ -57,3 +57,14 @@ gradle --no-daemon :app:assembleDebug
 ```
 
 El APK de prueba queda en `app/build/outputs/apk/debug/app-debug.apk`. El workflow de GitHub Actions compila en cada push a las ramas configuradas, en cada pull request a `main` y manualmente desde Actions.
+
+## Notificación rápida para anotar gastos
+
+`QuickExpense.kt` publica una notificación fija en un canal de importancia baja: no suena, no vibra y no muestra globo. Tiene una acción «Anotar gasto» con respuesta directa (`RemoteInput`).
+
+- Lo que la persona escribe (por ejemplo «85 tacos») lo recibe `QuickExpenseReceiver` y lo guarda en una cola de `SharedPreferences`, junto con la hora. La notificación confirma «Anotado».
+- Al abrir o volver a la app, `js/abaco-quick.js` lee la cola (`AndroidBridge.pendingQuickExpenses`), registra cada gasto con su hora y confirma cuáles quedaron guardados (`confirmQuickExpenses`). Un gasto que el motor rechaza (por ejemplo, sin saldo) se queda en la cola para otro intento.
+- Tocar la notificación abre Ábaco en Registrar.
+- Viene activada. Se apaga y se enciende en Ajustes (`setQuickExpenseEnabled`). En Android 13 o superior la app pide el permiso de notificaciones una sola vez.
+- `BootReceiver` la vuelve a publicar después de reiniciar el teléfono.
+

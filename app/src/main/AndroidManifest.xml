@@ -16,6 +16,7 @@
             android:name=".MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
+            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,6 +26,10 @@
 
         <receiver
             android:name=".ReminderReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        <receiver
+            android:name=".QuickExpenseReceiver"
             android:enabled="true"
             android:exported="false" />
         <receiver

@@ -71,6 +71,7 @@ tasks.register<Copy>("copyAbacoWebAssets") {
     from(rootProject.file("index.html"))
     from(rootProject.file("styles.css"))
     from(rootProject.file("js")) { into("js") }
+    from(rootProject.file("fonts")) { into("fonts") }
     into(layout.projectDirectory.dir("src/main/assets"))
 }
 

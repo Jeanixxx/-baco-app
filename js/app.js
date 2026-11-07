@@ -458,7 +458,7 @@ function updateSwipePreview() {
   const amount = parseInt($('hormAmount').value,10)||0;
   const desc = $('hormDesc').value.trim()||'Gasto rápido';
   $('scAmount').textContent = money(amount);
-  $('scDesc').textContent = amount ? desc : 'Escribe un monto arriba';
+  $('scDesc').textContent = amount ? desc : 'Escribe un monto';
   $('scCat').textContent = amount ? (catIcon(state.hormCat)+' '+catName(state.hormCat)) : '';
   const badge = $('scBadge');
   if (badge) {
@@ -558,13 +558,13 @@ const MENU_GROUPS = [
   {label:'Contigo', items:['decisiones','pactos','config']}
 ];
 const NAV_META = {
-  hormiga:{label:'Registrar'}, inicio:{label:'Inicio'}, presupuesto:{label:'Presupuesto'}, compras:{label:'Compras'},
-  lista:{label:'Lista de compras'},
+  hormiga:{label:'Registrar'}, inicio:{label:'Inicio'}, presupuesto:{label:'Sobres'}, compras:{label:'Compras'},
+  lista:{label:'Qué comprar'},
   ingresos:{label:'Ingresos'}, ahorros:{label:'Ahorros'}, tarjetas:{label:'Tarjetas'},
   cuentas:{label:'Cuentas'}, prestamos:{label:'Préstamos'}, suscripciones:{label:'Suscripciones'}, inversiones:{label:'Inversiones'}, deudores:{label:'Por cobrar'}, simulador:{label:'Simulador'},
   kanban:{label:'Pendientes'}, recordatorios:{label:'Recordatorios'},
   historial:{label:'Movimientos'}, categorias:{label:'Categorías'},
-  estadisticas:{label:'Estadísticas'}, cartas:{label:'Cartas'}, decisiones:{label:'Decisiones'}, pactos:{label:'Pactos'}, config:{label:'Configuración'},
+  estadisticas:{label:'Estadísticas'}, cartas:{label:'Cartas'}, decisiones:{label:'Decisiones'}, pactos:{label:'Pactos'}, config:{label:'Ajustes'},
 };
 const NAV_ICON_PATHS = {
   hormiga:'<path d="M5 3h14v18l-3-2-4 2-4-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -595,10 +595,6 @@ function navIconSvg(section){
   const shape=NAV_ICON_PATHS[section]||'<circle cx="12" cy="12" r="8"/>';
   return `<svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${shape}</svg>`;
 }
-function pinStateIconSvg(){
-  return '<svg class="pin-state-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4z"/></svg>';
-}
-
 /* Un solo mapa panel -> función que pinta su contenido con el estado actual.
    goPanel() lo consulta cada vez que se entra a una pantalla, así ninguna
    sección depende de que una acción (agregar/editar/borrar) la haya
@@ -884,19 +880,6 @@ function setupAndroidNavigation() {
   } catch (e) {}
 }
 
-function togglePin(name) {
-  if (!state.pinned) state.pinned = [];
-  if (state.pinned.includes(name)) {
-    state.pinned = state.pinned.filter(t => t !== name);
-  } else {
-    state.pinned.push(name);
-  }
-  save();
-  renderMenu();
-  renderPinned();
-  toast(state.pinned.includes(name) ? 'Fijado en acceso rápido' : 'Desfijado');
-}
-
 let walletQuizStep = 0;
 const WALLET_QUIZ = [
   {title:'TU DINERO', copy:'Conecta efectivo, débito y crédito.', kind:'accounts'},
@@ -913,55 +896,31 @@ function renderMenu() {
   if (!list) return;
   const overdue = getOverdueReminders().length;
   updateBackupStatusLabel();
-  const itemHtml = t => {
+  const active = state.activePanel || 'inicio';
+  const tile = t => {
     const meta = NAV_META[t] || { label: t };
-    const pinned = (state.pinned || []).includes(t) || t==='hormiga';
-    let badge = '';
-    if (t === 'recordatorios' && overdue) badge = `<span class="menu-badge">${overdue}</span>`;
-    return `<div class="menu-item" data-go="${t}" role="button" tabindex="0">
-      <span class="ico">${navIconSvg(t)}</span>
-      <span class="menu-item-label">${meta.label}</span>
-      ${badge}
-      <button type="button" class="pin-btn ${pinned ? 'on' : ''}" data-pin="${t}" aria-label="${pinned ? 'Quitar de favoritos' : 'Fijar en favoritos'}" aria-pressed="${pinned}">${pinStateIconSvg()}</button>
-    </div>`;
+    const badge = (t === 'recordatorios' && overdue) ? `<span class="menu-badge">${overdue}</span>` : '';
+    return `<button type="button" class="menu-tile${t === active ? ' on' : ''}" data-go="${t}">${navIconSvg(t)}<span>${meta.label}</span>${badge}</button>`;
   };
-  list.innerHTML = MENU_GROUPS.map(group => `<div class="menu-section">${group.label}</div>${group.items.map(itemHtml).join('')}`).join('');
-  list.querySelectorAll('.menu-item[data-go]').forEach(el => {
-    el.onclick = (e) => {
-      if (e.target.closest('.pin-btn')) return;
-      goPanel(el.dataset.go);
-      closeMenu();
-    };
-    el.onkeydown = (e) => {
-      if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.pin-btn')) {
-        e.preventDefault();
-        goPanel(el.dataset.go);
-        closeMenu();
-      }
-    };
-  });
-  list.querySelectorAll('.pin-btn').forEach(btn => {
-    btn.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      togglePin(btn.dataset.pin);
-    };
-  });
+  list.innerHTML = MENU_GROUPS.map(group => `<div class="menu-section">${group.label}</div><div class="menu-grid">${group.items.map(tile).join('')}</div>`).join('');
 }
 
+/* Barra inferior fija: Inicio, Movimientos, Registrar, Estadísticas, Cuentas. Las pantallas que no
+   están en la barra iluminan la más cercana (las de "Contigo" y consulta, Estadísticas; las de dinero, Cuentas). */
+const BAR_ITEMS = ['inicio','historial','hormiga','estadisticas','cuentas'];
+const BAR_PARENT = { cartas:'estadisticas', decisiones:'estadisticas', pactos:'estadisticas', config:'estadisticas', categorias:'estadisticas' };
+const BAR_ICON_PLUS = '<svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>';
 function renderPinned(){
   const bar=$('pinnedBar'); if(!bar)return;
-  let pins=Array.from(new Set(state.pinned||[])).filter(t=>NAV_META[t]);
-  if(!pins.length)pins=['inicio','historial','hormiga','estadisticas','cuentas'];
-  state.pinned=pins;
   const active=state.activePanel||'hormiga';
+  const lit=BAR_ITEMS.includes(active)?active:(BAR_PARENT[active]||'cuentas');
   bar.classList.add('has-pins');
   document.querySelector('.app')?.classList.add('has-bottom-nav');
-  bar.innerHTML=pins.map(t=>{
-    const meta=NAV_META[t]||{label:t};
-    return `<button type="button" class="pinned-chip ${t===active?'active-pin':''}" data-go="${t}" title="${meta.label}" aria-label="${meta.label}"><span class="pin-ico">${navIconSvg(t)}</span><span class="pin-label">${meta.label}</span></button>`;
+  bar.innerHTML=BAR_ITEMS.map(t=>{
+    const label=(NAV_META[t]||{label:t}).label;
+    const icon=t==='hormiga'?BAR_ICON_PLUS:navIconSvg(t);
+    return `<button type="button" class="pinned-chip ${t===lit?'active-pin':''}" data-go="${t}" title="${label}" aria-label="${label}"><span class="pin-ico">${icon}</span><span class="pin-label">${label}</span></button>`;
   }).join('');
-  
 }
 
 function setupMenuSwipe() {
@@ -1602,7 +1561,7 @@ function addressLabel(){
 function applyPronounUI(){
   const p = state.pronoun || 'el';
   if ($('welcomeTitle')) {
-    $('welcomeTitle').textContent = (p==='ella'?'Bienvenida':'Bienvenido') + ' a Abaco';
+    $('welcomeTitle').textContent = (p==='ella'?'Bienvenida':'Bienvenido') + ' a Ábaco';
   }
   const motto = $('balanceMotto');
   if (motto && /Bienvenid/i.test(motto.textContent||'')) {
@@ -2291,7 +2250,7 @@ ensureFinancialCore();
 function openMenu(){try{closeCalc();}catch(e){console.warn('No se pudo cerrar calculadora',e)}const menu=$('menuPage'),ov=$('menuOverlay');if(menu)menu.classList.add('open');if(ov){ov.classList.add('open');ov.style.pointerEvents='auto';}document.querySelector('.app')?.classList.add('menu-open');try{renderMenu();}catch(e){console.warn('No se pudo renderizar menú',e)}}
 function closeMenu(){const menu=$('menuPage'),ov=$('menuOverlay');if(menu){menu.classList.remove('open');menu.style.transform='';menu.style.transition='';}if(ov){ov.classList.remove('open');ov.style.transform='';ov.style.transition='';ov.style.opacity='';ov.style.pointerEvents='';}document.querySelector('.app')?.classList.remove('menu-open');}
 function toggleMenu(){if($('menuPage')?.classList.contains('open'))closeMenu();else openMenu();}
-function goPanel(name){closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();updateSwipePreview();if(LS('swipe_hint_closed')!=='1')$('swipeCard')?.classList.add('hint');},150);}
+function goPanel(name){closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}try{window.AbacoShell&&AbacoShell.onPanel(name);}catch(e){console.warn('Estructura no actualizada',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();updateSwipePreview();if(LS('swipe_hint_closed')!=='1')$('swipeCard')?.classList.add('hint');},150);}
 
 function renderWalletQuiz(){const body=$('walletQuizBody'),prog=$('walletQuizProgress');if(!body)return;const q=WALLET_QUIZ[walletQuizStep];if(prog)prog.textContent=`${walletQuizStep+1} de ${WALLET_QUIZ.length}`;let html=`<div class="wallet-quiz-title">${q.title}</div><div class="wallet-quiz-copy">${q.copy}</div>`;if(q.kind==='accounts')html+=`<div class="wallet-quiz-fields"><input id="quizAccountName" type="text" placeholder="Nombre (ej. BBVA, efectivo)"><div class="row"><select id="quizAccountType"><option value="débito">Débito</option><option value="crédito">Crédito</option><option value="efectivo">Efectivo</option></select><input id="quizAccountBalance" type="number" inputmode="decimal" placeholder="Saldo / límite $"></div><button type="button" class="btn" id="quizAddAccount" data-quiz="add-account">＋ Agregar a mi billetera</button><div class="wallet-entity-note" id="quizAccountList">${state.accounts.map(a=>`${esc(a.name)} · ${esc(a.type)}`).join(' · ')||'Aún no agregas cuentas'}</div></div>`;if(q.kind==='subscriptions')html+=`<div class="wallet-quiz-fields"><input id="quizSubName" type="text" placeholder="Ej. Netflix"><div class="row"><input id="quizSubAmount" type="number" inputmode="decimal" placeholder="Monto $"><select id="quizSubRange"><option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="semanal">Semanal</option></select></div><button type="button" class="btn" id="quizAddSub" data-quiz="add-sub">＋ Agregar suscripción</button><div class="wallet-entity-note" id="quizSubList">${state.subscriptions.map(a=>`${esc(a.name)} · ${money(a.amount)}`).join(' · ')||'Aún no agregas suscripciones'}</div></div>`;if(q.kind==='debts'){const cards=state.cards.filter(c=>financialType(c.type)==='credito');html+=`<div class="wallet-quiz-fields"><select id="quizDebtKind"><option value="loan">Préstamo / crédito</option><option value="msi">Compra a meses</option></select><select id="quizDebtCard"><option value="">${cards.length?'Tarjeta para MSI':'Primero agrega una tarjeta de crédito'}</option>${cards.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select><input id="quizDebtName" type="text" placeholder="Nombre de la deuda o compra"><div class="row"><input id="quizDebtAmount" type="number" inputmode="decimal" placeholder="Monto pendiente $"><input id="quizDebtMonths" type="number" min="2" placeholder="Meses"></div><div class="field"><label class="note">Fecha de compra / inicio</label><input id="quizDebtDate" type="date" value="${todayInputValue()}"></div><button type="button" class="btn" id="quizAddDebt" data-quiz="add-debt">＋ Agregar deuda</button><div class="wallet-entity-note" id="quizDebtList">${[...state.loans.map(a=>a.name),...state.msiPlans.map(a=>a.concept)].map(esc).join(' · ')||'Aún no agregas deudas'}</div></div>`;}body.innerHTML=html;
 }

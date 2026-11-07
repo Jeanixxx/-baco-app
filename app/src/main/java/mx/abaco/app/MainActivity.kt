@@ -31,6 +31,9 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private var pendingFileCallback: ValueCallback<Array<Uri>>? = null
+    private var pageReady = false
+    /** Pantalla que se pidió abrir desde la notificación rápida, pendiente hasta que cargue la página. */
+    private var pendingPanel: String? = null
 
     private val backupPicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         pendingFileCallback?.onReceiveValue(uri?.let { arrayOf(it) })
@@ -38,17 +41,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (!granted) Toast.makeText(this, "Activa las notificaciones para recibir recordatorios", Toast.LENGTH_LONG).show()
+        if (granted) QuickExpense.show(this)
+        else Toast.makeText(this, "Activa las notificaciones para recibir recordatorios y anotar gastos desde la barra", Toast.LENGTH_LONG).show()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setSystemBarColor("#EAEFF5")
+        setSystemBarColor("#9FD3F0")
         ReminderScheduler.createNotificationChannel(this)
+        QuickExpense.createChannel(this)
+        pendingPanel = intent?.getStringExtra(QuickExpense.EXTRA_OPEN)
 
         webView = WebView(this).apply {
-            setBackgroundColor(Color.parseColor("#EAEFF5"))
+            setBackgroundColor(Color.parseColor("#CFE8F5"))
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.allowFileAccess = true
@@ -61,6 +67,12 @@ class MainActivity : AppCompatActivity() {
             settings.displayZoomControls = false
             addJavascriptInterface(AndroidBridge(), "AndroidBridge")
             webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    pageReady = true
+                    deliverPendingPanel()
+                    syncQuickExpenses()
+                }
+
                 override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                     val uri = request?.url ?: return false
                     if (uri.scheme == "http" || uri.scheme == "https") {
@@ -107,6 +119,40 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
             webView.loadUrl("file:///android_asset/index.html")
         }
+        startQuickExpense()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(QuickExpense.EXTRA_OPEN)?.let { pendingPanel = it }
+        deliverPendingPanel()
+    }
+
+    /** Publica la notificación rápida. En Android 13+ pide el permiso una sola vez. */
+    private fun startQuickExpense() {
+        if (!QuickExpense.isEnabled(this)) return
+        val needsPermission = Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        if (!needsPermission) { QuickExpense.show(this); return }
+        val prefs = getSharedPreferences("abaco_android", MODE_PRIVATE)
+        if (!prefs.getBoolean("notification_permission_asked", false)) {
+            prefs.edit().putBoolean("notification_permission_asked", true).apply()
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
+    private fun deliverPendingPanel() {
+        val panel = pendingPanel ?: return
+        if (!pageReady || !::webView.isInitialized) return
+        pendingPanel = null
+        val safe = panel.replace(Regex("[^a-z]"), "")
+        webView.evaluateJavascript("try { window.AbacoQuick && AbacoQuick.open('$safe'); } catch(e) {}", null)
+    }
+
+    private fun syncQuickExpenses() {
+        if (!pageReady || !::webView.isInitialized) return
+        webView.evaluateJavascript("try { window.AbacoQuick && AbacoQuick.sync(); } catch(e) {}", null)
     }
 
     override fun onPause() {
@@ -122,6 +168,7 @@ class MainActivity : AppCompatActivity() {
         if (::webView.isInitialized) {
             webView.onResume()
             webView.evaluateJavascript("try { checkReminders(); } catch(e) {}", null)
+            syncQuickExpenses()
         }
     }
 
@@ -156,6 +203,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private inner class AndroidBridge {
+        /* ---- notificación rápida para anotar gastos ---- */
+        @JavascriptInterface
+        fun quickExpenseEnabled(): Boolean = QuickExpense.isEnabled(this@MainActivity)
+
+        @JavascriptInterface
+        fun setQuickExpenseEnabled(enabled: Boolean) {
+            runOnUiThread {
+                QuickExpense.setEnabled(this@MainActivity, enabled)
+                if (enabled) requestNotificationPermissionFromBridge()
+            }
+        }
+
+        @JavascriptInterface
+        fun pendingQuickExpenses(): String = QuickExpense.pending(this@MainActivity)
+
+        @JavascriptInterface
+        fun confirmQuickExpenses(idsJson: String, message: String?) {
+            QuickExpense.confirm(this@MainActivity, idsJson, message?.takeIf { it.isNotBlank() })
+        }
+
         @JavascriptInterface
         fun requestNotificationPermission() {
             runOnUiThread { requestNotificationPermissionFromBridge() }

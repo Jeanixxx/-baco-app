@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#E8EEF5" id="metaThemeColor">
+<meta name="theme-color" content="#9FD3F0" id="metaThemeColor">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Abaco Gestor de Finanzas</title>
@@ -24,7 +24,8 @@
     <div class="menu-list" id="menuList"></div>
     <div class="menu-footer">
       <div class="menu-section" style="margin-top:0">Preferencias</div>
-      <div class="menu-item" id="btnThemeMenu"><span class="ico">◐</span><span class="menu-item-label">Tema</span></div>
+      <div class="menu-item" id="btnHelpMenu"><span class="ico">?</span><span class="menu-item-label">Ayuda</span></div>
+      <div class="menu-item" id="btnThemeMenu"><span class="ico">◐</span><span class="menu-item-label">Cielo</span></div>
       <div class="menu-item" id="btnPronounMenu"><span class="ico">Aa</span><span class="menu-item-label">Pronombres</span></div>
       <div class="menu-item" id="btnClearMine"><span class="ico">−</span><span class="menu-item-label">Borrar movimientos</span></div>
       <div class="menu-item" id="btnClearAll"><span class="ico">×</span><span class="menu-item-label">Borrar todos los datos</span></div>
@@ -52,30 +53,30 @@
   <div class="calc-grid" id="calcGrid"></div>
 </div>
 
-<header>
-  <div class="header-top">
-    <div class="header-left">
-      <div class="avatar" id="avatar">?</div>
-      <div>
-        <div class="header-name" id="headerName">Abaco</div>
-        <div class="header-sub" id="headerSub">Sin registrar</div>
-      </div>
+<div class="content" id="appContent">
+<header id="topbar">
+  <div class="tb">
+    <div class="tb-text">
+      <div class="tb-sub" id="tbSub"></div>
+      <div class="tb-title" id="tbTitle">Ábaco</div>
     </div>
-    <div class="header-actions">
-      <span class="pending-count hidden" id="pendingBadge">0</span>
-      <button class="icon-btn" id="btnCalcHeader" type="button" aria-label="Calculadora" title="Calculadora">123</button>
-      <button class="icon-btn" id="btnHelpHeader" type="button" aria-label="Ayuda" title="Ayuda de esta sección">?</button>
-      <button class="icon-btn" id="btnMenuHeader" type="button" aria-label="Abrir menú" title="Menú">☰</button>
+    <div class="tb-actions">
+      <span class="tb-chip hidden" id="tbChip"></span>
+      <button class="tb-btn" id="btnCalcHeader" type="button" aria-label="Calculadora" title="Calculadora">123</button>
+      <button class="tb-btn" id="btnMenuHeader" type="button" aria-label="Abrir menú" title="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
     </div>
   </div>
-  <div class="header-phrase" id="headerPhrase" aria-live="polite"></div>
+  <!-- Piezas de la cabecera anterior que el código todavía actualiza; no se muestran. -->
+  <div class="hidden" aria-hidden="true">
+    <div id="avatar">?</div><div id="headerName">Abaco</div><div id="headerSub">Sin registrar</div>
+    <span id="pendingBadge">0</span><button id="btnHelpHeader" type="button" tabindex="-1">?</button>
+    <div id="headerPhrase"></div>
+  </div>
 </header>
-
-<div class="content">
   <div id="onboarding">
     <div class="onboard-card" id="step-register">
-      <div class="emoji">👋</div>
-      <h2 id="welcomeTitle">Bienvenido a Abaco</h2>
+      <div class="brand-mark" aria-hidden="true">Á</div>
+      <h2 id="welcomeTitle">Bienvenido a Ábaco</h2>
       <p id="welcomeSub">Un espacio claro para entender y cuidar tu dinero.</p>
       <div class="mode-choice" aria-label="Modo de uso">
         <button type="button" id="modePersonal" class="active">👤 Personal</button>
@@ -92,7 +93,7 @@
       <button class="btn btn-primary" id="btnRegister" type="button">Continuar</button>
     </div>
     <div class="onboard-card hidden" id="step-wallet">
-      <div class="emoji">🧾</div>
+      <div class="brand-mark small" aria-hidden="true">Á</div>
       <h2>Antes de empezar</h2>
       <p>Agrega tus cuentas, pagos y deudas ahora o después.</p>
       <div class="wallet-quiz-progress"><span id="walletQuizProgress">1 de 3</span></div>
@@ -108,59 +109,50 @@
 
     <!-- RÁPIDOS + SWIPE -->
     <div class="panel active" id="panel-hormiga">
-      <div class="hormiga-hero">
-        <h2>Anotar gasto</h2>
-      </div>
-
-      <div class="swipe-hint" id="swipeHint">
-        <div style="flex:1">
-          Desliza a la derecha para guardar y a la izquierda para descartar.
-        </div>
-        <button type="button" id="btnCloseHint">×</button>
-      </div>
-
-      <div class="form-card">
-        <div class="field"><input type="number" id="hormAmount" placeholder="$ Monto" inputmode="decimal"></div>
-        <div class="quick-amount" id="quickAmounts">
-          <button type="button" data-a="10">$10</button><button type="button" data-a="20">$20</button><button type="button" data-a="50">$50</button>
-          <button type="button" data-a="100">$100</button><button type="button" data-a="200">$200</button><button type="button" data-a="500">$500</button>
-        </div>
-        <div class="x-equiv hidden" id="hormEquiv"></div>
-        <div class="field"><input type="text" id="hormDesc" placeholder="¿Qué fue? (opcional)"></div>
-        <div class="chips" id="hormChips"></div>
-        <div class="chips" id="hormImpulseChips"><div class="chip" id="hormImpulse" role="button" aria-pressed="false">Fue por impulso</div></div>
-        <div class="field x-why hidden" id="hormWhyWrap"><input type="text" id="hormWhy" placeholder="Anota por qué, para revisarlo después (opcional)"></div>
-        <div class="field mt-6">
-          <label class="note">Sale de (cuenta)</label>
-          <select id="hormFromAccount"></select>
-        </div>
-      </div>
-
+      <!-- La tarjeta grande muestra el gasto y se desliza: derecha guarda, izquierda descarta. -->
       <div class="swipe-zone" id="swipeZone">
-        <div class="swipe-card" id="swipeCard">
+        <div class="swipe-card reg-hero" id="swipeCard">
           <div class="swipe-stamp right" id="stampOk">GUARDAR</div>
           <div class="swipe-stamp left" id="stampNo">NO</div>
+          <div class="reg-label">Cuánto fue</div>
           <div class="sc-amount" id="scAmount">$0</div>
-          <div class="sc-desc" id="scDesc">Escribe un monto arriba</div>
+          <div class="x-equiv hidden" id="hormEquiv"></div>
+          <div class="sc-desc" id="scDesc">Escribe un monto</div>
           <div class="sc-cat" id="scCat"></div>
           <div class="sc-badge personal" id="scBadge">Personal</div>
         </div>
       </div>
-      <div class="swipe-actions">
-        <button type="button" class="no" id="btnSwipeNo">✕</button>
-        <button type="button" class="ok" id="btnSwipeOk">✓</button>
+      <div class="quick-amount" id="quickAmounts">
+        <button type="button" data-a="10">$10</button><button type="button" data-a="20">$20</button><button type="button" data-a="50">$50</button>
+        <button type="button" data-a="100">$100</button><button type="button" data-a="200">$200</button><button type="button" data-a="500">$500</button>
       </div>
+      <div class="form-card reg-form">
+        <div class="field"><label class="x-label" for="hormAmount">Monto</label><input type="number" id="hormAmount" placeholder="$0" inputmode="decimal"></div>
+        <div class="field"><label class="x-label" for="hormDesc">¿Qué fue?</label><input type="text" id="hormDesc" placeholder="Antojo, súper, pasaje…"></div>
+        <div class="chips" id="hormChips"></div>
+        <div class="reg-impulse">
+          <div><div class="xc-title">Fue por impulso</div><div class="xc-sub">Te doy una pausa antes de guardar</div></div>
+          <div class="chip x-switch" id="hormImpulse" role="switch" aria-pressed="false" aria-label="Fue por impulso"></div>
+        </div>
+        <div class="field x-why hidden" id="hormWhyWrap"><label class="x-label" for="hormWhy">¿Por qué? (opcional)</label><input type="text" id="hormWhy" placeholder="Para revisarlo después"></div>
+        <div class="field">
+          <label class="x-label" for="hormFromAccount">Sale de</label>
+          <select id="hormFromAccount"></select>
+        </div>
+      </div>
+      <div class="swipe-actions">
+        <button type="button" class="no" id="btnSwipeNo" aria-label="Descartar">✕</button>
+        <button type="button" class="ok" id="btnSwipeOk" aria-label="Guardar">✓</button>
+      </div>
+      <div class="reg-hint">← descartar · guardar →</div>
+      <div class="swipe-hint hidden" id="swipeHint"><button type="button" id="btnCloseHint">×</button></div>
 
-      <div class="section-title">Últimos · mantén presionado · reacciona</div>
+      <div class="section-title">Últimos</div>
       <div id="hormigaList"></div>
     </div>
 
     <!-- INICIO -->
     <div class="panel" id="panel-inicio">
-      <div class="home-greet">
-        <div><div class="hg-hello" id="hgHello">Hola</div><div class="hg-title">Inicio</div></div>
-        <div class="hg-chip" id="hgChip">—</div>
-      </div>
       <div id="homeNotices"></div>
       <div class="account-view-chips" id="accountViewChips"></div>
       <div class="balance-card">
@@ -198,10 +190,10 @@
         <div class="w-big" id="wLine">Sigue así</div>
         <div class="w-emoji">💚</div>
       </div>
-<div class="section-title">Lectura rápida</div>
-      <div class="profiles compact-insights" id="profilesBox"></div>
+<div class="hidden"><div class="section-title">Lectura rápida</div>
+      <div class="profiles compact-insights" id="profilesBox"></div></div>
 
-      <button type="button" class="chart-cube" id="btnToggleCharts" data-home="charts" aria-label="Abrir panel de gráficas">
+      <button type="button" class="chart-cube hidden" id="btnToggleCharts" data-home="charts" aria-label="Abrir panel de gráficas">
         <span class="chart-cube-icon">📊</span><span><b>Mis gráficas</b><small>Salud y distribución de mi gasto</small></span><span class="chart-cube-arrow">↗</span>
       </button>
       <div class="charts-modal-backdrop hidden" id="chartsModalBackdrop" data-home="backdrop"></div>
@@ -234,8 +226,8 @@
       </div>
       <div class="section-title">Movimientos de hoy</div>
       <div id="todayList"></div>
-      <div class="section-title">Últimos movimientos</div>
-      <div id="recentList"></div>
+      <div class="hidden"><div class="section-title">Últimos movimientos</div>
+      <div id="recentList"></div></div>
     </div>
 
     <!-- COMPRAS -->
@@ -826,6 +818,8 @@
 <script src="js/app.js"></script>
 <script src="js/abaco-simulator-ui.js"></script>
 <script src="js/abaco-delegate.js"></script>
+<script src="js/abaco-shell.js"></script>
+<script src="js/abaco-quick.js"></script>
 <script src="js/abaco-extras-ui.js"></script>
 <script src="js/security.js"></script>
 </body>

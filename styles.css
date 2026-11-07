@@ -1520,15 +1520,6 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
 .panel-name, .section-title { text-shadow: 0 1px 8px rgba(255, 255, 255, .25); }
 [data-theme="dark"] .panel-name, [data-theme="dark"] .section-title { text-shadow: 0 1px 8px rgba(0, 0, 0, .4); }
 
-/* ===== Inicio: saludo y avisos ===== */
-.home-greet { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin: 2px 2px 12px; }
-.hg-hello { font-size: 14px; color: var(--muted); }
-.hg-title { font-size: 30px; font-weight: 700; letter-spacing: -.6px; line-height: 1.1; }
-.hg-chip {
-  font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 999px; white-space: nowrap;
-  background: var(--glass-soft); border: 1px solid var(--glass-edge);
-  -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
-}
 .x-notice {
   display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 10px; border-radius: 20px;
   background: var(--glass); border: 1px solid var(--glass-edge);
@@ -1592,9 +1583,6 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
 .x-pause .xp-actions .btn { flex: 1; }
 
 /* ===== Piezas de las pantallas nuevas ===== */
-.x-head { margin: 2px 2px 14px; }
-.x-head .xh-sub { font-size: 14px; color: var(--muted); }
-.x-head .xh-title { font-size: 30px; font-weight: 700; letter-spacing: -.6px; line-height: 1.1; }
 .x-card {
   background: var(--glass); border: 1px solid var(--glass-edge); border-radius: 22px; padding: 14px 16px; margin-bottom: 10px;
   -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
@@ -1646,3 +1634,218 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .8; }
 .x-letter p { font-family: Georgia, "Times New Roman", serif; font-size: 16px; line-height: 1.55; margin-top: 12px; }
 .x-letter .xl-sign { margin-top: 18px; font-family: Georgia, "Times New Roman", serif; font-size: 15px; color: #7A5E47; }
 .x-note { font-size: 12px; color: var(--muted); margin: 10px 6px 0; }
+
+/* ======================================================================
+   Rediseño del canvas: estructura, tipografía y componentes
+   (aprobado en el canvas "Ábaco · Rediseño completo en cristal líquido")
+   ====================================================================== */
+@font-face { font-family: Inter; src: url(fonts/inter-400.woff2) format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: Inter; src: url(fonts/inter-500.woff2) format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: Inter; src: url(fonts/inter-600.woff2) format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: Inter; src: url(fonts/inter-700.woff2) format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+body, button, input, select, textarea { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+
+:root, [data-theme="light"] { --glass: rgba(255, 255, 255, .36); --accent: #12704F; --accent-grad: #12704F; --card-shadow: inset 0 1px 0 var(--glass-hi), 0 8px 22px rgba(30, 40, 70, .12); }
+[data-theme="dark"] { --accent: #2A9A74; --accent-grad: #2A9A74; --card-shadow: inset 0 1px 0 var(--glass-hi), 0 8px 22px rgba(0, 0, 0, .3); }
+
+/* Área desplazable: márgenes del canvas. Sin will-change: las hojas fijas se anclan a la pantalla. */
+.content, .app.has-bottom-nav .content { padding: 0 16px calc(112px + var(--safe-bottom)); will-change: auto; }
+
+/* ----- Cabecera de título grande ----- */
+#topbar {
+  position: sticky; top: 0; z-index: 40; margin: 0 -16px 8px; padding: 18px 20px 10px;
+  background: transparent; border: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+  transition: padding .25s ease, background .25s ease;
+}
+#topbar .tb { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
+.tb-text { min-width: 0; }
+.tb-sub { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 20px; transition: max-height .25s ease, opacity .2s ease; }
+.tb-title { font-size: 32px; font-weight: 700; letter-spacing: -.6px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .25s ease; }
+.tb-actions { display: flex; gap: 6px; align-items: center; padding-bottom: 4px; flex-shrink: 0; }
+.tb-chip {
+  font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 999px; white-space: nowrap;
+  background: var(--glass-soft); border: 1px solid var(--glass-edge);
+  -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
+}
+.app .tb-btn, .menu-page .tb-btn {
+  width: 34px; height: 34px; min-height: 34px; padding: 0; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; letter-spacing: -.02em;
+  color: var(--text); background: var(--glass-soft); border: 1px solid var(--glass-edge); box-shadow: none;
+  -webkit-backdrop-filter: blur(18px) saturate(170%); backdrop-filter: blur(18px) saturate(170%);
+}
+.tb-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+#topbar.compact { padding: 8px 20px; background: var(--glass); border-bottom: 1px solid var(--glass-edge); -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%); }
+#topbar.compact .tb-sub { max-height: 0; opacity: 0; }
+#topbar.compact .tb-title { font-size: 20px; }
+.content:has(#onboarding:not(.hidden)) #topbar { display: none; }
+
+/* Títulos de la interfaz anterior: el título vive en la cabecera. */
+.panel-name, .op-title-card, .hormiga-hero, .budget-hero { display: none !important; }
+
+/* ----- Tarjetas, secciones y campos ----- */
+.app .card, .app .form-card, .app .upcoming-card, .app .wrapped, .app .budget-row, .app .kanban-card, .app .sub-cal-wrap, .app .personal-box {
+  border-radius: 22px; padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--card-shadow);
+}
+.app .balance-card { border-radius: 28px; padding: 16px 18px; box-shadow: var(--card-shadow); }
+.section-title { font-size: 12px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin: 18px 6px 8px; }
+.x-label, .field > label.note { display: block; font-size: 12px; color: var(--muted); margin: 0 0 5px; }
+.app input, .app select, .app textarea { border-radius: 14px; padding: 12px 14px; font-size: 16px; background: var(--glass-soft); border: 1px solid var(--glass-edge); color: var(--text); }
+.field { margin-bottom: 10px; }
+.app .stat { border-radius: 22px; padding: 14px; box-shadow: var(--card-shadow); text-align: left; }
+.app .stat .n { font-size: 19px; font-weight: 700; }
+.app .stat .l { font-size: 12px; color: var(--muted); }
+
+/* Listas agrupadas en una sola tarjeta de cristal con separadores */
+.app .item { margin: 0; border-radius: 0; border: none; border-bottom: 1px solid var(--glass-edge); box-shadow: none; padding: 12px 16px; }
+.app .item:first-child { border-top-left-radius: 22px; border-top-right-radius: 22px; }
+.app .item:last-child { border-bottom-left-radius: 22px; border-bottom-right-radius: 22px; border-bottom: none; margin-bottom: 10px; }
+
+/* Botón principal de cada pantalla: píldora verde con "＋" */
+.app .op-header { display: block; margin: 0 0 4px; }
+.app .op-add-btn {
+  width: 100%; min-height: 50px; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 18px; border: none; background: var(--accent); color: #fff; font-size: 15px; font-weight: 600; padding: 0 16px;
+  box-shadow: 0 8px 20px rgba(18, 112, 79, .28), inset 0 1px 0 rgba(255, 255, 255, .25);
+}
+.app .op-add-btn .plus { font-size: 20px; line-height: 1; }
+.app .op-add-btn .lbl { font-size: 15px; font-weight: 600; }
+.app .btn-primary { background: var(--accent); border-radius: 18px; min-height: 50px; font-size: 15px; box-shadow: 0 8px 20px rgba(18, 112, 79, .28), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.app .btn-ghost, .app .btn-outline, .app .btn-danger, .app .btn-charts { border-radius: 16px; }
+.app .btn-sm { border-radius: 12px; }
+.app .btn-charts { width: 100%; min-height: 46px; margin: 10px 0 0; background: var(--glass-soft); border: 1px solid var(--glass-edge); color: var(--text); font-weight: 600; }
+
+/* ----- Hojas inferiores (formularios) ----- */
+.app .form-card.sheet-open {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 130; margin: 0; max-height: 88vh; overflow-y: auto;
+  border-radius: 30px 30px 0 0; padding: 28px 18px calc(26px + var(--safe-bottom));
+  background: var(--glass-strong); border: 1px solid var(--glass-edge); border-bottom: none;
+  box-shadow: 0 -14px 40px rgba(0, 0, 0, .25);
+  -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+  animation: sheetUp .32s cubic-bezier(.22, 1, .36, 1);
+}
+.app .form-card.sheet-open::before { content: ''; position: absolute; top: 10px; left: 50%; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: var(--muted); opacity: .45; }
+.form-card.sheet-open .op-form-head h3, .form-card.sheet-open > h3 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+.sheet-scrim { position: fixed; inset: 0; z-index: 125; background: rgba(8, 12, 30, .38); opacity: 0; pointer-events: none; transition: opacity .25s ease; }
+.sheet-scrim.open { opacity: 1; pointer-events: auto; }
+.app.sheet-active #brujulaBtn, .app.sheet-active #brujulaCard { display: none; }
+.detail-sheet { border-radius: 30px 30px 0 0; padding-top: 28px; position: relative; }
+.detail-sheet::before { content: ''; position: absolute; top: 10px; left: 50%; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: var(--muted); opacity: .45; }
+.detail-sheet h3 { font-size: 20px; }
+
+/* ----- Menú en mosaico ----- */
+.menu-page { width: min(330px, 92%); padding-left: 16px; padding-right: 16px; }
+.menu-page-header { display: flex; justify-content: space-between; align-items: center; padding: 0 2px 2px; }
+.menu-page-header h2 { font-size: 28px; font-weight: 700; letter-spacing: -.5px; }
+.menu-page-header p { display: none; }
+.menu-section { font-size: 13px; font-weight: 600; color: var(--muted); margin: 14px 2px 0; text-transform: none; letter-spacing: 0; }
+.menu-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.app .menu-tile {
+  position: relative; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 2px 8px;
+  border-radius: 18px; background: var(--glass-soft); border: 1px solid var(--glass-edge); color: var(--text);
+  font-size: 10px; font-weight: 600; line-height: 1.15; text-align: center; box-shadow: none;
+}
+.app .menu-tile .nav-svg { width: 22px; height: 22px; stroke-width: 1.8; }
+.app .menu-tile.on { background: var(--glass-hi); color: var(--green); }
+.app .menu-tile .menu-badge { position: absolute; top: 4px; right: 6px; }
+.menu-footer { margin-top: 16px; }
+.menu-footer .menu-section { margin-top: 12px; }
+.menu-footer .menu-item {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; margin: 6px 4px 0 0; min-height: 0;
+  border-radius: 14px; background: var(--glass-soft); border: 1px solid var(--glass-edge); box-shadow: none; font-size: 12px; font-weight: 600;
+}
+.menu-footer .menu-item .ico { width: auto; height: auto; font-size: 12px; background: none; box-shadow: none; }
+
+/* ----- Barra inferior del canvas ----- */
+.pinned-bar { height: auto; padding: 6px 6px; }
+.app .pinned-chip { max-width: none; padding: 7px 4px 6px; border-radius: 18px; gap: 2px; background: transparent; border: none; color: var(--text); }
+.app .pinned-chip .nav-svg { width: 23px; height: 23px; stroke-width: 1.8; }
+.app .pinned-chip .pin-ico { height: 23px; }
+.app .pinned-chip .pin-label { font-size: 10px; font-weight: 500; }
+.app .pinned-chip.active-pin { color: var(--green); background: var(--glass-hi); box-shadow: 0 3px 10px var(--glass-shadow); transform: none; }
+.app .pinned-chip.active-pin .pin-label { font-weight: 700; }
+
+/* ----- Registrar ----- */
+.swipe-zone { height: auto; min-height: 0; padding: 0; margin: 0 0 10px; perspective: none; }
+.app .swipe-card.reg-hero {
+  position: relative; width: 100%; height: auto; min-height: 0; text-align: left; padding: 16px 20px 18px; border-radius: 28px;
+  background: var(--glass-hi); border: 1px solid var(--glass-edge); box-shadow: var(--card-shadow); display: block;
+}
+.reg-label { font-size: 13px; color: var(--muted); }
+.reg-hero .sc-amount { font-size: 50px; font-weight: 700; letter-spacing: -1.2px; color: var(--text); font-variant-numeric: tabular-nums; margin-top: 2px; line-height: 1.1; }
+.reg-hero .sc-desc { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.reg-hero .sc-cat { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.reg-hero .sc-badge { display: none; }
+.reg-hero .x-equiv { background: none; border: none; padding: 0; margin: 6px 0 0; font-size: 14px; font-weight: 600; }
+.reg-hero .x-equiv small { display: inline; margin-left: 4px; font-weight: 400; }
+.app .quick-amount { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 10px; }
+.app .quick-amount button { flex: 0 0 auto; min-height: 0; padding: 6px 11px; font-size: 12px; font-weight: 500; border-radius: 999px; }
+.reg-impulse { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 14px 0 12px; }
+.reg-impulse .xc-title { font-size: 14px; font-weight: 600; }
+.reg-impulse .xc-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.app .chip.x-switch { width: 46px; height: 28px; min-height: 28px; padding: 0; border-radius: 99px; position: relative; flex-shrink: 0; background: var(--glass-soft); border: 1px solid var(--glass-edge); opacity: 1; }
+.app .chip.x-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .3); transition: transform .2s ease; opacity: 1; transform: none; bottom: auto; }
+.app .chip.x-switch.active { background: var(--accent); border-color: transparent; box-shadow: none; }
+.app .chip.x-switch.active::after { transform: translateX(18px); }
+.swipe-actions { display: flex; justify-content: center; gap: 22px; margin: 6px 0 0; }
+.app .swipe-actions button { width: 58px; height: 58px; min-height: 58px; padding: 0; border-radius: 50%; font-size: 22px; flex: 0 0 auto; }
+.app .swipe-actions button.ok { background: var(--accent); color: #fff; border: none; box-shadow: 0 8px 20px rgba(18, 112, 79, .3); }
+.app .swipe-actions button.no { color: var(--bad); }
+.reg-hint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+/* ----- Inicio ----- */
+.balance-card .sparkle, .wrapped .w-emoji, .month-info-cube .mic-icon { display: none; }
+.balance-card .balance-value { font-size: 36px; font-weight: 700; letter-spacing: -.8px; color: var(--text); }
+.balance-card .balance-motto { font-size: 13px; font-weight: 600; color: var(--green); }
+.balance-grid { gap: 10px; margin-top: 12px; }
+.app .balance-item { background: var(--glass-soft); border: 1px solid var(--glass-edge); border-radius: 18px; padding: 12px 14px; box-shadow: none; }
+.balance-item .lbl { font-size: 12px; }
+.balance-item .val { font-size: 19px; }
+.wrapped h3 { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 10px; }
+.wrapped .w-big { font-size: 13px; font-weight: 600; margin: 10px 0 0; }
+.month-info-cubes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.app .month-info-cube { aspect-ratio: auto; min-height: 0; padding: 10px 8px; border-radius: 16px; text-align: left; background: var(--glass-soft); border: 1px solid var(--glass-edge); box-shadow: none; color: var(--text); }
+.month-info-cube small { font-size: 11px; color: var(--muted); }
+.month-info-cube b { font-size: 15px; font-weight: 700; margin-top: 3px; }
+.upcoming-card h4 { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* ----- Bienvenida y asistente ----- */
+#onboarding { padding-top: 48px; }
+.brand-mark {
+  width: 76px; height: 76px; margin: 0 auto 16px; border-radius: 26px; display: flex; align-items: center; justify-content: center;
+  font-size: 34px; font-weight: 700; color: var(--green); background: var(--glass-hi); border: 1px solid var(--glass-edge);
+}
+.brand-mark.small { width: 56px; height: 56px; border-radius: 20px; font-size: 26px; }
+.app .onboard-card { border-radius: 28px; padding: 22px 18px; text-align: center; box-shadow: var(--card-shadow); }
+.onboard-card h2 { font-size: 28px; font-weight: 700; letter-spacing: -.6px; margin-bottom: 6px; }
+.onboard-card p { font-size: 14px; }
+
+/* ----- Calculadora ----- */
+.app .calc-display { font-size: 46px; font-weight: 600; letter-spacing: -1px; border-radius: 24px; background: var(--glass-hi); }
+.app .calc-grid button { min-height: 60px; font-size: 24px; font-weight: 500; border-radius: 20px; }
+.app .calc-grid button.op { background: var(--glass-hi); color: var(--green); }
+.app .calc-grid button.eq { background: var(--accent); color: #fff; border: none; }
+
+/* ----- Bloqueo ----- */
+.security-overlay { background: var(--sky-grad, var(--bg)); }
+.security-card { background: var(--glass-strong); border: 1px solid var(--glass-edge); border-radius: 28px; -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px); }
+
+/* Mosaicos de Estadísticas (Gráficas, Cartas, Decisiones, Pactos) */
+.x-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.app .x-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 0; padding: 12px 6px; border-radius: 20px;
+  background: var(--glass); border: 1px solid var(--glass-edge); color: var(--text); font-size: 12px; font-weight: 600; box-shadow: var(--card-shadow);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+}
+.app .x-tile .nav-svg { width: 22px; height: 22px; color: var(--green); stroke-width: 1.8; }
+
+/* Ajustes tras comparar con el canvas */
+.app .pinned-chip { min-width: 0; padding: 7px 0 6px; }
+.app .pinned-chip .pin-label { overflow: visible; text-overflow: clip; letter-spacing: -.1px; }
+.account-view-chips, .account-view-chips[class] { display: flex; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; gap: 6px; margin: 0 0 10px; scrollbar-width: none; }
+.account-view-chips::-webkit-scrollbar { display: none; }
+.app .account-view-chips .chip { flex: 0 0 auto; min-width: 0; min-height: 0; padding: 6px 12px; font-size: 12px; }
+.app.menu-open .pinned-bar, .app.menu-open #brujulaBtn, .app.menu-open #brujulaCard { display: none; }
+/* La entrada de cada pantalla es un fundido: un transform en el panel anclaría las hojas fijas al panel. */
+.panel.active.panel-enter { animation: panelFade .28s ease; }
+@keyframes panelFade { from { opacity: 0; } to { opacity: 1; } }
