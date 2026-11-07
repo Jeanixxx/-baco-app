@@ -387,3 +387,51 @@ test('tablero: Ver todas abre el listado de categorías', async () => {
   await page.waitForTimeout(200);
   assert.match(await page.evaluate(() => document.body.innerText), /Todas las categorías/);
 });
+
+/* ---------- asistente de bienvenida: botones por delegación ---------- */
+
+test('asistente: agregar una cuenta, avanzar y saltar, todo con clics', async () => {
+  await open();
+  await page.fill('#userName', 'Hugo');
+  await page.click('#btnRegister');
+  await page.waitForFunction(() => !!state.user_id);
+  await page.evaluate(() => startWalletQuiz());
+  await page.waitForTimeout(200);
+  assert.equal(await page.isVisible('#step-wallet'), true, 'el asistente se muestra');
+  assert.match(await page.textContent('#walletQuizProgress'), /^1 de/);
+
+  await page.fill('#quizAccountName', 'BBVA');
+  await page.fill('#quizAccountBalance', '2500');
+  await page.click('[data-quiz="add-account"]');
+  await page.waitForTimeout(200);
+  const bbva = await page.evaluate(() => (state.accounts || []).find((a) => a.name === 'BBVA'));
+  assert.ok(bbva, 'la cuenta se creó desde el asistente');
+  assert.equal(bbva.balance, 2500);
+
+  await page.click('[data-quiz="next"]');
+  await page.waitForTimeout(150);
+  assert.match(await page.textContent('#walletQuizProgress'), /^2 de/, 'Continuar avanza al paso siguiente');
+
+  await page.click('[data-quiz="skip"]');
+  await page.waitForTimeout(150);
+  assert.equal(await page.isVisible('#step-wallet'), false, 'Saltar cierra el asistente');
+});
+
+test('asistente: agregar una suscripción desde su paso con un clic', async () => {
+  await open();
+  await page.fill('#userName', 'Hugo');
+  await page.click('#btnRegister');
+  await page.waitForFunction(() => !!state.user_id);
+  await page.evaluate(() => startWalletQuiz());
+  await page.waitForTimeout(150);
+  await page.click('[data-quiz="next"]');   // paso 2
+  await page.waitForTimeout(150);
+  await page.fill('#quizSubName', 'Netflix');
+  await page.fill('#quizSubAmount', '199');
+  await page.click('[data-quiz="add-sub"]');
+  await page.waitForTimeout(200);
+  const subs = await page.evaluate(() => state.subscriptions || []);
+  assert.equal(subs.length, 1);
+  assert.equal(subs[0].name, 'Netflix');
+  assert.equal(subs[0].amount, 199);
+});

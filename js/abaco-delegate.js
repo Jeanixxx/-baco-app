@@ -28,6 +28,13 @@
     'data-cart-remove': (v) => removeCart(Number(v)),
     'data-go': (v) => { closeMenu(); goPanel(v); },
     'data-av': (v) => { state.accountView = v; LS_SET('account_view', state.accountView); save(); renderInicio(); },
+    'data-quiz': (v) => {
+      if (v === 'next') nextWalletQuiz();
+      else if (v === 'skip') finishWalletQuiz(true);
+      else if (v === 'add-account') window.quizAddAccount();
+      else if (v === 'add-sub') window.quizAddSub();
+      else if (v === 'add-debt') window.quizAddDebt();
+    },
     'data-home': (v, el, e) => {
       if (v === 'charts') toggleHomeCharts();
       else if (v === 'close') closeHomeCharts();

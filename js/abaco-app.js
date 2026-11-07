@@ -53,6 +53,18 @@
     }
   }
 
+  /* Como act(), pero no llama a updateUI: el asistente de bienvenida depende de esa función
+   * para decidir qué pantalla mostrar, así que no debe ejecutarse mientras el asistente está abierto. */
+  async function actQuiet(promise, { onOk, okMessage } = {}) {
+    const r = await promise;
+    if (!r.ok) { toast(r.error || 'No se pudo completar la operación'); return null; }
+    syncFinance();
+    ['renderAccounts', 'renderCards', 'renderInicio'].forEach((n) => { try { if (typeof window[n] === 'function') window[n](); } catch (e) { console.warn(n, e); } });
+    if (onOk) onOk(r.result);
+    if (okMessage) toast(okMessage);
+    return r.result;
+  }
+
   /* Ejecuta una operación del motor y refresca solo si se guardó. */
   async function act(promise, { onOk, okMessage } = {}) {
     const r = await promise;
@@ -464,7 +476,7 @@
     if (!name) { toast('Escribe un nombre'); return; }
     if (amount < 0) { toast('El monto no puede ser negativo'); return; }
     const op = /crédito|credito/i.test(type) ? data.createCard({ name, limit: amount }) : data.addAccount({ name, type, balance: amount });
-    await act(op, {
+    await actQuiet(op, {
       onOk() { clear('quizAccountName', 'quizAccountBalance'); renderWalletQuiz(); },
       okMessage: 'Cuenta añadida y conectada'
     });
@@ -477,7 +489,8 @@
     if (!name || amount <= 0) { toast('Completa nombre y monto'); return; }
     state.subscriptions = [...(state.subscriptions || []), { id: uid(), name, amount, range, date: todayInputValue(), active: true, user_id: state.user_id, created_at: Date.now() }];
     persistApp();
-    refreshUI();
+    syncFinance();
+    try { renderInicio(); renderSubscriptions(); } catch (e) { console.warn('render suscripciones', e); }
     clear('quizSubName', 'quizSubAmount');
     renderWalletQuiz();
     toast('Suscripción añadida');
@@ -494,7 +507,7 @@
     const op = kind === 'msi'
       ? data.msiPurchase({ cardId, concept: name, total: amount, months: Math.max(2, months), purchaseDate: date })
       : data.loan({ name, principal: amount, annualRate: 0, term: months, type: 'personal' });
-    await act(op, {
+    await actQuiet(op, {
       onOk() { clear('quizDebtName', 'quizDebtAmount', 'quizDebtMonths'); renderWalletQuiz(); },
       okMessage: kind === 'msi' ? 'Compra a meses registrada' : 'Deuda registrada'
     });
