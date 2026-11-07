@@ -215,25 +215,25 @@
 
     /* ---------- movimientos cotidianos ---------- */
 
-    expense({ amount, description = 'Gasto', category = 'general', accountId } = {}) {
+    expense({ amount, description = 'Gasto', category = 'general', accountId, source = 'gasto', at = null } = {}) {
       const c = toCents(amount);
       const acc = this._liquidOrFirst(accountId);
       return this.post('gasto', description, [
         { account: acc.id, amount: -c },
         { account: EXT.EXPENSE, amount: c }
-      ], { category });
+      ], { category, source }, at);
     }
 
-    income({ amount, description = 'Ingreso', type = 'otro', accountId } = {}) {
+    income({ amount, description = 'Ingreso', type = 'otro', accountId, at = null } = {}) {
       const c = toCents(amount);
       const acc = this._liquidOrFirst(accountId);
       return this.post('ingreso', description, [
         { account: acc.id, amount: c },
         { account: EXT.INCOME, amount: -c }
-      ], { incomeType: type });
+      ], { incomeType: type }, at);
     }
 
-    transfer({ fromId, toId, amount } = {}) {
+    transfer({ fromId, toId, amount, at = null } = {}) {
       const c = toCents(amount);
       const from = this._account(fromId);
       const to = this._account(toId);
@@ -242,7 +242,7 @@
       return this.post('transferencia', `Transferencia: ${from.name} → ${to.name}`, [
         { account: from.id, amount: -c },
         { account: to.id, amount: c }
-      ]);
+      ], {}, at);
     }
 
     /* ---------- cuentas por cobrar (prestar dinero) ---------- */
@@ -457,6 +457,53 @@
       return true;
     }
 
+    /* ---------- edición (sin mover dinero) ---------- */
+
+    renameAccount(accountId, name) {
+      const acc = this._account(accountId);
+      const label = String(name || '').trim();
+      if (!label) throw new CoreError('INVALID_NAME', 'Escribe el nombre de la cuenta');
+      acc.name = label;
+      return acc;
+    }
+
+    updateCard({ cardId, name, limit } = {}) {
+      const card = this._card(cardId);
+      if (name !== undefined) {
+        const label = String(name || '').trim();
+        if (!label) throw new CoreError('INVALID_NAME', 'Escribe el nombre de la tarjeta');
+        card.name = label;
+        this.accounts.get(card.accountId).name = label;
+      }
+      if (limit !== undefined) card.limitC = toCents(limit, { allowZero: true });
+      return card;
+    }
+
+    /* Borra un registro (cobro, ahorro, inversión, préstamo) y deshace sus movimientos.
+     * El dinero vuelve a la cuenta de origen; el ledger conserva la historia con reversas. */
+    deleteRecord(refId) {
+      const maps = [this.debtors, this.goals, this.investments, this.loans];
+      const owner = maps.find((m) => m.has(refId));
+      if (!owner) throw new CoreError('NOT_FOUND', 'Registro no encontrado');
+      const live = this.entries.filter((e) => !e.reversed && e.meta && (
+        e.meta.debtorId === refId || e.meta.goalId === refId || e.meta.investmentId === refId || e.meta.loanId === refId));
+      const reversals = [];
+      for (const e of live) {
+        // Un pago de préstamo ya no se deshace solo: se borra el préstamo completo con sus pagos.
+        reversals.push(this.reverse(e.id, 'Eliminado: ' + e.description));
+      }
+      owner.delete(refId);
+      const internal = this.accounts.get(refId);
+      if (internal) internal.archived = true;
+      return { reversals: reversals.length };
+    }
+
+    deleteBudget(budgetId) {
+      if (!this.budgets.has(budgetId)) throw new CoreError('NOT_FOUND', 'Concepto no encontrado');
+      this.budgets.delete(budgetId);
+      return true;
+    }
+
     /* ---------- reversas y presupuestos ---------- */
 
     /* Deshace un movimiento agregando otro con importes opuestos. */
@@ -471,13 +518,13 @@
       return entry;
     }
 
-    setBudget({ category, amount } = {}) {
+    setBudget({ category, amount, description = '' } = {}) {
       const name = String(category || '').trim();
       if (!name) throw new CoreError('INVALID_NAME', 'Elige una categoría');
       const existing = [...this.budgets.values()].find((b) => b.category === name);
       const amountC = toCents(amount, { allowZero: true });
       const id = existing ? existing.id : this.uid();
-      this.budgets.set(id, { id, category: name, amountC });
+      this.budgets.set(id, { id, category: name, amountC, description: String(description || '') });
       return this.budgets.get(id);
     }
 
@@ -572,7 +619,7 @@
 
     /* ---------- internos ---------- */
 
-    post(type, description, postings, meta = {}) {
+    post(type, description, postings, meta = {}, at = null) {
       if (postings.length < 2) throw new CoreError('INVALID_ENTRY', 'Un movimiento necesita al menos dos líneas');
       let sum = 0;
       const delta = new Map();
@@ -594,7 +641,7 @@
         id: this.uid(),
         type,
         description,
-        at: this.now(),
+        at: at == null ? this.now() : Number(at),
         postings: postings.map((p) => ({ account: p.account, amount: p.amount })),
         meta: { ...meta },
         reversed: false

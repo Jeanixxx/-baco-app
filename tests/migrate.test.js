@@ -129,8 +129,47 @@ test('un saldo negativo en una cuenta líquida se avisa y se migra como 0', () =
   assert.equal(r.report.verify.ok, true);
 });
 
-test('sin datos antiguos la migración solo crea las cuentas por defecto', () => {
+test('migrar sin cuentas no crea cuentas por defecto: quien migra conserva exactamente lo que tenía', () => {
   const r = migrateLegacy({}, { Ledger, now: clock });
-  assert.deepEqual(r.ledger.listAccounts().map((a) => a.name).sort(), ['Débito', 'Efectivo']);
+  assert.equal(r.ledger.listAccounts().length, 0);
+  assert.equal(r.report.verify.ok, true);
+});
+
+test('historial: gastos, ingresos y transferencias se reproducen con su fecha y el saldo final no cambia', () => {
+  const day = (d) => Date.UTC(2026, 10, d, 12);
+  const data = {
+    accounts: [
+      { id: 'a-ef', name: 'Efectivo', type: 'efectivo', balance: 700 },
+      { id: 'a-bb', name: 'BBVA', type: 'débito', balance: 4300 }
+    ],
+    expenses: [{ id: 'e1', description: 'Tacos', amount: 200, category: 'alimentación', accountId: 'a-ef', created_at: day(2) }],
+    incomes: [{ id: 'i1', description: 'Quincena', amount: 4800, type: 'salario', accountId: 'a-bb', created_at: day(1) }],
+    transfers: [{ id: 't1', from: 'a-bb', to: 'a-ef', amount: 500, created_at: day(3) }]
+  };
+  const r = migrateLegacy(data, { Ledger, now: clock });
+  const byName = (n) => r.ledger.listAccounts().find((a) => a.name === n);
+  assert.equal(byName('Efectivo').balanceC, 70000, 'saldo final = actual');
+  assert.equal(byName('BBVA').balanceC, 430000, 'saldo final = actual');
+  const gastos = r.ledger.entries.filter((e) => e.type === 'gasto');
+  const ingresos = r.ledger.entries.filter((e) => e.type === 'ingreso');
+  const transf = r.ledger.entries.filter((e) => e.type === 'transferencia');
+  assert.equal(gastos.length, 1);
+  assert.equal(ingresos.length, 1);
+  assert.equal(transf.length, 1);
+  assert.equal(gastos[0].at, day(2), 'conserva la fecha original');
+  assert.equal(ingresos[0].at, day(1));
+  assert.equal(transf[0].at, day(3));
+  assert.equal(r.report.verify.ok, true);
+});
+
+test('historial que no cuadra con el saldo: se conserva el saldo y se avisa', () => {
+  const data = {
+    // Ingreso de 100 registrado, pero el saldo actual es 50: el saldo inicial saldría negativo.
+    accounts: [{ id: 'a', name: 'Caja', type: 'efectivo', balance: 50 }],
+    incomes: [{ id: 'i', description: 'X', amount: 100, accountId: 'a', created_at: Date.UTC(2026, 9, 1) }]
+  };
+  const r = migrateLegacy(data, { Ledger, now: clock });
+  assert.equal(r.ledger.listAccounts().find((a) => a.name === 'Caja').balanceC, 5000);
+  assert.ok(r.report.warnings.some((w) => w.includes('Caja')));
   assert.equal(r.report.verify.ok, true);
 });

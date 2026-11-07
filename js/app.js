@@ -1,5 +1,4 @@
 /* Nombres asignados más abajo en un IIFE; se declaran aquí para no crear globales implícitas. */
-var addDebtor, addIncome, addInvestment, addLoan, addMsi, addSaving, contributeSaving, markLoanPayment, settleDebtor, transferFunds;
 /* ===== Safe areas (APK / WebView) =====
    En muchos Android env(safe-area-inset-*) = 0.
    Forzamos mínimos y afinamos con JS. */
@@ -198,56 +197,6 @@ const LS_SET = (k,v) => localStorage.setItem(k, typeof v==='string'?v:JSON.strin
 /* Persistencia debounced (patrón del store del backend) */
 let _saveTimer = null;
 let _saveErrorNotified = false;
-function save(immediate) {
-  const flush = () => {
-    try {
-      if (state.user_id) LS_SET('user_id', state.user_id);
-      if (state.user_name) LS_SET('user_name', state.user_name);
-      LS_SET('expenses', JSON.stringify(state.expenses || []));
-      LS_SET('incomes', JSON.stringify(state.incomes || []));
-      LS_SET('shop', JSON.stringify(state.shop || []));
-      LS_SET('checklist', JSON.stringify(state.checklist || []));
-      LS_SET('cart', JSON.stringify(state.cart || []));
-      LS_SET('shopMode', JSON.stringify(state.shopMode));
-      LS_SET('historial', JSON.stringify(state.historial || []));
-      LS_SET('savings', JSON.stringify(state.savings || []));
-      LS_SET('kanban', JSON.stringify(state.kanban || []));
-      LS_SET('reminders', JSON.stringify(state.reminders || []));
-      LS_SET('reactions', JSON.stringify(state.reactions || {}));
-      LS_SET('categories', JSON.stringify(state.categories || []));
-       LS_SET('budgets', JSON.stringify(state.budgets || []));
-       LS_SET('cards', JSON.stringify(state.cards || []));
-       LS_SET('msiPlans', JSON.stringify(state.msiPlans || []));
-       LS_SET('accounts', JSON.stringify(state.accounts || []));
-       LS_SET('transfers', JSON.stringify(state.transfers || []));
-       LS_SET('loans', JSON.stringify(state.loans || []));
-       LS_SET('subscriptions', JSON.stringify(state.subscriptions || []));
-       LS_SET('debtors', JSON.stringify(state.debtors || []));
-       LS_SET('investments', JSON.stringify(state.investments || []));
-       LS_SET('account_view', state.accountView || 'todas');
-      LS_SET('pinned', JSON.stringify(state.pinned || []));
-      if (state.pronoun) LS_SET('user_pronoun', state.pronoun);
-      LS_SET('money_chart_prefs', JSON.stringify(state.moneyChartPrefs || {}));
-      if (state.activePanel) LS_SET('active_panel', state.activePanel);
-      _saveErrorNotified = false;
-      return true;
-    } catch (err) {
-      console.warn('save failed', err);
-      if (!_saveErrorNotified && $('toast')) {
-        _saveErrorNotified = true;
-        toast('No se pudieron guardar tus cambios. Libera espacio e inténtalo de nuevo.');
-      }
-      return false;
-    }
-  };
-  if (immediate) {
-    if (_saveTimer) clearTimeout(_saveTimer);
-    _saveTimer = null;
-    return flush();
-  }
-  if (_saveTimer) clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(flush, 280);
-}
 
 /* Utilidades nativas compartidas: mismo patrón defensivo que ya usan SafeArea/
    StatusBar/App (window.Capacitor?.Plugins?.X), con degradación a Web APIs si
@@ -336,30 +285,30 @@ setInterval(checkReminders, 60000);
 
 let state = {
   user_id: LS('user_id')||null, user_name: LS('user_name')||'',
-  expenses: JSON.parse(LS('expenses')||'[]'),
-  incomes: JSON.parse(LS('incomes')||'[]'),
+  expenses: [],
+  incomes: [],
   shop: JSON.parse(LS('shop')||'[]'),
   checklist: JSON.parse(LS('checklist')||'[]'),
   checklistFilter: 'todos',
   cart: JSON.parse(LS('cart')||'[]'),
   shopMode: JSON.parse(LS('shopMode')||'null'),
-  historial: JSON.parse(LS('historial')||'[]'),
-  savings: JSON.parse(LS('savings')||'[]'),
+  historial: [],
+  savings: [],
   kanban: JSON.parse(LS('kanban')||'[]'),
   reminders: JSON.parse(LS('reminders')||'[]'),
   reactions: JSON.parse(LS('reactions')||'{}'),
   categories: JSON.parse(LS('categories')||'null')||DEFAULT_CATS,
-   budgets: JSON.parse(LS('budgets')||'[]'),
+   budgets: [],
    budgetPeriod: LS('budget_period')||'mensual',
-   cards: JSON.parse(LS('cards')||'[]'),
-   msiPlans: JSON.parse(LS('msiPlans')||'[]'),
-   accounts: JSON.parse(LS('accounts')||'[]'),
-   transfers: JSON.parse(LS('transfers')||'[]'),
-   loans: JSON.parse(LS('loans')||'[]'),
+   cards: [],
+   msiPlans: [],
+   accounts: [],
+   transfers: [],
+   loans: [],
    subscriptions: JSON.parse(LS('subscriptions')||'[]'),
    subRange: 'mensual',
-   debtors: JSON.parse(LS('debtors')||'[]'),
-   investments: JSON.parse(LS('investments')||'[]'),
+   debtors: [],
+   investments: [],
    accountView: LS('account_view')||'todas',
    tipSplitMode: 'all',
   pinned: JSON.parse(LS('pinned')||'null')||['hormiga','ingresos','inicio'],
@@ -434,26 +383,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-window.deleteExpense = id => {
-  if (!confirm('¿Borrar este gasto?')) return;
-  state.expenses = state.expenses.filter(e => e.id !== id);
-  if (state.reactions[id]) delete state.reactions[id];
-  
-  save(); closeDetail(); updateUI(); toast('Gasto borrado');
-};
-window.deleteIncome = id => {
-  if (!confirm('¿Borrar este ingreso?')) return;
-  state.incomes = state.incomes.filter(i => i.id !== id);
-  if (state.reactions[id]) delete state.reactions[id];
-  
-  save(); closeDetail(); updateUI(); toast('Ingreso borrado');
-};
-window.deleteHistorialItem = id => {
-  if (!confirm('¿Borrar esta compra del historial?')) return;
-  state.historial = state.historial.filter(h => h.id !== id);
-  
-  save(); closeDetail(); updateUI(); toast('Historial actualizado');
-};
 
 function bindLongPress(el, onLong, onTap) {
   let timer=null, moved=false;
@@ -891,7 +820,7 @@ function closeTopLayer() {
     if (f && !f.classList.contains('hidden')) { closeOpForm(fid); return true; }
   }
   const charts = $('chartsBlock');
-  if (charts && !charts.classList.contains('hidden-soft')) { toggleCharts(); return true; }
+  if (charts && !charts.classList.contains('hidden-soft')) { charts.classList.add('hidden-soft'); return true; }
   return false;
 }
 function handleAndroidBack() {
@@ -1383,7 +1312,7 @@ function collectMoneyChartData(key, period){
       const monthly = monthlyEquivalent(s);
       const amt = scaleFromMonthly(monthly, period);
       bars.push({label: s.name, amount: amt});
-      activities.push({title: s.name, meta: `${subRangeLabel(s.range)} · ${s.date||'—'}`, amount: amt, neg:true});
+      activities.push({title: s.name, meta: `${subRangeLabel(s.range)} · ${esc(s.date||'—')}`, amount: amt, neg:true});
     });
     total = bars.reduce((s,b)=>s+b.amount,0);
   } else if(key==='deudores'){
@@ -1544,64 +1473,14 @@ function renderIncomes() {
 function safeNum(v){ const n=Number(v); return Number.isFinite(n) ? n : 0; }
 function ensureUser(){ if(!state.user_id){ toast('Primero dinos tu nombre, porfa'); return false; } return true; }
 
-function pushHistorial(entry){
-  const item = {
-    id: entry.id || uid(),
-    type: entry.type || 'movimiento',
-    description: entry.description || '',
-    amount: safeNum(entry.amount),
-    direction: entry.direction || 'out',
-    source: entry.source || '',
-    accountId: entry.accountId || null,
-    user_id: entry.user_id || state.user_id,
-    created_at: entry.created_at || Date.now(),
-    refId: entry.refId || null
-  };
-  state.historial = state.historial || [];
-  state.historial.push(item);
-  
-  return item;
-}
 function accountsByType(type){
   const t = (type||'').toLowerCase();
   return (state.accounts||[]).filter(a => (a.type||'').toLowerCase() === t || (t==='débito' && (a.type||'').toLowerCase()==='debito') || (t==='crédito' && (a.type||'').toLowerCase()==='credito'));
-}
-function ensureDefaultAccounts(){
-  if(!state.accounts) state.accounts = [];
-  const norm=t=>(t||'').toLowerCase();
-  const has=t=>state.accounts.some(a=>{
-    const at=norm(a.type); return at===t || (t==='débito'&&at==='debito') || (t==='crédito'&&at==='credito');
-  });
-  if(!has('efectivo')) state.accounts.push({id:uid(),name:'Efectivo',type:'efectivo',balance:0,user_id:state.user_id,created_at:Date.now()});
-  if(!has('débito')) state.accounts.push({id:uid(),name:'Débito',type:'débito',balance:0,user_id:state.user_id,created_at:Date.now()});
 }
 function getAccount(id){ return (state.accounts||[]).find(a=>a.id===id) || null; }
 function firstLiquidAccount(){
   ensureDefaultAccounts();
   return state.accounts.find(a=>['efectivo','débito','debito'].includes((a.type||'').toLowerCase())) || null;
-}
-function applyIncomeToAccount(dest, amount){
-  ensureDefaultAccounts(); amount=safeNum(amount);
-  let acc=null;
-  if(!dest || dest==='__efectivo__') acc=state.accounts.find(a=>(a.type||'').toLowerCase()==='efectivo');
-  else if(dest==='__tdc__') acc=state.accounts.find(a=>['crédito','credito'].includes((a.type||'').toLowerCase()));
-  else if(dest==='__debito__') acc=state.accounts.find(a=>['débito','debito'].includes((a.type||'').toLowerCase()));
-  else acc=getAccount(dest);
-  if(!acc) return null;
-  const type=(acc.type||'').toLowerCase();
-  if(type==='crédito'||type==='credito') acc.balance=Math.max(0,safeNum(acc.balance)-amount);
-  else acc.balance=safeNum(acc.balance)+amount;
-  return acc;
-}
-function applyExpenseFromAccount(accountId, amount){
-  ensureDefaultAccounts(); amount=safeNum(amount);
-  let acc=getAccount(accountId);
-  if(!acc) acc=firstLiquidAccount();
-  if(!acc) return null;
-  const type=(acc.type||'').toLowerCase();
-  if(type==='crédito'||type==='credito') acc.balance=safeNum(acc.balance)+amount;
-  else acc.balance=safeNum(acc.balance)-amount;
-  return acc;
 }
 let calcValue='0', calcPrev=null, calcOp=null, calcFresh=true, calcExpressionText='';
 function openCalc(){ $('calcPage')?.classList.add('open'); $('calcOverlay')?.classList.add('open'); document.querySelector('.app')?.classList.add('calc-open'); }
@@ -2003,20 +1882,6 @@ function addCart(){
 }
 function removeCart(i){ if(i<0||i>=state.cart.length)return; state.cart.splice(i,1); save(); renderCart(); }
 function cancelShop(){ state.shopMode=null; state.cart=[]; save(); updateUI(); toast('Compra cancelada'); }
-function confirmShop(){
-  if(!state.shopMode){return;}
-  const total=state.cart.reduce((s,c)=>s+safeNum(c.price),0), budget=safeNum(state.shopMode.budget);
-  if(!state.cart.length){toast('El carrito está vacío');return;}
-  if(total>budget){toast('El carrito supera tu presupuesto');return;}
-  const now=Date.now();
-  state.cart.forEach(c=>{
-    const acc=applyExpenseFromAccount('', safeNum(c.price));
-    const e={id:uid(),description:c.name,amount:safeNum(c.price),category:'general',shared:false,hormiga:false,user_id:state.user_id,created_at:now,fromShop:true,accountId:acc?.id||null};
-    state.expenses.push(e);
-  });
-  try{pushHistorial({type:'compra',description:'Compra: '+state.cart.map(c=>c.name).join(', '),amount:total,direction:'out',source:'compras',created_at:now});}catch(e){state.historial.push({id:uid(),type:'compra',description:'Compra: '+state.cart.map(c=>c.name).join(', '),amount:total,user_id:state.user_id,created_at:now});}
-  state.shopMode=null; state.cart=[]; save(); updateUI(); showConfetti(); toast('Compra registrada: '+money(total));
-}
 
 function savingsYieldEstimate(s){
   const rate=safeNum(s.annualRate);
@@ -2059,7 +1924,6 @@ function renderSavings(){
   renderSaveSelect();
 }
 function renderSaveSelect(){ const sel=$('saveSelect'); if(!sel)return; sel.innerHTML=(state.savings||[]).map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''); }
-function deleteSaving(id){if(!confirm('¿Borrar este ahorro?'))return;state.savings=state.savings.filter(x=>x.id!==id);save();closeDetail();renderSavings();toast('Ahorro borrado');}
 function toggleSaveMenu(){ $('saveMenuPanel')?.classList.toggle('hidden'); renderSaveSelect(); }
 function switchSaveTab(tab){ const isNew=tab==='new'; $('saveTabNew')?.classList.toggle('active',isNew); $('saveTabAdd')?.classList.toggle('active',!isNew); $('saveFormNew')?.classList.toggle('hidden',!isNew); $('saveFormAdd')?.classList.toggle('hidden',isNew); }
 
@@ -2094,37 +1958,6 @@ function setBudgetPeriod(period){
   $('budgetPeriodLabel').textContent=BUDGET_PERIODS[period].description;
   closeBudgetEntry(); renderBudget();
 }
-function saveBudgetPlan(){
-  const rows=[...$('budgetRows').querySelectorAll('.excel-grid')].map(row=>({
-    concept:(row.querySelector('[data-budget-field="concept"]')?.value||'').trim(),
-    description:(row.querySelector('[data-budget-field="description"]')?.value||'').trim(),
-    amount:safeNum(row.querySelector('[data-budget-field="amount"]')?.value)
-  })).filter(r=>r.concept||r.description||r.amount);
-  if(!rows.length){toast('Agrega al menos un gasto planeado');return;}
-  if(rows.some(r=>!r.concept||r.amount<=0)){toast('Cada fila necesita concepto y costo válido');return;}
-  state.budgets = state.budgets.filter(b=>b.period!==state.budgetPeriod);
-  state.budgets=state.budgets.filter(b=>b.period!==state.budgetPeriod);
-  rows.forEach(r=>{const item={id:uid(),...r,period:state.budgetPeriod,spent:0,user_id:state.user_id,created_at:Date.now()};state.budgets.push(item);});
-  save(); closeBudgetEntry(); renderBudget(); toast('Plan guardado');
-}
-function adjustBudgetSpent(id){
-  const item=state.budgets.find(b=>b.id===id); if(!item)return;
-  const value=prompt('¿Cuánto llevas gastado en '+item.concept+'?',String(item.spent||0));
-  if(value===null)return; const spent=safeNum(value);
-  if(spent<0){toast('El gasto no puede ser negativo');return;}
-  item.spent=spent;  save(); renderBudget();
-}
-function deleteBudget(id){
-  if(!confirm('¿Quitar este concepto del plan?'))return;
-  state.budgets=state.budgets.filter(b=>b.id!==id);save();renderBudget();toast('Concepto quitado');
-}
-function clearBudget(){
-  const items=state.budgets.filter(b=>b.period===state.budgetPeriod);
-  if(!items.length){toast('Este periodo no tiene conceptos');return;}
-  if(!confirm('¿Limpiar el plan de '+budgetPeriodLabel().toLowerCase()+'?'))return;
-  items.forEach(b=>{});
-  state.budgets=state.budgets.filter(b=>b.period!==state.budgetPeriod);save();renderBudget();toast('Plan limpiado');
-}
 function renderBudget(){
   const period=state.budgetPeriod||'mensual', items=state.budgets.filter(b=>b.period===period);
   $('budgetPeriodLabel').textContent=BUDGET_PERIODS[period]?.description||BUDGET_PERIODS.mensual.description;
@@ -2155,10 +1988,8 @@ function renderCards(){
   list.querySelectorAll('[data-card-edit]').forEach(btn=>btn.onclick=()=>editCard(btn.dataset.cardEdit));
   list.querySelectorAll('[data-card-del]').forEach(btn=>btn.onclick=()=>deleteCard(btn.dataset.cardDel));
 }
-function editCard(id){const c=state.cards.find(x=>x.id===id);if(!c)return;const name=prompt('Nombre de la tarjeta',c.name);if(name===null)return;const limit=prompt('Límite',String(c.limit||0));if(limit===null)return;c.name=name.trim()||c.name;c.limit=Math.max(0,safeNum(limit));save();renderCards();renderInicio();toast('Tarjeta actualizada');}
 
 
-function editAccount(id){const a=state.accounts.find(x=>x.id===id);if(!a)return;const name=prompt('Nombre de la cuenta',a.name);if(name===null)return;const balance=prompt('Saldo actual',String(a.balance||0));if(balance===null)return;a.name=name.trim()||a.name;a.balance=safeNum(balance);save();renderAccounts();renderInicio();toast('Cuenta actualizada');}
 
 function loanPayment(principal,annualRate,months){
   const rate=safeNum(annualRate)/100/12;
@@ -2289,7 +2120,7 @@ function renderSubscriptions(){
       <div class="item-icon shop">🔁</div>
       <div class="item-body">
         <div class="item-title">${esc(s.name)}</div>
-        <div class="item-meta">${subRangeLabel(s.range)} · ${s.date||'—'} · ~${money(monthlyEquivalent(s))}/mes</div>
+        <div class="item-meta">${subRangeLabel(s.range)} · ${esc(s.date||'—')} · ~${money(monthlyEquivalent(s))}/mes</div>
       </div>
       <div class="item-amount neg">${money(s.amount)}</div>
     </div>
@@ -2342,105 +2173,13 @@ function deleteReminder(id){if(!confirm('¿Borrar recordatorio?'))return;const r
 function renderCategories(){const el=$('catList');if(!el)return;el.innerHTML=state.categories.map(c=>`<div class="item" data-cid="${esc(c.id)}"><div class="item-icon shop">${esc(c.icon)}</div><div class="item-body"><div class="item-title">${esc(c.name)}</div><div class="item-meta">Categoría</div></div>${DEFAULT_CATS.some(d=>d.id===c.id)?'':'<button type="button" class="btn btn-ghost btn-sm" data-cat-del="'+esc(c.id)+'">✕</button>'}</div>`).join('');el.querySelectorAll('[data-cat-del]').forEach(b=>b.onclick=()=>deleteCategory(b.dataset.catDel));}
 function addCategory(){const name=($('catName')?.value||'').trim(),icon=($('catIcon')?.value||'📦').trim();if(!name){toast('Escribe el nombre');return;}const id=name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||uid();if(state.categories.some(c=>c.id===id)){toast('Esa categoría ya existe');return;}const c={id,name,icon};state.categories.push(c);save();renderCategories();renderHormiga();renderInicio();$('catName').value='';$('catIcon').value='📦';toast('Categoría creada');}
 function deleteCategory(id){if(DEFAULT_CATS.some(c=>c.id===id)){toast('Las categorías base no se pueden borrar');return;}if(!confirm('¿Borrar categoría? Se conserva en el historial.'))return;state.categories=state.categories.filter(c=>c.id!==id);if(state.hormCat===id)state.hormCat='general';save();renderCategories();renderHormiga();renderInicio();toast('Categoría borrada');}
-function clearMine(){if(!ensureUser())return;if(!confirm('¿Borrar tus movimientos? No se puede deshacer.'))return;state.expenses=state.expenses.filter(e=>e.user_id!==state.user_id);
-state.incomes=state.incomes.filter(i=>i.user_id!==state.user_id);
-save(true);updateUI();closeMenu();toast('Tus movimientos fueron borrados');}
 /* Respaldo/Restauración: usa PERSISTED_KEYS (la misma lista que clearAll) para
    que exportar/importar y vaciar datos nunca queden desincronizados. */
-async function exportBackup(){
-  try {
-    save(true);
-    const snap = {};
-    PERSISTED_KEYS.forEach(k => { snap[k] = state[k]; });
-    snap.transactions = state.transactions || [];
-    const payload = { app: 'abaco-gestor-finanzas', version: 2, exported_at: Date.now(), state: JSON.parse(JSON.stringify(snap)) };
-    const json = JSON.stringify(payload, null, 2);
-    const filename = 'abaco_backup_' + todayInputValue() + '.json';
-    const native = window.AndroidBridge;
-    const FS = window.Capacitor?.Plugins?.Filesystem;
-    const Share = window.Capacitor?.Plugins?.Share;
-    if (native?.shareBackup) {
-      native.shareBackup(filename, json);
-    } else if (FS?.writeFile) {
-      const res = await FS.writeFile({ path: filename, data: json, directory: 'CACHE', encoding: 'utf8' });
-      if (Share?.share) await Share.share({ title: 'Copia de seguridad de Ábaco', url: res.uri });
-      else toast('Copia guardada: ' + filename);
-    } else {
-      const blob = new Blob([json], { type: 'application/json' }), url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = filename;
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
-    }
-    LS_SET('last_backup_at', Date.now()); updateBackupStatusLabel(); toast('Copia de seguridad exportada');
-  } catch (e) { console.warn('exportBackup', e); toast('No se pudo exportar la copia'); }
-}
-function validateBackupData(incoming){
-  const arrayKeys=new Set(['expenses','incomes','shop','checklist','cart','historial','savings','kanban','reminders','categories','budgets','cards','msiPlans','accounts','transfers','loans','subscriptions','debtors','investments','pinned']);
-  const objectKeys=new Set(['reactions','money_chart_prefs','wallet_quiz']);
-  const stringKeys=new Set(['user_name','budget_period','account_view','user_pronoun','active_panel','theme']);
-  if(!incoming||typeof incoming!=='object'||Array.isArray(incoming))throw new Error('El estado de la copia debe ser un objeto');
-  for(const key of PERSISTED_KEYS){
-    if(!Object.prototype.hasOwnProperty.call(incoming,key))continue;
-    const value=incoming[key];
-    if(arrayKeys.has(key)&&!Array.isArray(value))throw new Error(`Formato inválido en ${key}`);
-    if(objectKeys.has(key)&&(!value||typeof value!=='object'||Array.isArray(value)))throw new Error(`Formato inválido en ${key}`);
-    if(stringKeys.has(key)&&typeof value!=='string')throw new Error(`Formato inválido en ${key}`);
-    if(key==='user_id'&&value!==null&&typeof value!=='string')throw new Error('Formato inválido en user_id');
-    if(key==='shopMode'&&value!==null&&(typeof value!=='object'||Array.isArray(value)))throw new Error('Formato inválido en shopMode');
-  }
-  if(Object.prototype.hasOwnProperty.call(incoming,'transactions')&&!Array.isArray(incoming.transactions))throw new Error('Formato inválido en transactions');
-  const inspect=(value,key='',depth=0)=>{
-    if(depth>40)throw new Error('La copia es demasiado profunda');
-    if(typeof value==='string'){
-      if(/^(id|.*Id|.*_id)$/.test(key)&&/[\u0000-\u001f"'<>`\\]/.test(value))throw new Error(`Identificador inválido en ${key}`);
-      return;
-    }
-    if(value===null||typeof value==='boolean')return;
-    if(typeof value==='number'){if(!Number.isFinite(value))throw new Error('Número inválido en la copia');return;}
-    if(Array.isArray(value)){value.forEach(item=>inspect(item,'',depth+1));return;}
-    if(typeof value==='object'){
-      Object.keys(value).forEach(k=>{
-        if(k==='__proto__'||k==='prototype'||k==='constructor')throw new Error('La copia contiene una propiedad no permitida');
-        inspect(value[k],k,depth+1);
-      });
-      return;
-    }
-    throw new Error('La copia contiene un valor no permitido');
-  };
-  PERSISTED_KEYS.forEach(key=>{if(Object.prototype.hasOwnProperty.call(incoming,key))inspect(incoming[key],key);});
-  if(Object.prototype.hasOwnProperty.call(incoming,'transactions'))inspect(incoming.transactions,'transactions');
-}
-function importBackup(file){
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    try{
-      if(typeof reader.result!=='string')throw new Error('No se pudo leer el archivo');
-      const payload=JSON.parse(reader.result);
-      let incoming=payload;
-      if(payload&&typeof payload==='object'&&!Array.isArray(payload)&&Object.prototype.hasOwnProperty.call(payload,'state')){
-        if(payload.app&&payload.app!=='abaco-gestor-finanzas')throw new Error('La copia pertenece a otra aplicación');
-        if(payload.version!==undefined&&(!Number.isInteger(payload.version)||payload.version<1||payload.version>2))throw new Error('Versión de copia no compatible');
-        incoming=payload.state;
-      }
-      validateBackupData(incoming);
-      if(!confirm('¿Reemplazar tus datos con esta copia?'))return;
-      PERSISTED_KEYS.forEach(k=>{if(k in incoming)state[k]=incoming[k];});
-      if(Array.isArray(incoming.transactions))state.transactions=incoming.transactions;
-      if(!save(true))return;
-      try{Abaco?.Finance?.ensure();}catch(e){}
-      updateUI(); renderMenu(); renderPinned(); closeMenu();
-      toast('Copia de seguridad restaurada');
-    }catch(e){console.warn('importBackup',e);toast('La copia no es válida o contiene datos incompatibles');}
-  };
-  reader.onerror=()=>{console.warn('importBackup: no se pudo leer el archivo',reader.error);toast('No se pudo leer el archivo de copia');};
-  reader.readAsText(file);
-}
 function updateBackupStatusLabel(){
   const el=$('menuBackupStatusLabel'); if(!el)return;
   const ts=safeNum(LS('last_backup_at'));
   el.textContent=ts?('Última copia: '+timeAgo(ts)):'Sin respaldo';
 }
-function clearAll(){if(!confirm('¿Borrar todos los datos? No se puede deshacer.'))return;PERSISTED_KEYS.concat(['transactions','abaco_db_updated_at']).forEach(k=>localStorage.removeItem(k));state.expenses=[];state.incomes=[];state.shop=[];state.checklist=[];state.cart=[];state.shopMode=null;state.historial=[];state.savings=[];state.budgets=[];state.budgetPeriod='mensual';state.cards=[];state.msiPlans=[];state.accounts=[];state.transfers=[];state.loans=[];state.subscriptions=[];state.debtors=[];state.investments=[];state.accountView='todas';state.kanban=[];state.reminders=[];state.reactions={};state.transactions=[];save(true);try{window.Abaco?.DB?.clear?.();}catch(e){console.warn('No se pudo limpiar la base local',e)}closeMenu();updateUI();toast('Datos vaciados');}
 
 
 /* ===== Núcleo financiero v2 =====
@@ -2451,22 +2190,6 @@ function financialType(a){ return String(a?.type||'').toLowerCase().normalize('N
 function isCreditAccount(a){ return financialType(a)==='credito'; }
 function isLiquidAccount(a){ const t=financialType(a); return t==='efectivo'||t==='debito'||t==='otro'; }
 function coreAccount(id){ return (state.accounts||[]).find(a=>a.id===id)||null; }
-function coreAccountForCard(card){
-  if(!card) return null;
-  ensureDefaultAccounts();
-  const type=financialType(card.type)==='credito'?'crédito':(financialType(card.type)==='efectivo'?'efectivo':'débito');
-  let acc=coreAccount(card.wallet_id);
-  if(acc && (isCreditAccount(acc)=== (type==='crédito'))) return acc;
-  acc=(state.accounts||[]).find(a=>a.card_id===card.id && (isCreditAccount(a)===(type==='crédito')));
-  if(!acc){
-    acc={id:uid(),name:card.name,type,balance:safeNum(card.balance),limit:safeNum(card.limit),card_id:card.id,wallet_id:card.wallet_id||uid(),user_id:state.user_id,created_at:card.created_at||Date.now()};
-    state.accounts.push(acc);
-  }
-  card.wallet_id=acc.id;
-  acc.card_id=card.id;
-  acc.limit=safeNum(card.limit);
-  return acc;
-}
 function coreCreditAccountForCard(card){
   if(!card || financialType(card.type)!=='credito') return null;
   return coreAccountForCard(card);
@@ -2477,65 +2200,8 @@ function syncCardDebt(card){
   card.balance=Math.max(0,safeNum(acc.balance));
   return card.balance;
 }
-function ensureFinancialCore(){
-  if(!state.accounts) state.accounts=[];
-  if(!state.cards) state.cards=[];
-  if(!state.msiPlans) state.msiPlans=[];
-  if(!state.loans) state.loans=[];
-  if(!state.debtors) state.debtors=[];
-  if(!state.investments) state.investments=[];
-  if(!state.savings) state.savings=[];
-  if(!state.historial) state.historial=[];
-  ensureDefaultAccounts();
-  // Vincula tarjetas existentes a una cuenta de crédito real. Si ya había
-  // saldo en la tarjeta, ese saldo se conserva como deuda inicial.
-  state.cards.forEach(card=>{
-    const acc=coreAccountForCard(card);
-    if(financialType(card.type)==='credito'){
-      const plans=state.msiPlans.filter(p=>p.cardId===card.id);
-      if(plans.length){
-        const unpaid=plans.reduce((sum,p)=>sum+(p.installments||[]).filter(i=>!i.paid).reduce((x,i)=>x+safeNum(i.amount),0),0);
-        acc.balance=Math.max(0,unpaid);
-      }
-      syncCardDebt(card);
-    }
-  });
-  state.loans.forEach(l=>{ if(l.current==null) l.current=safeNum(l.principal); if(l.paid==null) l.paid=0; });
-  state.debtors.forEach(d=>{ if(d.remaining==null) d.remaining=safeNum(d.amount); });
-  state.investments.forEach(i=>{ if(i.current==null) i.current=safeNum(i.amount); });
-  // Movimientos antiguos que ya tienen cuenta quedan utilizables por el motor.
-  state.expenses.forEach(e=>{ if(!e.accountId && e.sourceAccountId)e.accountId=e.sourceAccountId; });
-  state.incomes.forEach(i=>{ if(!i.accountId && i.sourceAccountId)i.accountId=i.sourceAccountId; });
-  state.__financialCoreVersion=2;
-}
 function coreLiquidAccounts(){ ensureFinancialCore(); return state.accounts.filter(isLiquidAccount); }
 function coreFirstLiquid(){ return coreLiquidAccounts()[0]||null; }
-function coreChangeAccount(accountId, delta){
-  ensureFinancialCore(); const acc=coreAccount(accountId); if(!acc)return null;
-  acc.balance=safeNum(acc.balance)+safeNum(delta);
-  if(isCreditAccount(acc)) acc.balance=Math.max(0,acc.balance);
-  return acc;
-}
-function coreIncomeToAccount(accountId, amount){
-  ensureFinancialCore(); amount=safeNum(amount); let acc=coreAccount(accountId)||coreFirstLiquid(); if(!acc)return null;
-  if(isCreditAccount(acc)) coreChangeAccount(acc.id,-amount); else coreChangeAccount(acc.id,amount);
-  return acc;
-}
-function coreExpenseFromAccount(accountId, amount){
-  ensureFinancialCore(); amount=safeNum(amount); let acc=coreAccount(accountId)||coreFirstLiquid(); if(!acc)return null;
-  if(isCreditAccount(acc)) coreChangeAccount(acc.id,amount); else coreChangeAccount(acc.id,-amount);
-  return acc;
-}
-function coreReverseExpense(expense){
-  if(!expense)return;
-  const amount=safeNum(expense.amount), acc=coreAccount(expense.accountId);
-  if(acc){ if(isCreditAccount(acc)) coreChangeAccount(acc.id,-amount); else coreChangeAccount(acc.id,amount); }
-}
-function coreReverseIncome(income){
-  if(!income)return;
-  const amount=safeNum(income.amount), acc=coreAccount(income.accountId);
-  if(acc){ if(isCreditAccount(acc)) coreChangeAccount(acc.id,amount); else coreChangeAccount(acc.id,-amount); }
-}
 function walletLiquidity(){ ensureFinancialCore(); return coreLiquidAccounts().reduce((s,a)=>s+safeNum(a.balance),0); }
 function walletAssets(){
   ensureFinancialCore();
@@ -2551,7 +2217,6 @@ function walletDebt(){
   return credit+loans;
 }
 function walletNet(){ return walletAssets()-walletDebt(); }
-function coreRefresh(){ save(); try{renderAccounts();}catch(e){} try{renderCards();}catch(e){} try{renderInicio();}catch(e){} try{renderIncomes();}catch(e){} try{renderHormiga();}catch(e){} try{renderLoans();}catch(e){} try{renderDebtors();}catch(e){} try{renderInvestments();}catch(e){} try{renderSavings();}catch(e){} try{renderHistorial();}catch(e){} }
 
 // Reemplaza el selector de cuentas vacío y hace que las páginas usen las mismas cuentas.
 function renderAccounts(){
@@ -2567,58 +2232,12 @@ function renderAccounts(){
   list.innerHTML=state.accounts.length?state.accounts.map(a=>`<div class="item" data-account-edit="${a.id}"><div class="item-icon shop">💼</div><div class="item-body"><div class="item-title">${esc(a.name)}</div><div class="account-type">${esc(a.type)}${isCreditAccount(a)?' · deuda':''}</div></div><div class="account-balance">${money(a.balance)}</div></div>`).join(''):'<div class="empty"><p>Agrega tu primera cuenta.</p></div>';
   list.querySelectorAll('[data-account-edit]').forEach(el=>el.onclick=()=>editAccount(el.dataset.accountEdit));
 }
-function addAccount(){
-  const name=($('accountName')?.value||'').trim(), balance=safeNum($('accountBalance')?.value), type=$('accountType')?.value||'débito';
-  if(!name){toast('Escribe el nombre de la cuenta');return;}
-  if(balance<0){toast('El saldo inicial no puede ser negativo');return;}
-  ensureFinancialCore(); state.accounts.push({id:uid(),name,type,balance,user_id:state.user_id,created_at:Date.now(),wallet_id:uid()});
-  save();renderAccounts();renderInicio();$('accountName').value='';$('accountBalance').value='';closeOpForm('accountFormPanel');toast('Cuenta agregada');
-}
-
-function registerHormiga(){
-  const amount=safeNum($('hormAmount')?.value); if(amount<=0){toast('Indica un monto');resetSwipeCard();return;}
-  const desc=($('hormDesc')?.value||'').trim()||'Gasto rápido', selected=$('hormFromAccount')?.value||'';
-  const acc=coreExpenseFromAccount(selected,amount); if(!acc){toast('Agrega una cuenta primero');return;}
-  const item={id:uid(),description:desc,amount,category:state.hormCat,shared:false,hormiga:true,user_id:state.user_id,created_at:Date.now(),accountId:acc.id};
-  state.expenses.push(item);pushHistorial({type:'gasto',description:desc,amount,direction:'out',source:'hormiga',refId:item.id,accountId:acc.id});
-  $('hormAmount').value='';$('hormDesc').value='';save();updateUI();toast('✓ Guardado $'+amount);$('hormAmount').focus();
-}
-window.deleteExpense=id=>{
-  const e=state.expenses.find(x=>x.id===id);if(!e)return;if(!confirm('¿Borrar este gasto?'))return;
-  coreReverseExpense(e);state.expenses=state.expenses.filter(x=>x.id!==id);if(state.reactions[id])delete state.reactions[id];
-  state.historial=(state.historial||[]).filter(h=>!(h.refId===id));state.transactions=(state.transactions||[]).filter(t=>t.refId!==id);save();closeDetail();updateUI();toast('Gasto borrado y saldo corregido');
-};
-window.deleteIncome=id=>{
-  const i=state.incomes.find(x=>x.id===id);if(!i)return;if(!confirm('¿Borrar este ingreso?'))return;
-  coreReverseIncome(i);state.incomes=state.incomes.filter(x=>x.id!==id);if(state.reactions[id])delete state.reactions[id];
-  state.historial=(state.historial||[]).filter(h=>!(h.refId===id));state.transactions=(state.transactions||[]).filter(t=>t.refId!==id);save();closeDetail();updateUI();toast('Ingreso borrado y saldo corregido');
-};
 
 
-function addCard(){
-  const name=($('cardName')?.value||'').trim(),limit=safeNum($('cardLimit')?.value),type=$('cardType')?.value||'crédito';
-  if(!name){toast('Escribe el nombre de la cuenta');return;}if(limit<0){toast('Límite inválido');return;}
-  ensureFinancialCore(); const card={id:uid(),name,type,limit,balance:0,wallet_id:null,user_id:state.user_id,created_at:Date.now()};state.cards.push(card);coreAccountForCard(card);
-  save();renderCards();renderAccounts();renderInicio();$('cardName').value='';$('cardLimit').value='';closeOpForm('cardFormPanel');toast('Cuenta agregada y conectada');
-}
-function toggleMsiInstallment(planId,index){
-  ensureFinancialCore();const plan=state.msiPlans.find(p=>p.id===planId),inst=plan?.installments?.[index];if(!plan||!inst)return;const card=state.cards.find(c=>c.id===plan.cardId),credit=coreCreditAccountForCard(card);if(!credit)return;
-  if(inst.paid){const paidFrom=coreAccount(inst.paymentAccountId);if(paidFrom)paidFrom.balance+=safeNum(inst.amount);inst.paid=false;inst.paymentAccountId=null;credit.balance=Math.max(0,safeNum(credit.balance)+safeNum(inst.amount));syncCardDebt(card);state.historial=(state.historial||[]).filter(h=>h.refId!==`${plan.id}:${index}`);save();renderCards();renderAccounts();renderInicio();renderHistorial();toast('Pago MSI revertido y dinero devuelto');return;}
-  const source=coreFirstLiquid();if(!source){toast('Agrega una cuenta para registrar el pago');return;}const amount=safeNum(inst.amount);if(source.balance<amount){toast('El saldo disponible no alcanza para pagar esta mensualidad');return;}source.balance-=amount;credit.balance=Math.max(0,safeNum(credit.balance)-amount);inst.paid=true;inst.paymentAccountId=source.id;pushHistorial({type:'pago_msi',description:`Pago MSI: ${plan.concept} · mes ${inst.number}`,amount,direction:'out',source:'tarjetas',refId:`${plan.id}:${index}`,accountId:source.id});save();renderCards();renderAccounts();renderInicio();renderHistorial();toast('Mensualidad MSI pagada');
-}
 
-function deleteCard(id){
-  ensureFinancialCore();const c=state.cards.find(x=>x.id===id);if(!c)return;const acc=coreCreditAccountForCard(c),debt=safeNum(acc?.balance);
-  if(debt>0.005){toast('No puedes borrar una tarjeta con deuda pendiente');return;}
-  if(!confirm('¿Borrar esta tarjeta? Sus compras a MSI también se borrarán.'))return;
-  state.msiPlans=state.msiPlans.filter(p=>p.cardId!==id);state.cards=state.cards.filter(x=>x.id!==id);if(acc)state.accounts=state.accounts.filter(a=>a.id!==acc.id);
-  save();renderCards();renderAccounts();renderInicio();closeDetail();toast('Tarjeta eliminada');
-}
 
-function deleteDebtor(id){if(!confirm('¿Borrar este registro?'))return;const d=state.debtors.find(x=>x.id===id);if(d&&!d.settled&&d.accountId){coreChangeAccount(d.accountId,safeNum(d.remaining??d.amount));}state.debtors=state.debtors.filter(x=>x.id!==id);save();renderDebtors();renderAccounts();renderInicio();closeDetail();toast('Registro borrado');}
 
-function deleteInvestment(id){if(!confirm('¿Borrar esta inversión?'))return;const inv=state.investments.find(x=>x.id===id);if(inv&&inv.accountId)coreChangeAccount(inv.accountId,safeNum(inv.current??inv.amount));state.investments=state.investments.filter(x=>x.id!==id);save();renderInvestments();renderAccounts();renderInicio();closeDetail();toast('Inversión borrada y dinero devuelto');}
-function applySavingYield(id){const s=state.savings.find(x=>x.id===id);if(!s)return;const gain=savingsYieldEstimate(s);if(gain<=0){toast('Aún no hay rendimiento para aplicar');return;}s.current=safeNum(s.current)+gain;s.lastYieldAt=Date.now();save();closeDetail();renderSavings();renderInicio();toast('Rendimiento aplicado: '+money(gain));}
+
 
 
 function renderHistorial(){
@@ -2638,9 +2257,7 @@ function toggleMenu(){if($('menuPage')?.classList.contains('open'))closeMenu();e
 function goPanel(name){closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();updateSwipePreview();if(LS('swipe_hint_closed')!=='1')$('swipeCard')?.classList.add('hint');},150);}
 
 function renderWalletQuiz(){const body=$('walletQuizBody'),prog=$('walletQuizProgress');if(!body)return;const q=WALLET_QUIZ[walletQuizStep];if(prog)prog.textContent=`${walletQuizStep+1} de ${WALLET_QUIZ.length}`;let html=`<div class="wallet-quiz-title">${q.title}</div><div class="wallet-quiz-copy">${q.copy}</div>`;if(q.kind==='accounts')html+=`<div class="wallet-quiz-fields"><input id="quizAccountName" type="text" placeholder="Nombre (ej. BBVA, efectivo)"><div class="row"><select id="quizAccountType"><option value="débito">Débito</option><option value="crédito">Crédito</option><option value="efectivo">Efectivo</option></select><input id="quizAccountBalance" type="number" inputmode="decimal" placeholder="Saldo / límite $"></div><button type="button" class="btn" id="quizAddAccount">＋ Agregar a mi billetera</button><div class="wallet-entity-note" id="quizAccountList">${state.accounts.map(a=>`${esc(a.name)} · ${esc(a.type)}`).join(' · ')||'Aún no agregas cuentas'}</div></div>`;if(q.kind==='subscriptions')html+=`<div class="wallet-quiz-fields"><input id="quizSubName" type="text" placeholder="Ej. Netflix"><div class="row"><input id="quizSubAmount" type="number" inputmode="decimal" placeholder="Monto $"><select id="quizSubRange"><option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="semanal">Semanal</option></select></div><button type="button" class="btn" id="quizAddSub">＋ Agregar suscripción</button><div class="wallet-entity-note" id="quizSubList">${state.subscriptions.map(a=>`${esc(a.name)} · ${money(a.amount)}`).join(' · ')||'Aún no agregas suscripciones'}</div></div>`;if(q.kind==='debts'){const cards=state.cards.filter(c=>financialType(c.type)==='credito');html+=`<div class="wallet-quiz-fields"><select id="quizDebtKind"><option value="loan">Préstamo / crédito</option><option value="msi">Compra a meses</option></select><select id="quizDebtCard"><option value="">${cards.length?'Tarjeta para MSI':'Primero agrega una tarjeta de crédito'}</option>${cards.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select><input id="quizDebtName" type="text" placeholder="Nombre de la deuda o compra"><div class="row"><input id="quizDebtAmount" type="number" inputmode="decimal" placeholder="Monto pendiente $"><input id="quizDebtMonths" type="number" min="2" placeholder="Meses"></div><div class="field"><label class="note">Fecha de compra / inicio</label><input id="quizDebtDate" type="date" value="${todayInputValue()}"></div><button type="button" class="btn" id="quizAddDebt">＋ Agregar deuda</button><div class="wallet-entity-note" id="quizDebtList">${[...state.loans.map(a=>a.name),...state.msiPlans.map(a=>a.concept)].map(esc).join(' · ')||'Aún no agregas deudas'}</div></div>`;}body.innerHTML=html;
-  if(q.kind==='accounts')$('quizAddAccount').onclick=()=>{const name=$('quizAccountName').value.trim(),type=$('quizAccountType').value,amount=safeNum($('quizAccountBalance').value);if(!name){toast('Escribe un nombre');return;}if(amount<0){toast('El monto no puede ser negativo');return;}const card={id:uid(),name,type,limit:type==='crédito'?amount:0,balance:0,wallet_id:null,user_id:state.user_id,created_at:Date.now()};state.cards.push(card);const acc=coreAccountForCard(card);if(type!=='crédito')acc.balance=amount;else acc.limit=amount;save();renderAccounts();renderCards();renderInicio();$('quizAccountName').value='';$('quizAccountBalance').value='';renderWalletQuiz();toast('Cuenta añadida y conectada');};
-  if(q.kind==='subscriptions')$('quizAddSub').onclick=()=>{const name=$('quizSubName').value.trim(),amount=safeNum($('quizSubAmount').value),range=$('quizSubRange').value;if(!name||amount<=0){toast('Completa nombre y monto');return;}state.subscriptions.push({id:uid(),name,amount,range,date:todayInputValue(),active:true,user_id:state.user_id,created_at:Date.now()});save();renderSubscriptions();renderInicio();$('quizSubName').value='';$('quizSubAmount').value='';renderWalletQuiz();toast('Suscripción añadida');};
-  if(q.kind==='debts')$('quizAddDebt').onclick=()=>{const kind=$('quizDebtKind').value,name=$('quizDebtName').value.trim(),amount=safeNum($('quizDebtAmount').value),months=Math.max(1,Math.floor(safeNum($('quizDebtMonths').value))),date=$('quizDebtDate').value||todayInputValue(),cardId=$('quizDebtCard')?.value||'';if(!name||amount<=0){toast('Completa nombre y monto');return;}if(kind==='msi'){if(months<2){toast('Los MSI requieren mínimo 2 meses');return;}if(!cardId){toast('Selecciona una tarjeta de crédito para el MSI');return;}const card=state.cards.find(c=>c.id===cardId),acc=coreCreditAccountForCard(card);if(!card||!acc){toast('No se pudo conectar la tarjeta');return;}const purchase=new Date(date+'T12:00:00'),monthly=amount/months,installments=Array.from({length:months},(_,i)=>{const due=new Date(purchase);due.setMonth(due.getMonth()+i+1);return{number:i+1,amount:monthly,due:due.getTime(),paid:false};});const plan={id:uid(),cardId,concept:name,total:amount,months,monthly,installments,purchase_date:purchase.getTime(),created_at:purchase.getTime(),user_id:state.user_id};state.msiPlans.push(plan);coreChangeAccount(acc.id,amount);syncCardDebt(card);pushHistorial({type:'msi',description:'MSI: '+name,amount,direction:'memo',source:'tarjetas',refId:plan.id,accountId:acc.id});}else{state.loans.push({id:uid(),name,type:'personal',principal:amount,current:amount,annualRate:0,term:months,payment:loanPayment(amount,0,months),paid:0,start_date:date,created_at:new Date(date+'T12:00:00').getTime(),user_id:state.user_id});}save();renderCards();renderLoans();renderAccounts();renderInicio();$('quizDebtName').value='';$('quizDebtAmount').value='';$('quizDebtMonths').value='';renderWalletQuiz();toast(kind==='msi'?'MSI conectado a tu tarjeta':'Préstamo registrado');};}
+  if(q.kind==='accounts')$('quizAddAccount').onclick=window.quizAddAccount;  if(q.kind==='subscriptions')$('quizAddSub').onclick=window.quizAddSub;  if(q.kind==='debts')$('quizAddDebt').onclick=window.quizAddDebt;}
 
 function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(btn=>{if(!btn.disabled)btn.classList.add('btn-universal');});}
 
@@ -2778,49 +2395,15 @@ function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(bt
   normalizeTransactions();
 
   /* Todas las escrituras futuras pasan también por la base IndexedDB. */
-  const originalSave=save;
-  window.save=function(immediate){
-    const result=originalSave(immediate);
-    normalizeTransactions();
-    const snapshot={version:1,updatedAt:Date.now(),state:cloneData()};
-    DB.put(snapshot).catch(e=>console.warn('Abaco DB local:',e));
-    return result;
-  };
-  save=window.save;
-
+      
   /* Historial y transacciones nacen juntos; no se crean dos fuentes de verdad. */
-  const originalPushHistorial=pushHistorial;
-  window.pushHistorial=function(entry){
-    const item=originalPushHistorial(entry);
-    state.transactions=state.transactions||[];
-    const txId='hist:'+item.id;
-    if(!state.transactions.some(t=>t.id===txId)){
-      state.transactions.push({id:txId,type:item.type,amount:item.amount,direction:item.direction,description:item.description,accountId:item.accountId||null,refId:item.refId||null,source:item.source||'',user_id:item.user_id,created_at:item.created_at});
-    }
-    return item;
-  };
-  pushHistorial=window.pushHistorial;
-
+      
   /* Arranque: IndexedDB es una segunda capa persistente; localStorage sigue siendo
      compatible para no romper instalaciones existentes. Solo restaura si realmente
      es más reciente que la copia local. */
-  DB.open().then(async()=>{
-    const snap=await DB.get();
-    const localStamp=safeNum(LS('abaco_db_updated_at'));
-    if(snap&&safeNum(snap.updatedAt)>localStamp&&snap.state&&snap.state.user_id){
-      Object.keys(snap.state).forEach(k=>{state[k]=snap.state[k];});
-      normalizeTransactions();
-      originalSave(true); updateUI(); renderPinned();
-    }
-    LS_SET('abaco_db_updated_at',Date.now());
-  }).catch(e=>console.warn('Abaco DB no disponible:',e));
-
+  
   /* API de dominio: las interfaces futuras deben usar estas operaciones. */
-  Finance.recordTransaction=function(tx){
-    this.ensure();const item={id:tx.id||uid(),type:tx.type||'movement',amount:safeNum(tx.amount),direction:tx.direction||'memo',description:tx.description||'',accountId:tx.accountId||null,refId:tx.refId||null,source:tx.source||'manual',user_id:state.user_id,created_at:tx.created_at||Date.now()};state.transactions.push(item);save();return item;
-  };
-  Finance.snapshot=()=>({dashboard:Finance.dashboard(),transactions:Finance.transactions()});
-  Finance.normalizeTransactions=normalizeTransactions;
+      Finance.normalizeTransactions=normalizeTransactions;
 })();
 
 /* ===== ABACO MOTOR FINANCIERO v4 =====
@@ -2836,94 +2419,18 @@ function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(bt
   const saveNow=()=>{ try{save();}catch(e){console.warn('Abaco save',e)} };
 
   /* Persistencia normalizada: IndexedDB conserva entidades separadas además del snapshot legado. */
-  async function persistNormalized(){
-    canonicalizeTransactions();
-    ensureArray('categories'); ensureArray('goals');
-    if(!DB||!DB.handle)return;
-    const stores=['accounts','transactions','cards','msiPlans','loans','subscriptions','savings','investments','debtors','budgets','categories','goals'];
-    try{
-      const tr=DB.handle.transaction(stores,'readwrite');
-      const put=(name,arr)=>{const st=tr.objectStore(name);st.clear();(arr||[]).forEach(x=>st.put(clone(x),x.id));};
-      put('accounts',state.accounts);put('transactions',state.transactions);put('cards',state.cards);put('msiPlans',state.msiPlans);put('loans',state.loans);put('subscriptions',state.subscriptions);put('savings',state.savings);put('investments',state.investments);put('debtors',state.debtors);put('budgets',state.budgets);put('categories',state.categories);put('goals',state.goals);
-      await new Promise((res,rej)=>{tr.oncomplete=res;tr.onerror=()=>rej(tr.error);});
-    }catch(e){console.warn('Abaco entidades locales',e)}
-  }
-  /* El esquema v2 se abre desde el núcleo v3; así no hay carreras entre versiones. */
+    /* El esquema v2 se abre desde el núcleo v3; así no hay carreras entre versiones. */
 
   /* Índice transaccional coherente con el historial existente. */
-  function ledger(entry){
-    const type=entry.type||'movement';
-    const impact=entry.impact||({
-      ingreso:{income:true,cash:true},
-      gasto:{expense:true,cash:true},
-      transferencia:{cash:false},
-      prestamo_personal:{cash:false,receivable:true},
-      cobro:{cash:true,receivable:true},
-      ahorro:{cash:true,assetMove:true},
-      aporte_ahorro:{cash:true,assetMove:true},
-      inversion:{cash:true,assetMove:true},
-      prestamo:{liability:true},
-      pago_prestamo:{cash:true,liability:true},
-      interes_prestamo:{expense:true,cash:true},
-      msi:{liability:true}
-    }[type]||{});
-    const meta={...(entry.meta||{}),impact};
-    let hist=null;
-    try{hist=pushHistorial({type,description:entry.description||'',amount:M.round(entry.amount),direction:entry.direction||'memo',source:entry.source||'service',refId:entry.refId||null,accountId:entry.accountId||null,created_at:entry.created_at||now(),meta});}catch(_){ }
-    state.transactions=state.transactions||[];
-    const txId=hist?'hist:'+hist.id:(entry.id||uid());
-    let item=state.transactions.find(t=>t.id===txId);
-    if(!item){item={id:txId,type,amount:M.round(entry.amount),direction:entry.direction||'memo',description:entry.description||'',accountId:entry.accountId||null,refId:entry.refId||null,source:entry.source||'service',user_id:state.user_id,created_at:entry.created_at||now(),groupId:entry.groupId||txGroup(),meta};state.transactions.push(item);}
-    else{item.groupId=item.groupId||entry.groupId||txGroup();item.meta={...(item.meta||{}),...meta};item.source=item.source||entry.source||'service';}
-    return item;
-  }
-  function account(id){F.ensure();return (state.accounts||[]).find(a=>a.id===id)||null;}
+    function account(id){F.ensure();return (state.accounts||[]).find(a=>a.id===id)||null;}
   function liquid(id){const a=account(id);return a&&isLiquidAccount(a)?a:null;}
   function firstLiquid(){return F.liquidAccounts()[0]||null;}
   function requireAmount(n){return safeNum(n)>0?safeNum(n):0;}
   function redraw(names){refresh();(names||[]).forEach(n=>{try{window[n]&&window[n]();}catch(_){} });}
 
-  const S={};
-  S.expense=function({amount,description='Gasto',category='general',accountId,refId=null,source='gasto',meta={}}){
-    const value=requireAmount(amount); if(!value)throw Error('Monto inválido');
-    const selected=liquid(accountId); const a=selected||firstLiquid();
-    if(!a)throw Error('No hay cuenta disponible');
-    if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');
-    a.balance=M.round(safeNum(a.balance)-value);
-    const e={id:refId||uid(),description,amount:value,category,shared:false,hormiga:source==='hormiga',user_id:state.user_id,created_at:now(),accountId:a.id};
-    state.expenses.push(e); ledger({type:'gasto',amount:value,direction:'out',description,accountId:a.id,refId:e.id,source,meta:{...meta,category}}); saveNow(); return e;
-  };
-  S.income=function({amount,description='Ingreso',type='otro',accountId,refId=null,source='ingresos'}){
-    const value=requireAmount(amount); if(!value)throw Error('Monto inválido');
-    const a=liquid(accountId)||firstLiquid(); if(!a)throw Error('No hay cuenta de destino');
-    a.balance=M.round(safeNum(a.balance)+value);
-    const i={id:refId||uid(),description,amount:value,type,note:'',shared:false,user_id:state.user_id,created_at:now(),accountId:a.id};
-    state.incomes.push(i); ledger({type:'ingreso',amount:value,direction:'in',description,accountId:a.id,refId:i.id,source}); saveNow(); return i;
-  };
-  S.transfer=function({fromId,toId,amount}){
-    const value=requireAmount(amount),from=liquid(fromId),to=liquid(toId);
-    if(!from||!to||from.id===to.id)throw Error('Elige dos cuentas líquidas distintas');
-    if(safeNum(from.balance)<value)throw Error('Saldo de origen insuficiente');
-    from.balance=M.round(from.balance-value);to.balance=M.round(to.balance+value);
-    const id=uid();state.transfers=state.transfers||[];state.transfers.push({id,from:from.id,to:to.id,amount:value,created_at:now(),user_id:state.user_id});
-    ledger({type:'transferencia',amount:value,direction:'transfer',description:`Transferencia: ${from.name} → ${to.name}`,accountId:to.id,refId:id,source:'cuentas',meta:{fromAccountId:from.id,toAccountId:to.id}});saveNow();return id;
-  };
-  S.lend=function({person,concept,amount,date}){
-    const value=requireAmount(amount),a=firstLiquid();if(!a)throw Error('Agrega una cuenta para prestar dinero');if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');
-    a.balance=M.round(a.balance-value);const d={id:uid(),person:(person||'').trim(),concept:(concept||'Préstamo').trim(),amount:value,remaining:value,settled:false,date:date||todayInputValue(),user_id:state.user_id,created_at:now(),accountId:a.id};state.debtors.push(d);
-    ledger({type:'prestamo_personal',amount:value,direction:'out',description:`Le prestaste a ${d.person}: ${d.concept}`,accountId:a.id,refId:d.id,source:'quien_me_debe'});saveNow();return d;
-  };
-  S.collect=function(id){const d=(state.debtors||[]).find(x=>x.id===id);if(!d||d.settled)return null;const a=firstLiquid();if(!a)throw Error('Agrega una cuenta para recibir el pago');const value=safeNum(d.remaining??d.amount);d.settled=true;d.remaining=0;d.settledAt=now();d.settledAccountId=a.id;a.balance=M.round(safeNum(a.balance)+value);ledger({type:'cobro',amount:value,direction:'in',description:`Cobro a ${d.person}: ${d.concept||'Préstamo'}`,accountId:a.id,refId:d.id,source:'quien_me_debe'});saveNow();return d;};
-  S.saving=function({name,amount,type='open',target=0}){const value=requireAmount(amount),a=firstLiquid();if(!a)throw Error('Agrega una cuenta para ahorrar');if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');const s={id:uid(),name,amount:value,current:value,type,target:safeNum(target),user_id:state.user_id,created_at:now()};a.balance=M.round(a.balance-value);state.savings.push(s);ledger({type:'ahorro',amount:value,direction:'out',description:`Ahorro: ${name}`,accountId:a.id,refId:s.id,source:'ahorros'});saveNow();return s;};
-  S.saveContribution=function(id,amount){const value=requireAmount(amount),s=state.savings.find(x=>x.id===id),a=firstLiquid();if(!s||!a)throw Error('Ahorro o cuenta no disponible');if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');a.balance=M.round(a.balance-value);s.current=M.round(safeNum(s.current??s.amount)+value);ledger({type:'aporte_ahorro',amount:value,direction:'out',description:`Aporte a ${s.name}`,accountId:a.id,refId:s.id,source:'ahorros'});saveNow();return s;};
-  S.invest=function({name,amount,rate=0,date='',note=''}){const value=requireAmount(amount),a=firstLiquid();if(!a)throw Error('Agrega una cuenta para invertir');if(safeNum(a.balance)<value)throw Error('Saldo disponible insuficiente');a.balance=M.round(a.balance-value);const i={id:uid(),name,amount:value,current:value,rate:safeNum(rate),date,note,user_id:state.user_id,created_at:now(),accountId:a.id};state.investments.push(i);ledger({type:'inversion',amount:value,direction:'out',description:`Inversión: ${name}`,accountId:a.id,refId:i.id,source:'inversiones'});saveNow();return i;};
-  S.loan=function({name,principal,annualRate=0,term,type='personal'}){const p=requireAmount(principal),n=Math.max(1,Math.floor(safeNum(term))),rate=safeNum(annualRate);if(!p)throw Error('Monto inválido');const l={id:uid(),name,type:type||'personal',principal:p,current:p,annualRate:rate,term:n,payment:M.monthlyPayment(p,rate,n),paid:0,created_at:now(),user_id:state.user_id};state.loans.push(l);ledger({type:'prestamo',amount:p,direction:'memo',description:`Deuda: ${name}`,refId:l.id,source:'prestamos',meta:{principal:p,annualRate:rate,term:n}});saveNow();return l;};
-  S.loanPayment=function(id){const l=state.loans.find(x=>x.id===id);if(!l||safeNum(l.current)<=0)return null;const a=firstLiquid();if(!a)throw Error('Agrega una cuenta para pagar el préstamo');const remaining=safeNum(l.current),r=safeNum(l.annualRate)/100/12,scheduled=safeNum(l.payment)||M.monthlyPayment(remaining,l.annualRate,l.term),interest=M.round(remaining*r),payment=M.round(Math.min(remaining+interest,scheduled)),principal=M.round(Math.min(remaining,Math.max(0,payment-interest)));if(safeNum(a.balance)<payment)throw Error('Saldo disponible insuficiente');a.balance=M.round(a.balance-payment);l.current=M.round(Math.max(0,remaining-principal));l.paid=Math.min(safeNum(l.term),safeNum(l.paid)+1);l.lastPaymentAt=now();if(interest>0){const e={id:uid(),description:'Interés: '+l.name,amount:interest,category:'general',shared:false,hormiga:false,user_id:state.user_id,created_at:now(),accountId:a.id,loanId:l.id};state.expenses.push(e);ledger({type:'interes_prestamo',amount:interest,direction:'out',description:e.description,accountId:a.id,refId:e.id,source:'prestamos'});}ledger({type:'pago_prestamo',amount:payment,direction:'out',description:'Pago: '+l.name,accountId:a.id,refId:l.id,source:'prestamos',meta:{interest,principal}});saveNow();return l;};
-  S.msi=function({cardId,concept,total,months,paidBefore=0,purchaseDate}){F.ensure();const card=state.cards.find(c=>c.id===cardId),value=requireAmount(total),n=Math.max(2,Math.floor(safeNum(months)));if(!card||financialType(card.type)!=='credito')throw Error('Selecciona una tarjeta de crédito');if(!value)throw Error('Monto inválido');const acc=coreCreditAccountForCard(card);if(!acc)throw Error('No se pudo conectar la tarjeta');const d=new Date((purchaseDate||todayInputValue())+'T12:00:00');if(Number.isNaN(d.getTime()))throw Error('Fecha inválida');const base=value/n,paid=Math.min(n,Math.max(0,Math.floor(safeNum(paidBefore))));const installments=Array.from({length:n},(_,i)=>{const due=new Date(d);due.setMonth(due.getMonth()+i+1);return{number:i+1,amount:i===n-1?M.round(value-base*(n-1)):M.round(base),due:due.getTime(),paid:i<paid};});const plan={id:uid(),cardId,concept,total:value,months:n,monthly:M.round(value/n),installments,purchase_date:d.getTime(),created_at:d.getTime(),user_id:state.user_id};state.msiPlans.push(plan);const unpaid=M.sum(installments.filter(i=>!i.paid),i=>i.amount);acc.balance=M.round(safeNum(acc.balance)+unpaid);syncCardDebt(card);ledger({type:'msi',amount:value,direction:'memo',description:'MSI: '+concept,accountId:acc.id,refId:plan.id,source:'tarjetas',meta:{months:n,purchaseDate:d.getTime()}});saveNow();return plan;};
-
+                        
   /* API pública: cualquier módulo nuevo puede trabajar sin tocar saldos a mano. */
-  Object.assign(A,{Services:S});
-
+  
   /* Lecturas de negocio: presupuesto predictivo, compromisos y salud financiera. */
   F.forecast=function(date=new Date()){
     const p=this.plan(date),b=this.monthBounds(date),days=Math.max(1,new Date(date).getDate()),totalDays=Math.max(1,new Date(date.getFullYear(),date.getMonth()+1,0).getDate());
@@ -3065,24 +2572,9 @@ function applyUniversalButtonUI(){document.querySelectorAll('button').forEach(bt
   };
 
   /* Reemplazos de UI: mismos controles, ahora delegan en servicios. */
-  addIncome=function(){if(!ensureUser())return;try{S.income({description:($('incDesc')?.value||'').trim(),amount:$('incAmount')?.value,type:$('incType')?.value||'otro',accountId:$('incDestAccount')?.value});['incDesc','incAmount','incNote'].forEach(id=>{if($(id))$(id).value='';});closeOpForm('incFormPanel');redraw(['renderIncomes','renderAccounts']);toast('Ingreso guardado');}catch(e){toast(e.message||'No se pudo registrar el ingreso');}};
-  transferFunds=function(){try{S.transfer({fromId:$('transferFrom')?.value,toId:$('transferTo')?.value,amount:$('transferAmount')?.value});$('transferAmount').value='';redraw(['renderAccounts','renderHistorial']);toast('Transferencia realizada');}catch(e){toast(e.message||'No se pudo transferir');}};
-  registerHormiga=function(){try{S.expense({amount:$('hormAmount')?.value,description:($('hormDesc')?.value||'').trim()||'Gasto rápido',category:state.hormCat,accountId:$('hormFromAccount')?.value,source:'hormiga'});$('hormAmount').value='';$('hormDesc').value='';updateUI();toast('✓ Gasto guardado');$('hormAmount').focus();}catch(e){toast(e.message||'No se pudo guardar el gasto');resetSwipeCard();}};
-  addDebtor=function(){if(!ensureUser())return;try{S.lend({person:$('debtPerson')?.value,concept:$('debtConcept')?.value,amount:$('debtAmount')?.value,date:$('debtDate')?.value});['debtPerson','debtConcept','debtAmount','debtDate'].forEach(id=>{if($(id))$(id).value='';});closeOpForm('debtFormPanel');redraw(['renderDebtors']);toast('Préstamo registrado y descontado de tu disponible');}catch(e){toast(e.message||'No se pudo registrar');}};
-  settleDebtor=function(id){try{S.collect(id);redraw(['renderDebtors']);closeDetail();toast('Cobro registrado y añadido a tu disponible');}catch(e){toast(e.message||'No se pudo cobrar');}};
-  addInvestment=function(){if(!ensureUser())return;try{S.invest({name:($('invName')?.value||'').trim(),amount:$('invAmount')?.value,rate:$('invRate')?.value,date:$('invDate')?.value||'',note:($('invNote')?.value||'').trim()});['invName','invAmount','invRate','invDate','invNote'].forEach(id=>{if($(id))$(id).value='';});closeOpForm('invFormPanel');redraw(['renderInvestments']);toast('Inversión registrada');}catch(e){toast(e.message||'No se pudo invertir');}};
-  addSaving=function(){try{const type=$('saveTypeChips')?.querySelector('.chip.active')?.dataset.val||state.saveType||'open';S.saving({name:($('saveName')?.value||'').trim()||'Ahorro',amount:$('saveCurrent')?.value,type,target:$('saveTarget')?.value});redraw(['renderSavings']);toast('Ahorro creado y separado de tu disponible');}catch(e){toast(e.message||'No se pudo crear el ahorro');}};
-  contributeSaving=function(){try{S.saveContribution($('saveSelect')?.value,$('saveAdd')?.value);$('saveAdd').value='';$('saveAddNote').value='';redraw(['renderSavings']);toast('Aporte registrado');}catch(e){toast(e.message||'No se pudo aportar');}};
-  addLoan=function(){if(!ensureUser())return;try{S.loan({name:($('loanName')?.value||'').trim(),principal:$('loanPrincipal')?.value,annualRate:$('loanRate')?.value,term:$('loanTerm')?.value,type:$('loanType')?.value});['loanName','loanPrincipal','loanRate','loanTerm'].forEach(id=>{if($(id))$(id).value='';});closeOpForm('loanFormPanel');redraw(['renderLoans']);toast('Deuda registrada');}catch(e){toast(e.message||'No se pudo registrar');}};
-  markLoanPayment=function(id){try{S.loanPayment(id);redraw(['renderLoans','renderAccounts','renderHistorial']);toast('Pago registrado con capital e interés separados');}catch(e){toast(e.message||'No se pudo pagar');}};
-  addMsi=function(){try{S.msi({cardId:$('msiCardSelect')?.value,concept:($('msiConcept')?.value||'').trim(),total:$('msiTotal')?.value,months:$('msiMonths')?.value,paidBefore:$('msiPaidBefore')?.value,purchaseDate:$('msiPurchaseDate')?.value||todayInputValue()});['msiConcept','msiTotal','msiMonths','msiPaidBefore'].forEach(id=>{if($(id))$(id).value='';});if($('msiPurchaseDate'))$('msiPurchaseDate').value=todayInputValue();redraw(['renderCards','renderAccounts']);toast('Plan MSI conectado a tu crédito');}catch(e){toast(e.message||'No se pudo crear el MSI');}};
-
+                      
   /* Guardado normalizado tras cada save; no altera el almacenamiento legacy. */
-  const prevSave=save;
-  save=function(immediate){const r=prevSave(immediate);persistNormalized();return r;};
-  window.save=save;
-  F.reconcile();
-  try{F.audit();}catch(e){console.warn('Abaco audit',e)}
+          try{F.audit();}catch(e){console.warn('Abaco audit',e)}
 })();
 
 /* Vinculación de botones existentes. No modifica estilos ni HTML visual. */

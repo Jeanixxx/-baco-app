@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#E8EEF5" id="metaThemeColor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Abaco Gestor de Finanzas</title>
+<link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+<div class="app">
+
+<!-- Menú deslizante desde la derecha -->
+<div class="menu-overlay" id="menuOverlay"></div>
+<div class="menu-page" id="menuPage">
+  <div class="menu-page-header">
+    <h2>Menú</h2>
+    <p>Secciones</p>
+  </div>
+  <div class="menu-scroll" id="menuScroll">
+    <div class="menu-list" id="menuList"></div>
+    <div class="menu-footer">
+      <div class="menu-section" style="margin-top:0">Preferencias</div>
+      <div class="menu-item" id="btnThemeMenu"><span class="ico">◐</span><span class="menu-item-label">Tema</span></div>
+      <div class="menu-item" id="btnPronounMenu"><span class="ico">Aa</span><span class="menu-item-label">Pronombres</span></div>
+      <div class="menu-item" id="btnClearMine"><span class="ico">−</span><span class="menu-item-label">Borrar movimientos</span></div>
+      <div class="menu-item" id="btnClearAll"><span class="ico">×</span><span class="menu-item-label">Borrar todos los datos</span></div>
+      <div class="menu-section">Copias</div>
+      <div class="menu-item" id="btnExportBackup"><span class="ico">↓</span><span class="menu-item-label">Exportar copia</span></div>
+      <div class="menu-item" id="btnImportBackup"><span class="ico">↑</span><span class="menu-item-label">Importar copia</span></div>
+      <input type="file" id="inputImportBackup" accept="application/json" style="display:none">
+      <div class="menu-item" id="menuBackupStatus" style="opacity:.65;pointer-events:none">
+        <span class="ico">•</span><span class="menu-item-label" id="menuBackupStatusLabel">Sin respaldo</span>
+      </div>
+      <div class="brand-footer"><strong>Abaco Gestor de Finanzas</strong><span>Hecho por Hugo Jean R</span></div>
+    </div>
+  </div>
+</div>
+<div id="menuEdgeHint" title="Abrir menú">‹</div>
+<div id="calcEdgeHint" title="Calculadora">›</div>
+<div class="calc-overlay" id="calcOverlay"></div>
+<div class="calc-page" id="calcPage">
+  <div class="op-form-head">
+    <h3 style="margin:0;font-size:16px">Calculadora</h3>
+    <button type="button" class="btn btn-ghost btn-sm" id="btnCloseCalc">Cerrar</button>
+  </div>
+  <div class="calc-expression" id="calcExpression" aria-live="polite"></div>
+  <div class="calc-display" id="calcDisplay" aria-live="polite">0</div>
+  <div class="calc-grid" id="calcGrid"></div>
+</div>
+
+<header>
+  <div class="header-top">
+    <div class="header-left">
+      <div class="avatar" id="avatar">?</div>
+      <div>
+        <div class="header-name" id="headerName">Abaco</div>
+        <div class="header-sub" id="headerSub">Sin registrar</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="pending-count hidden" id="pendingBadge">0</span>
+      <button class="icon-btn" id="btnCalcHeader" type="button" aria-label="Calculadora" title="Calculadora">123</button>
+      <button class="icon-btn" id="btnHelpHeader" type="button" aria-label="Ayuda" title="Ayuda de esta sección">?</button>
+      <button class="icon-btn" id="btnMenuHeader" type="button" aria-label="Abrir menú" title="Menú">☰</button>
+    </div>
+  </div>
+  <div class="header-phrase" id="headerPhrase" aria-live="polite"></div>
+</header>
+
+<div class="content">
+  <div id="onboarding">
+    <div class="onboard-card" id="step-register">
+      <div class="emoji">👋</div>
+      <h2 id="welcomeTitle">Bienvenido a Abaco</h2>
+      <p id="welcomeSub">Un espacio claro para entender y cuidar tu dinero.</p>
+      <div class="mode-choice" aria-label="Modo de uso">
+        <button type="button" id="modePersonal" class="active">👤 Personal</button>
+      </div>
+      <div class="field"><input type="text" id="userName" placeholder="Tu nombre"></div>
+      <p class="note" style="text-align:left;margin:8px 0 4px">¿Cómo prefieres que te tratemos?</p>
+      <div class="mode-choice" aria-label="Trato" id="pronounChoice">
+        <button type="button" data-pronoun="el" class="active">Él</button>
+        <button type="button" data-pronoun="ella">Ella</button>
+      </div>
+      <div class="mode-choice" style="margin-top:0;grid-template-columns:1fr">
+        <button type="button" data-pronoun="neutro" id="pronounNeutro">Neutro / sin género</button>
+      </div>
+      <button class="btn btn-primary" id="btnRegister" type="button">Continuar</button>
+    </div>
+    <div class="onboard-card hidden" id="step-wallet">
+      <div class="emoji">🧾</div>
+      <h2>Antes de empezar</h2>
+      <p>Agrega tus cuentas, pagos y deudas ahora o después.</p>
+      <div class="wallet-quiz-progress"><span id="walletQuizProgress">1 de 3</span></div>
+      <div id="walletQuizBody"></div>
+      <div class="row mt-6">
+        <button class="btn btn-ghost" id="btnSkipWalletQuiz" type="button">Saltar</button>
+        <button class="btn btn-primary" id="btnNextWalletQuiz" type="button">Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="appPanels" class="hidden">
+
+    <!-- RÁPIDOS + SWIPE -->
+    <div class="panel active" id="panel-hormiga">
+      <div class="hormiga-hero">
+        <h2>Anotar gasto</h2>
+      </div>
+
+      <div class="swipe-hint" id="swipeHint">
+        <div style="flex:1">
+          Desliza a la derecha para guardar y a la izquierda para descartar.
+        </div>
+        <button type="button" id="btnCloseHint">×</button>
+      </div>
+
+      <div class="form-card">
+        <div class="field"><input type="number" id="hormAmount" placeholder="$ Monto" inputmode="decimal"></div>
+        <div class="quick-amount" id="quickAmounts">
+          <button type="button" data-a="10">$10</button><button type="button" data-a="20">$20</button><button type="button" data-a="50">$50</button>
+          <button type="button" data-a="100">$100</button><button type="button" data-a="200">$200</button><button type="button" data-a="500">$500</button>
+        </div>
+        <div class="field"><input type="text" id="hormDesc" placeholder="¿Qué fue? (opcional)"></div>
+        <div class="chips" id="hormChips"></div>
+        <div class="field mt-6">
+          <label class="note">Sale de (cuenta)</label>
+          <select id="hormFromAccount"></select>
+        </div>
+      </div>
+
+      <div class="swipe-zone" id="swipeZone">
+        <div class="swipe-card" id="swipeCard">
+          <div class="swipe-stamp right" id="stampOk">GUARDAR</div>
+          <div class="swipe-stamp left" id="stampNo">NO</div>
+          <div class="sc-amount" id="scAmount">$0</div>
+          <div class="sc-desc" id="scDesc">Escribe un monto arriba</div>
+          <div class="sc-cat" id="scCat"></div>
+          <div class="sc-badge personal" id="scBadge">Personal</div>
+        </div>
+      </div>
+      <div class="swipe-actions">
+        <button type="button" class="no" id="btnSwipeNo">✕</button>
+        <button type="button" class="ok" id="btnSwipeOk">✓</button>
+      </div>
+
+      <div class="section-title">Últimos · mantén presionado · reacciona</div>
+      <div id="hormigaList"></div>
+    </div>
+
+    <!-- INICIO -->
+    <div class="panel" id="panel-inicio">
+      <div class="panel-name"><span class="pn-ico">🏠</span><span>Ver mi mes</span></div>
+      <div class="account-view-chips" id="accountViewChips"></div>
+      <div class="balance-card">
+        <span class="sparkle">✨</span>
+        <div class="balance-label" id="balanceLabel">Disponible</div>
+        <div class="balance-ring-wrap">
+          <div class="balance-ring" id="balanceRing" style="--pct:0%">
+            <div class="balance-ring-inner" id="balanceRingPct">0%</div>
+          </div>
+          <div style="flex:1">
+            <div class="balance-value" id="balanceValue" style="margin:0">$0</div>
+            <div class="balance-motto" id="balanceMotto">¡Bienvenido!</div>
+          </div>
+        </div>
+        <div class="balance-grid">
+          <div class="balance-item"><div class="lbl">Ingresos</div><div class="val" id="totalIngresos">$0</div></div>
+          <div class="balance-item"><div class="lbl">Gastos</div><div class="val" id="totalGastos">$0</div></div>
+        </div>
+      </div>
+      <div class="personal-box hidden" id="personalBox">
+        <h4>Gastos personales (no afectan el balance conjunto)</h4>
+        <div id="personalSummary" style="font-size:13px;font-weight:600"></div>
+      </div>
+
+      <div class="wrapped" id="wrappedBox">
+        <h3>Resumen del mes <span class="live-emoji">✨</span></h3>
+        <div class="month-info-cubes">
+          <button type="button" class="month-info-cube" data-home-action="charts" aria-label="Ver categoría principal y gráficas"><span class="mic-icon">🏷️</span><small>Principal</small><b id="wTopCat">—</b></button>
+          <button type="button" class="month-info-cube" data-home-action="recordatorios" aria-label="Ver recordatorios"><span class="mic-icon">🔔</span><small>Recordatorios</small><b id="wReminders">0</b></button>
+          <button type="button" class="month-info-cube" data-home-action="suscripciones" aria-label="Ver suscripciones"><span class="mic-icon">🔄</span><small>Suscripciones</small><b id="wSubs">0</b></button>
+          <button type="button" class="month-info-cube" data-home-action="tarjetas" aria-label="Ver compras a meses"><span class="mic-icon">🛍️</span><small>Compras a meses</small><b id="wMsi">0</b></button>
+          <button type="button" class="month-info-cube" data-home-action="tarjetas" aria-label="Ver crédito pendiente"><span class="mic-icon">💳</span><small>Crédito pendiente</small><b id="wCreditPending">$0</b></button>
+          <button type="button" class="month-info-cube" data-home-action="ingresos" aria-label="Ver ingresos del mes"><span class="mic-icon">💰</span><small>Ingresos del mes</small><b id="wIncome">$0</b></button>
+        </div>
+        <div class="w-big" id="wLine">Sigue así</div>
+        <div class="w-emoji">💚</div>
+      </div>
+<div class="section-title">Lectura rápida</div>
+      <div class="profiles compact-insights" id="profilesBox"></div>
+
+      <button type="button" class="chart-cube" id="btnToggleCharts" aria-label="Abrir panel de gráficas">
+        <span class="chart-cube-icon">📊</span><span><b>Mis gráficas</b><small>Salud y distribución de mi gasto</small></span><span class="chart-cube-arrow">↗</span>
+      </button>
+      <div class="charts-modal-backdrop hidden" id="chartsModalBackdrop"></div>
+      <div class="charts-block hidden-soft" id="chartsBlock">
+        <div class="chart-modal-head">
+          <h3>Mis gráficas</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseCharts">Cerrar</button>
+        </div>
+        <div class="section-title" style="margin-top:0">Top categorías</div>
+        <div class="cat-scroll" id="catGrid"></div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnAllCats" style="margin:8px 0 12px;width:auto">Ver todas →</button>
+        <div class="waterfall">
+          <h4>Cascada ingresos → gastos</h4>
+          <div class="wf-bars" id="waterfallBars"></div>
+        </div>
+        <div class="budget-health" id="budgetHealth">
+          <h4>💡 ¿Qué tan sano va tu gasto?</h4>
+          <div class="bh-sub">Distribución de gastos según la regla 50 / 30 / 20.</div>
+          <div class="bh-track" id="bhTrack"></div>
+          <div class="bh-advice ok" id="bhAdvice">
+            <div class="bh-title">Registra tus ingresos y gastos para ver el resumen.</div>
+          </div>
+          <div class="bh-salary-note" id="bhSalaryNote"></div>
+        </div>
+      </div>
+      <div id="cutoffBanner" class="cutoff-banner hidden"></div>
+      <div class="upcoming-card" id="upcomingBox">
+        <h4>📅 Próximos pagos y cortes</h4>
+        <div id="upcomingList"><div class="note">Sin avisos por ahora</div></div>
+      </div>
+      <div class="section-title">Movimientos de hoy</div>
+      <div id="todayList"></div>
+      <div class="section-title">Últimos movimientos</div>
+      <div id="recentList"></div>
+    </div>
+
+    <!-- COMPRAS -->
+    <div class="panel" id="panel-compras">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">🛒</div>
+          <h2>Ir de compras</h2>
+          <p>Lista y modo carrito</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenShopForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar compra</span>
+        </button>
+      </div>
+            <div id="shopNormal">
+        <div class="form-card hidden" id="shopFormPanel">
+          <div class="op-form-head">
+            <h3>Nueva compra / lista</h3>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnCloseShopForm">Cerrar</button>
+          </div>
+          <div class="field"><input type="number" id="shopBudget" placeholder="Monto disponible $"></div>
+          <button class="btn btn-blue" id="btnStartShopMode" type="button">Iniciar modo compras</button>
+          <div class="section-title" style="margin-top:12px">Agregar a lista de espera</div>
+          <div class="row">
+            <input type="text" id="shopItem" placeholder="Producto">
+            <input type="number" id="shopPrice" placeholder="$" style="max-width:75px">
+          </div>
+          <button class="btn btn-primary mt-6" id="btnAddShop" type="button">Agregar a la lista</button>
+          <p class="note">Queda en espera hasta que aceptes o declines.</p>
+        </div>
+        <div class="section-title">Lista de espera</div>
+        <div id="shopList"></div>
+      </div>
+      <div id="shopModeActive" class="hidden">
+        <div class="shop-mode-banner">
+          <div style="font-size:12px;opacity:.9">Total del carrito</div>
+          <div class="cart-total" id="cartTotal">$0</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px">
+            <span>Disponible: <span id="shopAvail">$0</span></span>
+            <span id="shopRemainLabel">Restante: $0</span>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="row">
+            <input type="text" id="cartItem" placeholder="Producto">
+            <input type="number" id="cartPrice" placeholder="$" style="max-width:75px">
+          </div>
+          <button class="btn btn-blue mt-6" id="btnAddCart" type="button">Al carrito</button>
+        </div>
+        <div id="cartList"></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-ghost" id="btnCancelShop" type="button">Cancelar</button>
+          <button class="btn btn-primary" id="btnConfirmShop" type="button">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-lista">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">📝</div>
+          <h2>Qué comprar</h2>
+          <p>Súper, papelería o despensa de la semana</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenListaForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar producto</span>
+        </button>
+      </div>
+      <div class="form-card hidden" id="listaFormPanel">
+        <div class="op-form-head">
+          <h3>Nuevo producto</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseListaForm">Cerrar</button>
+        </div>
+        <div class="row">
+          <input type="text" id="listaItem" placeholder="Producto">
+          <input type="text" id="listaQty" placeholder="Cant." style="max-width:70px">
+        </div>
+        <div class="chips" id="listaCatChips">
+          <div class="chip active" data-val="super">🛒 Súper</div>
+          <div class="chip" data-val="papeleria">✏️ Papelería</div>
+          <div class="chip" data-val="despensa">🏠 Despensa</div>
+          <div class="chip" data-val="otro">📦 Otro</div>
+        </div>
+        <button class="btn btn-primary mt-6" id="btnAddLista" type="button">Agregar a la lista</button>
+      </div>
+      <div class="chips" id="listaFilterChips">
+        <div class="chip active" data-filter="todos">Todos</div>
+        <div class="chip" data-filter="super">🛒 Súper</div>
+        <div class="chip" data-filter="papeleria">✏️ Papelería</div>
+        <div class="chip" data-filter="despensa">🏠 Despensa</div>
+        <div class="chip" data-filter="otro">📦 Otro</div>
+      </div>
+      <div class="section-title">Por comprar</div>
+      <div id="listaPendItems"></div>
+      <div class="section-title" id="listaDoneTitle">Ya comprado</div>
+      <div id="listaDoneItems"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-ghost" id="btnClearListaDone" type="button">Vaciar comprados</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-ingresos">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">💰</div>
+          <h2>Anotar ingreso</h2>
+          <p>Salario, extras y más</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenIncForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar ingreso</span>
+        </button>
+      </div>
+            <div class="form-card hidden" id="incFormPanel">
+        <div class="op-form-head">
+          <h3>Nuevo ingreso</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseIncForm">Cerrar</button>
+        </div>
+        <div class="field"><input type="text" id="incDesc" placeholder="Concepto"></div>
+        <div class="row">
+          <input type="number" id="incAmount" placeholder="$">
+          <select id="incType"><option value="salario">Salario</option><option value="freelance">Freelance</option><option value="extra">Extra</option><option value="otro">Otro</option></select>
+        </div>
+        <div class="field"><input type="text" id="incNote" placeholder="Nota"></div>
+        <div class="chips" style="margin-top:8px">
+          <div class="chip" data-val="1">Compartido</div>
+        </div>
+        <div class="field mt-6">
+          <label class="note">¿A qué cuenta llega?</label>
+          <select id="incDestAccount"></select>
+        </div>
+        <button class="btn btn-primary" id="btnAddIncome" type="button">Guardar</button>
+      </div>
+      <div id="incomeList"></div>
+    </div>
+
+    <div class="panel" id="panel-ahorros">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">🏦</div>
+          <h2>Guardar dinero</h2>
+          <p>Metas y aportes</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnSaveMenu">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar ahorro</span>
+        </button>
+      </div>
+      <button type="button" class="btn-charts money-chart-toggle" data-money-key="ahorros">📊 Mostrar gráficas</button>
+      <div class="charts-block hidden-soft money-charts-block" id="moneyCharts-ahorros">
+        <div class="chips money-period-chips" data-money-key="ahorros">
+          <div class="chip active" data-period="mensual">Mensual</div>
+          <div class="chip" data-period="quincenal">Quincenal</div>
+          <div class="chip" data-period="semanal">Semanal</div>
+        </div>
+        <div class="stat-row" id="moneyChartStats-ahorros"></div>
+        <h4 style="font-size:12px;font-weight:600;margin:8px 0 8px;color:var(--text)">Gráfica del periodo</h4>
+        <div class="wf-bars" id="moneyChartBars-ahorros" style="min-height:110px"></div>
+        <div class="section-title">Desglose de actividad</div>
+        <div id="moneyActivity-ahorros"></div>
+      </div>
+      <div class="save-menu-panel hidden" id="saveMenuPanel">
+        <div class="op-form-head">
+          <h3>Ahorro / Aportar</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseSaveForm">Cerrar</button>
+        </div>
+        <div class="save-tabs">
+          <button type="button" class="active" data-tab="new" id="saveTabNew">Nuevo ahorro</button>
+          <button type="button" data-tab="add" id="saveTabAdd">Aportar</button>
+        </div>
+        <div id="saveFormNew">
+          <div class="field"><input type="text" id="saveName" placeholder="Nombre"></div>
+          <div class="chips" id="saveTypeChips">
+            <div class="chip active" data-val="target">Con meta</div>
+            <div class="chip" data-val="open">Abierto</div>
+          </div>
+          <div id="saveTargetFields" class="row">
+            <input type="number" id="saveTarget" placeholder="Meta $">
+            <input type="number" id="saveCurrent" placeholder="Actual $" value="0">
+          </div>
+          <div class="field mt-6"><input type="number" id="saveRate" placeholder="Rendimiento anual % (opcional)" min="0" step="0.01"></div>
+          <div class="field mt-6"><input type="text" id="saveNote" placeholder="Nota"></div>
+          <button class="btn btn-gold mt-6" id="btnAddSave" type="button">Crear</button>
+        </div>
+        <div id="saveFormAdd" class="hidden">
+          <div class="row"><select id="saveSelect"></select><input type="number" id="saveAdd" placeholder="$"></div>
+          <div class="field mt-6"><input type="text" id="saveAddNote" placeholder="Nota"></div>
+          <button class="btn btn-primary mt-6" id="btnContribute" type="button">Aportar</button>
+        </div>
+      </div>
+      <div class="section-title">Tus ahorros</div>
+      <div id="saveList"></div>
+    </div>
+
+    <div class="panel" id="panel-kanban">
+      <div class="panel-name"><span class="pn-ico">📋</span><span>Mis pendientes</span></div>
+      <div class="form-card">
+        <h3>Nueva tarjeta</h3>
+        <div class="field"><input type="text" id="kanbanText" placeholder="Tarea"></div>
+        <div class="row">
+          <select id="kanbanScope"><option value="individual">Individual</option></select>
+          <select id="kanbanCol"><option value="todo">Por hacer</option><option value="doing">En curso</option><option value="done">Hecho</option></select>
+        </div>
+        <button class="btn btn-purple mt-6" id="btnAddKanban" type="button">Agregar</button>
+        <p class="note">Toca para avanzar. Blanco: editar · rojo: borrar.</p>
+      </div>
+      <div class="section-title">Individual</div>
+      <div class="kanban" id="kanbanIndividual"></div>
+    </div>
+
+    <div class="panel" id="panel-recordatorios">
+      <div class="panel-name"><span class="pn-ico">⏰</span><span>Recordarme algo</span></div>
+      <div class="form-card">
+        <h3>Recordatorio</h3>
+        <div class="field"><input type="text" id="remText" placeholder="¿Qué?"></div>
+        <div class="row"><input type="date" id="remDate"><input type="time" id="remTime" value="09:00"></div>
+        <button class="btn btn-primary mt-6" id="btnAddRem" type="button">Crear</button>
+      </div>
+      <div id="remList"></div>
+    </div>
+    <div class="panel" id="panel-historial">
+      <div class="panel-name"><span class="pn-ico">📜</span><span>Historial completo</span></div>
+      <div class="section-title">Todos los movimientos</div>
+      <p class="note" style="margin-bottom:10px">Entradas, salidas, aportes y compras — el registro completo.</p>
+      <div id="historialList"></div>
+    </div>
+
+    <div class="panel" id="panel-categorias">
+      <div class="panel-name"><span class="pn-ico">🏷️</span><span>Mis categorías</span></div>
+      <div class="form-card">
+        <h3>Nueva categoría</h3>
+        <div class="row">
+          <input type="text" id="catName" placeholder="Nombre">
+          <input type="text" id="catIcon" placeholder="Emoji" maxlength="2" style="max-width:65px" value="📦">
+        </div>
+        <button class="btn btn-primary mt-6" id="btnAddCat" type="button">Crear</button>
+      </div>
+      <div id="catList"></div>
+    </div>
+
+    <!-- PRESUPUESTO -->
+    <div class="panel" id="panel-presupuesto">
+      <div class="budget-hero">
+        <h2>Planear mi mes ✨</h2>
+        <p id="budgetPeriodLabel">Tu presupuesto mensual, claro y sin ruido.</p>
+      </div>
+      <div class="chips" id="budgetPeriodChips">
+        <div class="chip active" data-budget-period="mensual">Mensual</div>
+        <div class="chip" data-budget-period="quincenas">2 quincenas</div>
+        <div class="chip" data-budget-period="semanas">4 semanas</div>
+      </div>
+      <div class="budget-summary" id="budgetSummary"></div>
+      <div class="budget-toolbar">
+        <button class="btn btn-primary" id="btnBudgetEntry" type="button">＋ Capturar plan</button>
+        <button class="btn btn-ghost btn-sm" id="btnBudgetClear" type="button">Limpiar</button>
+      </div>
+      <div class="form-card hidden" id="budgetEntryPanel">
+        <h3>Captura tipo tabla</h3>
+        <p class="note">Una fila por gasto: concepto, descripción y costo.</p>
+        <div class="excel-grid excel-head"><span>Concepto</span><span>Descripción</span><span>Costo</span><span></span></div>
+        <div id="budgetRows"></div>
+        <button class="btn btn-ghost btn-sm mt-6" id="btnBudgetAddRow" type="button">＋ Añadir fila</button>
+        <div class="row mt-6">
+          <button class="btn btn-ghost" id="btnBudgetCancel" type="button">Cancelar</button>
+          <button class="btn btn-primary" id="btnBudgetSave" type="button">Guardar plan</button>
+        </div>
+      </div>
+      <div class="section-title">Plan limpio</div>
+      <div id="budgetList"></div>
+    </div>
+    <!-- TARJETAS Y MSI -->
+    <div class="panel" id="panel-tarjetas">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">💳</div>
+          <h2>Mis tarjetas</h2>
+          <p>Crédito y meses sin intereses</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenCardForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar tarjeta</span>
+        </button>
+      </div>
+            <div class="form-card hidden" id="cardFormPanel">
+        <div class="op-form-head">
+          <h3>Nueva tarjeta / MSI</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseCardForm">Cerrar</button>
+        </div>
+        <div class="section-title" style="margin-top:0">Nueva tarjeta</div>
+        <div class="row">
+          <input type="text" id="cardName" placeholder="Nombre o banco">
+          <input type="number" id="cardLimit" placeholder="Límite $" inputmode="decimal">
+        </div>
+        <select id="cardType" class="mt-6"><option value="crédito">Crédito</option><option value="débito">Débito</option><option value="efectivo">Efectivo</option></select>
+        <button class="btn btn-primary mt-6" id="btnAddCard" type="button">Agregar cuenta</button>
+        <div class="section-title">Compra a MSI</div>
+        <div class="row"><select id="msiCardSelect"></select><input type="text" id="msiConcept" placeholder="Concepto"></div>
+        <div class="row mt-6">
+          <input type="number" id="msiTotal" placeholder="Total $" inputmode="decimal">
+          <input type="number" id="msiMonths" placeholder="Meses" min="2" max="48">
+          <input type="number" id="msiPaidBefore" placeholder="Ya pagadas" min="0">
+        </div>
+        <div class="field mt-6">
+          <label class="note">Fecha de compra</label>
+          <input type="date" id="msiPurchaseDate">
+        </div>
+        <button class="btn btn-blue mt-6" id="btnAddMsi" type="button">Crear plan MSI</button>
+        <p class="note">Las mensualidades ya pagadas no crean gastos nuevos.</p>
+      </div>
+      <div class="section-title">Mis tarjetas y planes</div>
+      <div id="cardList"></div>
+    </div>
+
+    <!-- CUENTAS -->
+    <div class="panel" id="panel-cuentas">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">💼</div>
+          <h2>Mis cuentas</h2>
+          <p>Débito, crédito y efectivo</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenAccountForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar cuenta</span>
+        </button>
+      </div>
+            <div class="form-card hidden" id="accountFormPanel">
+        <div class="op-form-head">
+          <h3>Nueva cuenta / Transferir</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseAccountForm">Cerrar</button>
+        </div>
+        <div class="section-title" style="margin-top:0">Nueva cuenta</div>
+        <div class="row"><input type="text" id="accountName" placeholder="Nombre"><input type="number" id="accountBalance" placeholder="Saldo $" inputmode="decimal"></div>
+        <select id="accountType" class="mt-6"><option value="débito">Débito</option><option value="crédito">Crédito</option><option value="efectivo">Efectivo</option><option value="ahorro">Ahorro</option></select>
+        <button class="btn btn-primary mt-6" id="btnAddAccount" type="button">Agregar cuenta</button>
+        <div class="section-title">Transferir entre cuentas</div>
+        <div class="row"><select id="transferFrom"></select><select id="transferTo"></select></div>
+        <div class="row mt-6"><input type="number" id="transferAmount" placeholder="Monto $" inputmode="decimal"><button class="btn btn-blue" id="btnTransfer" type="button">Transferir</button></div>
+        <p class="note">Las transferencias solo mueven saldo; no alteran tus gastos ni ingresos.</p>
+      </div>
+      <div class="section-title">Saldos</div>
+      <div id="accountList"></div>
+    </div>
+
+    <!-- PRÉSTAMOS -->
+    <div class="panel" id="panel-prestamos">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">🏠</div>
+          <h2>Mis préstamos</h2>
+          <p>Hipoteca, auto o personal</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenLoanForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar préstamo</span>
+        </button>
+      </div>
+      <button type="button" class="btn-charts money-chart-toggle" data-money-key="prestamos">📊 Mostrar gráficas</button>
+      <div class="charts-block hidden-soft money-charts-block" id="moneyCharts-prestamos">
+        <div class="chips money-period-chips" data-money-key="prestamos">
+          <div class="chip active" data-period="mensual">Mensual</div>
+          <div class="chip" data-period="quincenal">Quincenal</div>
+          <div class="chip" data-period="semanal">Semanal</div>
+        </div>
+        <div class="stat-row" id="moneyChartStats-prestamos"></div>
+        <h4 style="font-size:12px;font-weight:600;margin:8px 0 8px;color:var(--text)">Gráfica del periodo</h4>
+        <div class="wf-bars" id="moneyChartBars-prestamos" style="min-height:110px"></div>
+        <div class="section-title">Desglose de actividad</div>
+        <div id="moneyActivity-prestamos"></div>
+      </div>
+      <div class="form-card hidden" id="loanFormPanel">
+        <div class="op-form-head">
+          <h3>Nuevo préstamo</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseLoanForm">Cerrar</button>
+        </div>
+        <div class="field"><input type="text" id="loanName" placeholder="Concepto: auto, casa, personal..."></div>
+        <div class="row"><input type="number" id="loanPrincipal" placeholder="Monto inicial $" inputmode="decimal"><input type="number" id="loanRate" placeholder="Tasa anual %" step="0.01"></div>
+        <div class="row mt-6"><input type="number" id="loanTerm" placeholder="Plazo en meses" min="1"><select id="loanType"><option value="personal">Personal</option><option value="auto">Auto</option><option value="hipoteca">Hipoteca</option><option value="otro">Otro</option></select></div>
+        <button class="btn btn-purple mt-6" id="btnAddLoan" type="button">Calcular y guardar</button>
+      </div>
+      <div class="module-note">Marca cada pago aquí sin volver a registrarlo como gasto. Así el saldo de la deuda avanza, pero tus reportes no se duplican.</div>
+      <div id="loanList"></div>
+    </div>
+
+    <!-- DEUDORES -->
+    <div class="panel" id="panel-deudores">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">🤝</div>
+          <h2>Quién me debe</h2>
+          <p>Préstamos a personas</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenDebtForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar deuda</span>
+        </button>
+      </div>
+            <div class="form-card hidden" id="debtFormPanel">
+        <div class="op-form-head"><h3>Persona que te debe</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseDebtForm">Cerrar</button></div>
+        <div class="field"><input type="text" id="debtPerson" placeholder="Nombre"></div>
+        <div class="field"><input type="text" id="debtConcept" placeholder="Concepto (opcional)"></div>
+        <div class="row">
+          <input type="number" id="debtAmount" placeholder="Monto $" inputmode="decimal">
+          <input type="date" id="debtDate">
+        </div>
+        <p class="note">La fecha es opcional. Úsala si acordaron un día de pago.</p>
+        <button class="btn btn-primary mt-6" id="btnAddDebt" type="button">Guardar</button>
+      </div>
+      <div class="section-title">Pendientes</div>
+      <div id="debtorsList"></div>
+    </div>
+
+    <!-- INVERSIONES -->
+    <div class="panel" id="panel-inversiones">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">📈</div>
+          <h2>Mis inversiones</h2>
+          <p>Portafolio y rendimiento</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenInvForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar inversión</span>
+        </button>
+      </div>
+      <button type="button" class="btn-charts money-chart-toggle" data-money-key="inversiones">📊 Mostrar gráficas</button>
+      <div class="charts-block hidden-soft money-charts-block" id="moneyCharts-inversiones">
+        <div class="chips money-period-chips" data-money-key="inversiones">
+          <div class="chip active" data-period="mensual">Mensual</div>
+          <div class="chip" data-period="quincenal">Quincenal</div>
+          <div class="chip" data-period="semanal">Semanal</div>
+        </div>
+        <div class="stat-row" id="moneyChartStats-inversiones"></div>
+        <h4 style="font-size:12px;font-weight:600;margin:8px 0;color:var(--text)">Gráfica del periodo</h4>
+        <div class="wf-bars" id="moneyChartBars-inversiones" style="min-height:110px"></div>
+        <div class="section-title">Desglose de actividad</div>
+        <div id="moneyActivity-inversiones"></div>
+      </div>
+      <div class="form-card hidden" id="invFormPanel">
+        <div class="op-form-head"><h3>Nueva inversión</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseInvForm">Cerrar</button></div>
+        <div class="field"><input type="text" id="invName" placeholder="Nombre (CETES, acciones…)"></div>
+        <div class="row">
+          <input type="number" id="invAmount" placeholder="Monto $" inputmode="decimal">
+          <input type="number" id="invRate" placeholder="Rend. anual %" step="0.01">
+        </div>
+        <div class="field mt-6"><input type="date" id="invDate"></div>
+        <div class="field mt-6"><input type="text" id="invNote" placeholder="Nota"></div>
+        <button class="btn btn-primary mt-6" id="btnAddInv" type="button">Guardar</button>
+      </div>
+      <div class="section-title">Tu portafolio</div>
+      <div id="investList"></div>
+    </div>
+
+    <!-- SUSCRIPCIONES -->
+    <div class="panel" id="panel-suscripciones">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">🔁</div>
+          <h2>Mis suscripciones</h2>
+          <p>Pagos recurrentes del mes</p>
+        </div>
+        <button type="button" class="op-add-btn" id="btnOpenSubForm">
+          <span class="plus">＋</span>
+          <span class="lbl">Agregar suscripción</span>
+        </button>
+      </div>
+      <div class="form-card hidden" id="subFormPanel">
+        <div class="op-form-head">
+          <h3>Nueva suscripción</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnCloseSubForm">Cerrar</button>
+        </div>
+        <div class="field"><input type="text" id="subName" placeholder="Nombre (ej. Netflix, Spotify)"></div>
+        <div class="row">
+          <input type="number" id="subAmount" placeholder="Monto $" inputmode="decimal">
+          <input type="date" id="subDate">
+        </div>
+        <div class="chips" id="subRangeChips" style="margin-top:8px">
+          <div class="chip active" data-val="mensual">Mensual</div>
+          <div class="chip" data-val="quincenal">Quincenal</div>
+          <div class="chip" data-val="semanal">Semanal</div>
+        </div>
+        <button class="btn btn-primary mt-6" id="btnAddSub" type="button">Guardar</button>
+        <p class="note">La fecha es el próximo cobro o el día de referencia del ciclo.</p>
+      </div>
+      <div class="stat-row" id="subSummary"></div>
+      <div class="sub-cal-wrap">
+        <div class="op-form-head">
+          <h3 style="margin:0;font-size:13px">Calendario de cobros</h3>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnToggleSubCal">Mostrar</button>
+        </div>
+        <div id="subCalendar" class="hidden"></div>
+      </div>
+            <div class="section-title">Tus suscripciones</div>
+      <div id="subList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="pinned-bar" id="pinnedBar"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-sheet">
+    <h3 id="detailTitle">Detalle</h3>
+    <div id="detailBody"></div>
+    <div id="detailActions" class="row mt-6" style="gap:8px"></div>
+    <button class="btn btn-ghost mt-6" id="btnCloseDetail" type="button">Cerrar</button>
+  </div>
+</div>
+
+<script src="js/boot.js"></script>
+<script src="js/app.js"></script>
+<script src="js/security.js"></script>
+</body>
+</html>

@@ -2,6 +2,8 @@
  * Incluye la migración de extremo a extremo: datos reales de la app antigua
  * → migración → los totales coinciden con los que la app antigua calcula.
  *
+ * La prueba de migración usa la app antigua congelada (tests/fixtures/legacy-v2),
+ * porque la app nueva migra en cuanto carga y ya no genera datos del formato antiguo.
  * Ejecutar: node --test tests/store.test.js
  */
 const { test, before, after, beforeEach } = require('node:test');
@@ -11,7 +13,8 @@ const { pathToFileURL } = require('node:url');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const APP_URL = pathToFileURL(path.join(ROOT, 'index.html')).href;
+// Copia congelada de la app antes de la Fase 4 (formato localStorage v2). Solo para generar datos antiguos.
+const APP_URL = pathToFileURL(path.join(ROOT, 'tests', 'fixtures', 'legacy-v2', 'index.html')).href;
 const HARNESS_URL = pathToFileURL(path.join(ROOT, 'tests', 'harness', 'store.html')).href;
 const CHROMIUM = process.env.ABACO_CHROMIUM || '/opt/pw-browsers/chromium';
 

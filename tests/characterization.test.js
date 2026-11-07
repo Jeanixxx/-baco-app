@@ -56,8 +56,9 @@ async function run(fields, fnName, args = []) {
       el.value = value;
     }
   }, { fields });
-  return page.evaluate(({ fnName, args }) => {
-    try { window[fnName](...args); return { ok: true }; }
+  // Las acciones financieras son asíncronas: esperamos a que terminen y a que el guardado cierre.
+  return page.evaluate(async ({ fnName, args }) => {
+    try { await window[fnName](...args); await new Promise((r) => setTimeout(r, 60)); return { ok: true }; }
     catch (e) { return { ok: false, error: e.message }; }
   }, { fnName, args });
 }
@@ -65,6 +66,16 @@ async function run(fields, fnName, args = []) {
 async function addAccount(name, balance, type = 'débito') {
   await run({ accountName: name, accountBalance: String(balance), accountType: type }, 'addAccount');
   return page.evaluate((n) => state.accounts.find((a) => a.name === n).id, name);
+}
+
+/* Fija el saldo mediante una operación del motor (la única forma que persiste). */
+async function setBalance(name, amount) {
+  await page.evaluate(async ({ name, amount }) => {
+    await window.AbacoApp.ready;
+    const acc = window.AbacoApp.data().view().accounts.find((a) => a.name === name);
+    await window.AbacoApp.data().adjustAccount(acc.id, amount);
+    window.AbacoApp.refreshUI();
+  }, { name, amount });
 }
 
 const balanceOf = (name) => page.evaluate((n) => state.accounts.find((a) => a.name === n).balance, name);
@@ -168,7 +179,7 @@ test('prestamo personal: usa la PRIMERA cuenta líquida, no la elegida (comporta
   await registerUser();
   await addAccount('Cartera', 1000, 'efectivo');
   // La primera cuenta líquida es la «Efectivo» creada por defecto (saldo 0).
-  await page.evaluate(() => { state.accounts.find((a) => a.name === 'Efectivo').balance = 1000; save(true); });
+  await setBalance('Efectivo', 1000);
   await run({ debtPerson: 'Ana', debtConcept: 'Comida', debtAmount: '300', debtDate: '2026-11-01' }, 'addDebtor');
   assert.equal(await balanceOf('Efectivo'), 700, 'descuenta de Efectivo, la primera líquida');
   assert.equal(await balanceOf('Cartera'), 1000, 'Cartera no se toca aunque sea la elegida en otros flujos');
@@ -180,7 +191,7 @@ test('prestamo personal: usa la PRIMERA cuenta líquida, no la elegida (comporta
 
 test('ahorro: descuenta de la primera cuenta líquida y crea la meta (comportamiento actual)', async () => {
   await registerUser();
-  await page.evaluate(() => { state.accounts.find((a) => a.name === 'Efectivo').balance = 1000; save(true); });
+  await setBalance('Efectivo', 1000);
   await run({ saveName: 'Vacaciones', saveCurrent: '400', saveTarget: '1000' }, 'addSaving');
   assert.equal(await balanceOf('Efectivo'), 600);
   const s = await page.evaluate(() => state.savings[0]);
@@ -190,7 +201,7 @@ test('ahorro: descuenta de la primera cuenta líquida y crea la meta (comportami
 
 test('préstamo: calcula la mensualidad y el pago reduce el saldo', async () => {
   await registerUser();
-  await page.evaluate(() => { state.accounts.find((a) => a.name === 'Efectivo').balance = 20000; save(true); });
+  await setBalance('Efectivo', 20000);
   await run({ loanName: 'Coche', loanPrincipal: '12000', loanRate: '12', loanTerm: '12', loanType: 'personal' }, 'addLoan');
   const loan = await page.evaluate(() => state.loans[0]);
   assert.equal(loan.term, 12);
@@ -201,16 +212,18 @@ test('préstamo: calcula la mensualidad y el pago reduce el saldo', async () => 
   assert.ok(after.current < 12000 && after.current > 10900, 'saldo tras un pago: ' + after.current);
 });
 
-test('MSI: BUG CONOCIDO, no se puede crear ningún plan (financialType recibe un string)', async () => {
+test('MSI: funciona tras la Fase 4 (antes fallaba por financialType)', async () => {
   await registerUser();
   await run({ cardName: 'Oro', cardType: 'crédito', cardLimit: '20000' }, 'addCard');
   const cardId = await page.evaluate(() => state.cards[0]?.id);
   assert.ok(cardId, 'la tarjeta sí se crea');
   const r = await run({ msiCardSelect: cardId, msiConcept: 'TV', msiTotal: '6000', msiMonths: '6', msiPaidBefore: '0', msiPurchaseDate: '2026-11-01' }, 'addMsi');
   const plans = await page.evaluate(() => state.msiPlans.length);
-  // Cuando se corrija el bug, esta aserción debe invertirse y verificar 6 cuotas que suman 6000.
-  assert.equal(plans, 0, 'comportamiento actual: no se crea el plan');
   assert.equal(r.ok, true);
+  assert.equal(plans, 1, 'el plan MSI se crea');
+  const plan = await page.evaluate(() => state.msiPlans[0]);
+  assert.equal(plan.installments.length, 6);
+  assert.ok(Math.abs(plan.installments.reduce((s, i) => s + i.amount, 0) - 6000) < 0.01);
 });
 
 test('tarjeta: se puede borrar sin deuda cuando el usuario confirma', async () => {
