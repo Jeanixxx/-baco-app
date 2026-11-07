@@ -322,7 +322,7 @@ let state = {
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-const money = n => '$'+(Number(n)||0).toLocaleString('es');
+const money = n => '$'+(Number(n)||0).toLocaleString('es-MX',{maximumFractionDigits:2});
 const uid = () => (globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : 'abaco-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10));
 const catIcon = id => (state.categories.find(c=>c.id===id)||{}).icon||'📦';
 const catName = id => (state.categories.find(c=>c.id===id)||{}).name||id;
@@ -551,7 +551,7 @@ $('btnThemeMenu').onclick = () => {
 
 const MENU_GROUPS = [
   {label:'Principal', items:['hormiga','inicio','presupuesto']},
-  {label:'Dinero', items:['compras','ingresos','ahorros','tarjetas','cuentas','prestamos','suscripciones','inversiones','deudores']},
+  {label:'Dinero', items:['compras','ingresos','ahorros','tarjetas','cuentas','prestamos','suscripciones','inversiones','deudores','simulador']},
   {label:'Organiza', items:['lista','kanban','recordatorios']},
   {label:'Consulta', items:['historial','categorias']}
 ];
@@ -559,7 +559,7 @@ const NAV_META = {
   hormiga:{label:'Gasto rápido'}, inicio:{label:'Inicio'}, presupuesto:{label:'Presupuesto'}, compras:{label:'Compras'},
   lista:{label:'Lista de compras'},
   ingresos:{label:'Ingresos'}, ahorros:{label:'Ahorros'}, tarjetas:{label:'Tarjetas'},
-  cuentas:{label:'Cuentas'}, prestamos:{label:'Préstamos'}, suscripciones:{label:'Suscripciones'}, inversiones:{label:'Inversiones'}, deudores:{label:'Por cobrar'},
+  cuentas:{label:'Cuentas'}, prestamos:{label:'Préstamos'}, suscripciones:{label:'Suscripciones'}, inversiones:{label:'Inversiones'}, deudores:{label:'Por cobrar'}, simulador:{label:'Simulador'},
   kanban:{label:'Pendientes'}, recordatorios:{label:'Recordatorios'},
   historial:{label:'Historial'}, categorias:{label:'Categorías'},
 };
@@ -574,6 +574,7 @@ const NAV_ICON_PATHS = {
   tarjetas:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
   cuentas:'<path d="M4 7h15a2 2 0 0 1 2 2v10H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12"/><path d="M16 13h5"/>',
   prestamos:'<rect x="4" y="4" width="11" height="16" rx="2"/><path d="M8 8h4M8 12h3"/><circle cx="17" cy="16" r="4"/><path d="M17 14v4M16 16h2"/>',
+  simulador:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 11h2M14 11h2M8 15h2M14 15h2"/>',
   suscripciones:'<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 2M4 16l2 2a7 7 0 0 0 12.5-3"/>',
   inversiones:'<path d="M3 20h18M5 17l5-6 4 3 6-8"/><path d="M16 6h4v4"/>',
   deudores:'<circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1M16 6a3 3 0 0 1 0 5M18 14a5 5 0 0 1 3 5"/>',
@@ -599,7 +600,7 @@ const PANEL_RENDERERS = {
   hormiga: () => renderHormiga(), inicio: () => renderInicio(), presupuesto: () => renderBudget(),
   compras: () => renderShop(), lista: () => renderChecklist(), ingresos: () => renderIncomes(),
   ahorros: () => renderSavings(), tarjetas: () => renderCards(), cuentas: () => renderAccounts(),
-  prestamos: () => renderLoans(), suscripciones: () => renderSubscriptions(), inversiones: () => renderInvestments(),
+  prestamos: () => renderLoans(), suscripciones: () => renderSubscriptions(), inversiones: () => renderInvestments(), simulador: () => renderSimulator(),
   deudores: () => renderDebtors(), kanban: () => renderKanban(), recordatorios: () => renderReminders(),
   historial: () => renderHistorial(), categorias: () => renderCategories(),
 };
@@ -649,6 +650,10 @@ const PANEL_HELP = {
   prestamos: {
     title: 'Mis préstamos',
     body: 'Registra deudas y pagos sin duplicar gastos.'
+  },
+  simulador: {
+    title: 'Simulador',
+    body: 'Compara decisiones antes de tomarlas: suscripciones, deudas, inversiones, metas y MSI. Nada de lo que veas aquí cambia tus datos.'
   },
   suscripciones: {
     title: 'Mis suscripciones',

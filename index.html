@@ -686,6 +686,46 @@
       <div id="investList"></div>
     </div>
 
+    <!-- SIMULADOR (no modifica datos) -->
+    <div class="panel" id="panel-simulador">
+      <div class="op-header">
+        <div class="op-title-card">
+          <div class="op-emoji">🧮</div>
+          <h2>Simulador</h2>
+          <p>Proyecta una decisión antes de tomarla. No cambia tus datos.</p>
+        </div>
+      </div>
+      <div class="chips" id="simModes" role="tablist" aria-label="Tipo de simulación">
+        <div class="chip active" role="tab" data-sim="suscripciones" aria-selected="true">Suscripciones</div>
+        <div class="chip" role="tab" data-sim="deudas" aria-selected="false">Deudas</div>
+        <div class="chip" role="tab" data-sim="inversiones" aria-selected="false">Inversiones</div>
+        <div class="chip" role="tab" data-sim="meta" aria-selected="false">Meta</div>
+        <div class="chip" role="tab" data-sim="msi" aria-selected="false">MSI vs contado</div>
+      </div>
+      <div class="form-card" id="simForm">
+        <div data-sim-form="suscripciones"><p class="note">Usa las suscripciones que tienes registradas.</p></div>
+        <div data-sim-form="deudas" hidden>
+          <div class="field"><label class="note" for="simLoan">Partir de un préstamo (opcional)</label><select id="simLoan"><option value="">Escribir los datos</option></select></div>
+          <div class="row"><input type="number" id="simDebt" placeholder="Saldo $" inputmode="decimal"><input type="number" id="simDebtRate" placeholder="Tasa anual %" inputmode="decimal"></div>
+          <div class="row mt-6"><input type="number" id="simDebtMonths" placeholder="Meses restantes" inputmode="numeric"><input type="number" id="simDebtExtra" placeholder="Pago extra al mes $" inputmode="decimal"></div>
+        </div>
+        <div data-sim-form="inversiones" hidden>
+          <div class="row"><input type="number" id="simInitial" placeholder="Inicial $" inputmode="decimal"><input type="number" id="simMonthly" placeholder="Aporte al mes $" inputmode="decimal"></div>
+          <div class="row mt-6"><input type="number" id="simRate" placeholder="Rendimiento anual %" inputmode="decimal"><input type="number" id="simYears" placeholder="Años" inputmode="decimal"></div>
+          <div class="field mt-6"><input type="number" id="simInflation" placeholder="Inflación anual % (opcional)" inputmode="decimal"></div>
+        </div>
+        <div data-sim-form="meta" hidden>
+          <div class="row"><input type="number" id="simTarget" placeholder="Meta $" inputmode="decimal"><input type="number" id="simMetaInitial" placeholder="Ya tengo $" inputmode="decimal"></div>
+          <div class="row mt-6"><input type="number" id="simMetaYears" placeholder="Plazo en años" inputmode="decimal"><input type="number" id="simMetaRate" placeholder="Rendimiento anual %" inputmode="decimal"></div>
+        </div>
+        <div data-sim-form="msi" hidden>
+          <div class="row"><input type="number" id="simMsiTotal" placeholder="Precio $" inputmode="decimal"><input type="number" id="simMsiMonths" placeholder="Meses" inputmode="numeric"></div>
+          <div class="row mt-6"><input type="number" id="simMsiRate" placeholder="Lo que te rinde tu dinero % anual" inputmode="decimal"><input type="number" id="simMsiDiscount" placeholder="Descuento de contado %" inputmode="decimal"></div>
+        </div>
+      </div>
+      <div class="form-card" id="simResult" aria-live="polite"></div>
+    </div>
+
     <!-- SUSCRIPCIONES -->
     <div class="panel" id="panel-suscripciones">
       <div class="op-header">
@@ -752,6 +792,7 @@
 <script src="js/abaco-simulate.js"></script>
 <script src="js/abaco-app.js"></script>
 <script src="js/app.js"></script>
+<script src="js/abaco-simulator-ui.js"></script>
 <script src="js/security.js"></script>
 </body>
 </html>

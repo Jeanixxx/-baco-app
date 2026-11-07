@@ -197,3 +197,54 @@ test('migración al abrir la app: datos del formato antiguo aparecen con sus sal
   assert.equal(await balance('Efectivo'), 850);
   assert.equal(await page.evaluate(() => state.shop.length), 1, 'los datos no financieros también llegan');
 });
+
+/* ---------- pestaña Simulador ---------- */
+
+async function openSimulator() {
+  await page.evaluate(() => goPanel('simulador'));
+  await page.waitForTimeout(350);
+}
+const simText = () => page.evaluate(() => document.getElementById('simResult').innerText);
+
+test('simulador: suscripciones reflejan tus datos reales y no cambian nada', async () => {
+  await open();
+  await register();
+  await page.evaluate(() => { state.subscriptions = [{ id: 's1', name: 'Netflix', amount: 199, range: 'mensual', active: true }]; AbacoApp.persistApp(); });
+  const before = await page.evaluate(() => JSON.stringify({ accounts: state.accounts, subs: state.subscriptions }));
+  await openSimulator();
+  const text = await simText();
+  assert.match(text, /199/, 'muestra el costo mensual');
+  const after = await page.evaluate(() => JSON.stringify({ accounts: state.accounts, subs: state.subscriptions }));
+  assert.equal(after, before, 'simular no modifica datos');
+});
+
+test('simulador: deuda con pago extra muestra meses e intereses ahorrados', async () => {
+  await open();
+  await register();
+  await openSimulator();
+  await page.click('#simModes [data-sim="deudas"]');
+  await page.fill('#simDebt', '10000');
+  await page.fill('#simDebtRate', '24');
+  await page.fill('#simDebtMonths', '12');
+  await page.fill('#simDebtExtra', '500');
+  const text = await simText();
+  assert.match(text, /Ahorras \d+ meses/);
+});
+
+test('simulador: inversión de 1 000 al mes al 12 % durante un año', async () => {
+  await open();
+  await register();
+  await openSimulator();
+  await page.click('#simModes [data-sim="inversiones"]');
+  await page.fill('#simMonthly', '1000');
+  await page.fill('#simRate', '12');
+  await page.fill('#simYears', '1');
+  const text = await simText();
+  assert.match(text, /12,682\.5/, 'saldo final con formato mexicano');
+});
+
+test('formato de montos: separador de miles mexicano (12,345 y no 12.345)', async () => {
+  await open();
+  const s = await page.evaluate(() => money(12345));
+  assert.equal(s, '$12,345');
+});
