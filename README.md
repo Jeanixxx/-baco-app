@@ -12,13 +12,32 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/abaco-data.js` | Capa entre motor y pantalla: vista en pesos y operaciones que guardan. |
 | `js/abaco-simulate.js` | Simulador puro: suscripciones, deudas, inversiones, metas y MSI. No guarda nada. |
 | `js/abaco-app.js` | Controlador de la interfaz: arranque, acciones financieras, copias. |
-| `js/abaco-dialog.js` | Diálogos de confirmación y de datos (reemplazan `confirm()` y `prompt()`). |
+| `js/abaco-dialog.js` | Diálogos de confirmación y de datos con campos de texto, lista y área de texto (reemplazan `confirm()` y `prompt()`). |
+| `js/abaco-sky.js` | Cielo del día: paleta por hora, sol y luna que cruzan la pantalla, tema claro/oscuro automático. Parte pura probada en Node. |
+| `js/abaco-extras.js` | Lógica pura de convivencia: equivalencias, pausa, decisiones, pactos, cartas, préstamos entre sobres, preguntas, medidas, silencio y brújula. |
+| `js/abaco-extras-ui.js` | Interfaz de convivencia: avisos de Inicio, brújula flotante, pausa antes de pagar y las pantallas Estadísticas, Decisiones, Pactos, Cartas y Configuración. |
+| `styles-glass.css` | Cristal líquido sobre el cielo: reasigna las variables de `styles.css`, añade el desenfoque y los estilos de lo nuevo. |
 | `js/app.js` | Interfaz: navegación, pantallas, tablero y datos no financieros. |
 | `js/abaco-simulator-ui.js` | Pantalla del simulador. |
 | `js/security.js` | Bloqueo opcional con PIN o patrón (solo barrera de acceso local). |
 | `js/boot.js` | Arranque mínimo del registro. |
 
-Orden de carga en `index.html`: `boot`, `abaco-core`, `abaco-migrate`, `abaco-store`, `abaco-data`, `abaco-simulate`, `abaco-dialog`, `abaco-app`, `app`, `abaco-simulator-ui`, `security`.
+Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core`, `abaco-migrate`, `abaco-store`, `abaco-data`, `abaco-simulate`, `abaco-dialog`, `abaco-app`, `app`, `abaco-simulator-ui`, `abaco-delegate`, `abaco-extras-ui`, `security`. La hoja `styles-glass.css` se carga después de `styles.css`.
+
+## Diseño: ciclo del día y convivencia
+
+- **Cielo.** El fondo sigue la hora: amanecer, mañana, tarde, atardecer y noche. El sol cruza de 6:00 a 19:30 y después entra la luna hasta las 6:00. El tema es claro de día y oscuro de noche. El botón *Tema* del menú alterna automático, día fijo y noche fija (`theme_mode`).
+- **Cristal.** Las tarjetas, la cabecera, el menú, los diálogos y la barra inferior son cristal translúcido con desenfoque.
+- **Convivencia.** Informar con cifras, ofrecer opciones, dejar decidir, no culpar. Lo que la persona elige vive en `state.extras` y se guarda con el resto de los datos no financieros (y viaja en la copia de seguridad):
+  - *Equivalencias*: si elige una unidad (café, cine, comida, pasaje o una propia), cada gasto muestra "Son 3 cafés". Por defecto no compara nada.
+  - *Pausa antes de pagar*: en compras marcadas "fue por impulso" espera unos segundos; "Mejor no" lo anota como decisión, sin reproche.
+  - *Cajón de decisiones*: compras grandes con su motivo; meses después pregunta si valió la pena.
+  - *Pactos*: acuerdos con uno mismo que la persona marca como cumplidos o rotos.
+  - *Cartas*: al cerrar el mes se escribe una carta corta; se puede guardar, editar o borrar (borrar es definitivo).
+  - *Sobres*: porcentaje por sobre y préstamos entre sobres con nota.
+  - *Preguntas sin prisa* en Cuentas, *silencio por encargo* hasta el lunes y *tono* (directo, amable, silencioso).
+  - *Brújula* en Inicio: círculo flotante cuya aguja se sacude y apunta a donde conviene mirar; al tocarla muestra una nota, sin cambiar de pantalla.
+- **Probar otra hora o fecha.** Abrir con `?hora=19` (o `?hora=19.5`) fija la hora del cielo; `window.__abacoNow = <ms>` fija la fecha de la capa de convivencia. No hay ningún control visible para esto.
 
 ## Datos
 
@@ -39,6 +58,9 @@ node --test tests/data.test.js          # capa de datos
 node --test tests/simulate.test.js      # simulador
 node --test tests/characterization.test.js  # comportamiento de la app
 node --test tests/app.test.js           # integración de la interfaz
+node --test tests/sky.test.js           # cielo del día (funciones puras)
+node --test tests/extras.test.js        # lógica de convivencia
+node --test tests/glass.test.js         # cristal líquido y convivencia en Chromium, 390x844
 ```
 
 `tests/fixtures/legacy-v2/` es una copia congelada de la app anterior. La prueba de migración la usa para generar datos del formato antiguo.

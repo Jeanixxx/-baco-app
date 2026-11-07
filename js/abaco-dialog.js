@@ -37,9 +37,23 @@
         label.className = 'abaco-dialog-label';
         label.textContent = f.label;
         label.htmlFor = 'dlg-' + f.id;
-        const input = document.createElement('input');
+        let input;
+        if (f.type === 'select') {
+          input = document.createElement('select');
+          for (const o of f.options || []) {
+            const opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.label;
+            input.appendChild(opt);
+          }
+        } else if (f.type === 'textarea') {
+          input = document.createElement('textarea');
+          input.rows = f.rows || 8;
+        } else {
+          input = document.createElement('input');
+          input.type = f.type || 'text';
+        }
         input.id = 'dlg-' + f.id;
-        input.type = f.type || 'text';
         if (f.inputmode) input.setAttribute('inputmode', f.inputmode);
         input.value = f.value == null ? '' : String(f.value);
         if (f.placeholder) input.placeholder = f.placeholder;

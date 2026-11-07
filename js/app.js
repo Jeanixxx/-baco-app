@@ -40,8 +40,9 @@
     try {
       const meta = document.getElementById('metaThemeColor');
       if (meta) {
+        const sky = window.AbacoSky && AbacoSky.current();
         const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-        meta.setAttribute('content', dark ? '#2B303A' : '#E8EEF5');
+        meta.setAttribute('content', sky ? sky.top : (dark ? '#2B303A' : '#E8EEF5'));
       }
     } catch (e) {}
   }
@@ -190,7 +191,7 @@ const PERSISTED_KEYS = ['user_id','user_name','expenses','incomes','shop','check
   'shopMode','historial','savings','kanban','reminders','reactions','categories','budgets',
   'budget_period','cards','msiPlans','accounts','transfers','loans','subscriptions','debtors',
   'investments','account_view','pinned','user_pronoun','money_chart_prefs','active_panel',
-  'wallet_quiz','theme'];
+  'wallet_quiz','theme','theme_mode'];
 const LS = k => localStorage.getItem(k);
 const LS_SET = (k,v) => localStorage.setItem(k, typeof v==='string'?v:JSON.stringify(v));
 
@@ -311,7 +312,7 @@ let state = {
    investments: [],
    accountView: LS('account_view')||'todas',
    tipSplitMode: 'all',
-  pinned: JSON.parse(LS('pinned')||'null')||['hormiga','ingresos','inicio'],
+  pinned: JSON.parse(LS('pinned')||'null')||['inicio','historial','hormiga','estadisticas','cuentas'],
   pronoun: LS('user_pronoun')||'el',
   hormCat:'general', hormShared:'1', incShared:'0', saveType:'target',
   moneyChartPrefs: JSON.parse(LS('money_chart_prefs')||'{}')||{},
@@ -539,29 +540,31 @@ if(LS('swipe_hint_closed')==='1') $('swipeHint').classList.add('hidden');
 $('btnCloseHint').onclick = () => { $('swipeHint').classList.add('hidden'); LS_SET('swipe_hint_closed','1'); };
 
 
-const savedTheme = LS('theme')||'light';
-document.documentElement.setAttribute('data-theme', savedTheme);
+/* El tema sigue al cielo: claro de día y oscuro de noche (js/abaco-sky.js).
+   El botón alterna entre automático, día fijo y noche fija. */
+if (window.AbacoSky) AbacoSky.init({ mode: LS('theme_mode') || 'auto' });
+else document.documentElement.setAttribute('data-theme', LS('theme')||'light');
 $('btnThemeMenu').onclick = () => {
-  const next = document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',next); LS_SET('theme',next);
-  const meta = document.getElementById('metaThemeColor');
-  if (meta) meta.setAttribute('content', next==='dark' ? '#2B303A' : '#E8EEF5');
-  toast(next==='dark'?'Oscuro':'Claro');
+  if (!window.AbacoSky) return;
+  const r = AbacoSky.cycleMode();
+  toast('Tema: ' + r.label);
 };
 
 const MENU_GROUPS = [
-  {label:'Principal', items:['hormiga','inicio','presupuesto']},
+  {label:'Principal', items:['inicio','hormiga','presupuesto']},
   {label:'Dinero', items:['compras','ingresos','ahorros','tarjetas','cuentas','prestamos','suscripciones','inversiones','deudores','simulador']},
   {label:'Organiza', items:['lista','kanban','recordatorios']},
-  {label:'Consulta', items:['historial','categorias']}
+  {label:'Consulta', items:['historial','estadisticas','categorias','cartas']},
+  {label:'Contigo', items:['decisiones','pactos','config']}
 ];
 const NAV_META = {
-  hormiga:{label:'Gasto rápido'}, inicio:{label:'Inicio'}, presupuesto:{label:'Presupuesto'}, compras:{label:'Compras'},
+  hormiga:{label:'Registrar'}, inicio:{label:'Inicio'}, presupuesto:{label:'Presupuesto'}, compras:{label:'Compras'},
   lista:{label:'Lista de compras'},
   ingresos:{label:'Ingresos'}, ahorros:{label:'Ahorros'}, tarjetas:{label:'Tarjetas'},
   cuentas:{label:'Cuentas'}, prestamos:{label:'Préstamos'}, suscripciones:{label:'Suscripciones'}, inversiones:{label:'Inversiones'}, deudores:{label:'Por cobrar'}, simulador:{label:'Simulador'},
   kanban:{label:'Pendientes'}, recordatorios:{label:'Recordatorios'},
-  historial:{label:'Historial'}, categorias:{label:'Categorías'},
+  historial:{label:'Movimientos'}, categorias:{label:'Categorías'},
+  estadisticas:{label:'Estadísticas'}, cartas:{label:'Cartas'}, decisiones:{label:'Decisiones'}, pactos:{label:'Pactos'}, config:{label:'Configuración'},
 };
 const NAV_ICON_PATHS = {
   hormiga:'<path d="M5 3h14v18l-3-2-4 2-4-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -581,7 +584,12 @@ const NAV_ICON_PATHS = {
   kanban:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16M5 8h2M11 8h2M17 8h2"/>',
   recordatorios:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',
   historial:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2M3 4v4h4"/>',
-  categorias:'<path d="M20 13 11 22 2 13V4h9z"/><circle cx="7.5" cy="8.5" r="1"/>'
+  categorias:'<path d="M20 13 11 22 2 13V4h9z"/><circle cx="7.5" cy="8.5" r="1"/>',
+  estadisticas:'<path d="M4 20V11M10 20V5M16 20v-8M22 20H2"/>',
+  cartas:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  decisiones:'<path d="M3 8h18v12H3z"/><path d="m3 8 2-4h14l2 4M10 13h4"/>',
+  pactos:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12 3 3 5-6"/>',
+  config:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'
 };
 function navIconSvg(section){
   const shape=NAV_ICON_PATHS[section]||'<circle cx="12" cy="12" r="8"/>';
@@ -603,7 +611,11 @@ const PANEL_RENDERERS = {
   prestamos: () => renderLoans(), suscripciones: () => renderSubscriptions(), inversiones: () => renderInvestments(), simulador: () => renderSimulator(),
   deudores: () => renderDebtors(), kanban: () => renderKanban(), recordatorios: () => renderReminders(),
   historial: () => renderHistorial(), categorias: () => renderCategories(),
+  estadisticas: () => renderExtrasPanel('estadisticas'), cartas: () => renderExtrasPanel('cartas'),
+  decisiones: () => renderExtrasPanel('decisiones'), pactos: () => renderExtrasPanel('pactos'), config: () => renderExtrasPanel('config'),
 };
+/* Las pantallas de convivencia las pinta js/abaco-extras-ui.js (se carga después de este archivo). */
+function renderExtrasPanel(name){ if (window.AbacoExtrasUI) AbacoExtrasUI.render(name); }
 function renderActivePanel(name) {
   const fn = PANEL_RENDERERS[name];
   if (typeof fn === 'function') { try { fn(); } catch (e) { console.warn('Render de panel', name, e); } }
@@ -611,6 +623,11 @@ function renderActivePanel(name) {
 
 
 const PANEL_HELP = {
+  estadisticas: { title: 'Estadísticas', body: 'Tus gastos de la semana, lo que más pesó y las medidas que tú elegiste. Aquí también está la lista de cartas.' },
+  cartas: { title: 'Cartas', body: 'Al cerrar cada mes, Ábaco te escribe una carta corta con lo que pasó. Puedes guardarla, editarla o borrarla; si la borras, no vuelve a aparecer.' },
+  decisiones: { title: 'Cajón de decisiones', body: 'Anota por qué hiciste una compra grande. Tiempo después, Ábaco te pregunta si valió la pena y tú decides la respuesta.' },
+  pactos: { title: 'Pactos contigo', body: 'Acuerdos que haces contigo, como "no pedir comida los martes". Tú marcas si los cumpliste o los rompiste; no hay castigos.' },
+  config: { title: 'Configuración', body: 'Elige cómo te habla Ábaco, tu unidad de equivalencia, la pausa antes de pagar, el silencio por encargo y tus medidas.' },
   hormiga: {
     title: 'Anotar gasto',
     body: 'Elige categoría, monto y cuenta. Guarda con el botón o desliza.'
@@ -935,7 +952,7 @@ function renderMenu() {
 function renderPinned(){
   const bar=$('pinnedBar'); if(!bar)return;
   let pins=Array.from(new Set(state.pinned||[])).filter(t=>NAV_META[t]);
-  if(!pins.length)pins=['hormiga','ingresos','inicio'];
+  if(!pins.length)pins=['inicio','historial','hormiga','estadisticas','cuentas'];
   state.pinned=pins;
   const active=state.activePanel||'hormiga';
   bar.classList.add('has-pins');
@@ -2269,12 +2286,12 @@ function renderHistorial(){
 ensureFinancialCore();
 
 /* ===== ABACO APP V3 ===== */
-(function(){const DEFAULT_PINS=['hormiga','ingresos','inicio'];if(!Array.isArray(state.pinned)||!state.pinned.length){state.pinned=[...DEFAULT_PINS];LS_SET('pinned',JSON.stringify(state.pinned));}})();
+(function(){const DEFAULT_PINS=['inicio','historial','hormiga','estadisticas','cuentas'];if(!Array.isArray(state.pinned)||!state.pinned.length){state.pinned=[...DEFAULT_PINS];LS_SET('pinned',JSON.stringify(state.pinned));}})();
 
 function openMenu(){try{closeCalc();}catch(e){console.warn('No se pudo cerrar calculadora',e)}const menu=$('menuPage'),ov=$('menuOverlay');if(menu)menu.classList.add('open');if(ov){ov.classList.add('open');ov.style.pointerEvents='auto';}document.querySelector('.app')?.classList.add('menu-open');try{renderMenu();}catch(e){console.warn('No se pudo renderizar menú',e)}}
 function closeMenu(){const menu=$('menuPage'),ov=$('menuOverlay');if(menu){menu.classList.remove('open');menu.style.transform='';menu.style.transition='';}if(ov){ov.classList.remove('open');ov.style.transform='';ov.style.transition='';ov.style.opacity='';ov.style.pointerEvents='';}document.querySelector('.app')?.classList.remove('menu-open');}
 function toggleMenu(){if($('menuPage')?.classList.contains('open'))closeMenu();else openMenu();}
-function goPanel(name){closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();updateSwipePreview();if(LS('swipe_hint_closed')!=='1')$('swipeCard')?.classList.add('hint');},150);}
+function goPanel(name){closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();updateSwipePreview();if(LS('swipe_hint_closed')!=='1')$('swipeCard')?.classList.add('hint');},150);}
 
 function renderWalletQuiz(){const body=$('walletQuizBody'),prog=$('walletQuizProgress');if(!body)return;const q=WALLET_QUIZ[walletQuizStep];if(prog)prog.textContent=`${walletQuizStep+1} de ${WALLET_QUIZ.length}`;let html=`<div class="wallet-quiz-title">${q.title}</div><div class="wallet-quiz-copy">${q.copy}</div>`;if(q.kind==='accounts')html+=`<div class="wallet-quiz-fields"><input id="quizAccountName" type="text" placeholder="Nombre (ej. BBVA, efectivo)"><div class="row"><select id="quizAccountType"><option value="débito">Débito</option><option value="crédito">Crédito</option><option value="efectivo">Efectivo</option></select><input id="quizAccountBalance" type="number" inputmode="decimal" placeholder="Saldo / límite $"></div><button type="button" class="btn" id="quizAddAccount" data-quiz="add-account">＋ Agregar a mi billetera</button><div class="wallet-entity-note" id="quizAccountList">${state.accounts.map(a=>`${esc(a.name)} · ${esc(a.type)}`).join(' · ')||'Aún no agregas cuentas'}</div></div>`;if(q.kind==='subscriptions')html+=`<div class="wallet-quiz-fields"><input id="quizSubName" type="text" placeholder="Ej. Netflix"><div class="row"><input id="quizSubAmount" type="number" inputmode="decimal" placeholder="Monto $"><select id="quizSubRange"><option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="semanal">Semanal</option></select></div><button type="button" class="btn" id="quizAddSub" data-quiz="add-sub">＋ Agregar suscripción</button><div class="wallet-entity-note" id="quizSubList">${state.subscriptions.map(a=>`${esc(a.name)} · ${money(a.amount)}`).join(' · ')||'Aún no agregas suscripciones'}</div></div>`;if(q.kind==='debts'){const cards=state.cards.filter(c=>financialType(c.type)==='credito');html+=`<div class="wallet-quiz-fields"><select id="quizDebtKind"><option value="loan">Préstamo / crédito</option><option value="msi">Compra a meses</option></select><select id="quizDebtCard"><option value="">${cards.length?'Tarjeta para MSI':'Primero agrega una tarjeta de crédito'}</option>${cards.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select><input id="quizDebtName" type="text" placeholder="Nombre de la deuda o compra"><div class="row"><input id="quizDebtAmount" type="number" inputmode="decimal" placeholder="Monto pendiente $"><input id="quizDebtMonths" type="number" min="2" placeholder="Meses"></div><div class="field"><label class="note">Fecha de compra / inicio</label><input id="quizDebtDate" type="date" value="${todayInputValue()}"></div><button type="button" class="btn" id="quizAddDebt" data-quiz="add-debt">＋ Agregar deuda</button><div class="wallet-entity-note" id="quizDebtList">${[...state.loans.map(a=>a.name),...state.msiPlans.map(a=>a.concept)].map(esc).join(' · ')||'Aún no agregas deudas'}</div></div>`;}body.innerHTML=html;
 }
@@ -2827,9 +2844,11 @@ try{ renderActivePanel(document.querySelector('.panel.active')?.id?.replace('pan
       const meta=document.getElementById('metaThemeColor');
       if(!meta)return;
       const dark=document.documentElement.getAttribute('data-theme')==='dark';
-      meta.content=dark?'#2B303A':'#EAEFF5';
+      const sky=window.AbacoSky&&AbacoSky.current();
+      const barColor=sky?sky.top:(dark?'#2B303A':'#EAEFF5');
+      meta.content=barColor;
       const status=window.Capacitor?.Plugins?.StatusBar;
-      if(status?.setBackgroundColor) status.setBackgroundColor({color:dark?'#2B303A':'#EAEFF5'}).catch(()=>{});
+      if(status?.setBackgroundColor) status.setBackgroundColor({color:barColor}).catch(()=>{});
       if(status?.setStyle) status.setStyle({style:dark?'DARK':'LIGHT'}).catch(()=>{});
       const native=window.AndroidBridge; if(native?.setStatusBarColor) native.setStatusBarColor(meta.content);
     }catch(e){}

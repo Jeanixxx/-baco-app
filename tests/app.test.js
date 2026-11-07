@@ -372,8 +372,10 @@ test('tablero: el fondo oscuro cierra las gráficas abiertas', async () => {
   await page.evaluate(() => goPanel('inicio'));
   await page.waitForTimeout(350);
   await page.click('#btnToggleCharts');
-  await page.evaluate(() => { const b = document.getElementById('chartsModalBackdrop'); b.style.pointerEvents = 'auto'; });
-  await page.click('#chartsModalBackdrop', { position: { x: 4, y: 4 } });
+  // La hoja de gráficas cubre la pantalla después de su animación de entrada, así que un clic con el dedo
+  // sobre el fondo solo cabría en los primeros milisegundos. Se dispara el evento directo sobre el fondo
+  // para probar que el botón delegado lo atiende, sin depender del tiempo.
+  await page.dispatchEvent('#chartsModalBackdrop', 'click');
   assert.equal(await page.evaluate(() => document.getElementById('chartsBlock').classList.contains('chart-modal-open')), false);
 });
 

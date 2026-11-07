@@ -12,7 +12,7 @@
   'use strict';
 
   /* Claves de `state` que se guardan en la base (no financieras). */
-  const APP_DATA_KEYS = ['user_id', 'user_name', 'shop', 'checklist', 'cart', 'shopMode', 'kanban', 'reminders', 'reactions', 'categories', 'subscriptions'];
+  const APP_DATA_KEYS = ['user_id', 'user_name', 'shop', 'checklist', 'cart', 'shopMode', 'kanban', 'reminders', 'reactions', 'categories', 'subscriptions', 'extras'];
 
   let data = null;
   let store = null;
@@ -51,6 +51,7 @@
     for (const name of renders) {
       try { if (typeof window[name] === 'function') window[name](); } catch (e) { console.warn('render ' + name, e); }
     }
+    try { if (window.AbacoExtrasUI) window.AbacoExtrasUI.afterRefresh(); } catch (e) { console.warn('convivencia', e); }
   }
 
   /* Como act(), pero no llama a updateUI: el asistente de bienvenida depende de esa función
@@ -104,6 +105,7 @@
       for (const k of APP_DATA_KEYS) if (r.app[k] !== undefined) state[k] = r.app[k];
       syncFinance();
       refreshUI();
+      if (window.AbacoExtrasUI) window.AbacoExtrasUI.start();
       if (r.status === 'migrated') toast('Tus datos se actualizaron a la nueva versión de Ábaco');
       readyResolve(true);
     } catch (err) {
@@ -162,12 +164,17 @@
   };
 
   window.registerHormiga = async function registerHormiga() {
+    const ui = window.AbacoExtrasUI;
+    const info = { amount: val('hormAmount'), description: val('hormDesc').trim() };
+    // Pausa antes de pagar: solo si la persona marcó "fue por impulso" y la tiene activada.
+    if (ui && (await ui.beforeExpense(info)) !== 'go') { resetSwipeCard(); return; }
     const r = await data.expense({
-      amount: val('hormAmount'), description: val('hormDesc').trim() || 'Gasto rápido',
+      amount: info.amount, description: info.description || 'Gasto rápido',
       category: state.hormCat || 'general', accountId: val('hormFromAccount') || undefined, source: 'hormiga'
     });
     if (!r.ok) { toast(r.error); resetSwipeCard(); return; }
     refreshUI();
+    if (ui) ui.afterExpense(info);
     clear('hormAmount', 'hormDesc');
     toast('✓ Gasto guardado');
     if ($$('hormAmount')) $$('hormAmount').focus();

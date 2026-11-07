@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Abaco Gestor de Finanzas</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles-glass.css">
 
 </head>
 <body>
@@ -125,8 +126,11 @@
           <button type="button" data-a="10">$10</button><button type="button" data-a="20">$20</button><button type="button" data-a="50">$50</button>
           <button type="button" data-a="100">$100</button><button type="button" data-a="200">$200</button><button type="button" data-a="500">$500</button>
         </div>
+        <div class="x-equiv hidden" id="hormEquiv"></div>
         <div class="field"><input type="text" id="hormDesc" placeholder="¿Qué fue? (opcional)"></div>
         <div class="chips" id="hormChips"></div>
+        <div class="chips" id="hormImpulseChips"><div class="chip" id="hormImpulse" role="button" aria-pressed="false">Fue por impulso</div></div>
+        <div class="field x-why hidden" id="hormWhyWrap"><input type="text" id="hormWhy" placeholder="Anota por qué, para revisarlo después (opcional)"></div>
         <div class="field mt-6">
           <label class="note">Sale de (cuenta)</label>
           <select id="hormFromAccount"></select>
@@ -154,7 +158,11 @@
 
     <!-- INICIO -->
     <div class="panel" id="panel-inicio">
-      <div class="panel-name"><span class="pn-ico">🏠</span><span>Ver mi mes</span></div>
+      <div class="home-greet">
+        <div><div class="hg-hello" id="hgHello">Hola</div><div class="hg-title">Inicio</div></div>
+        <div class="hg-chip" id="hgChip">—</div>
+      </div>
+      <div id="homeNotices"></div>
       <div class="account-view-chips" id="accountViewChips"></div>
       <div class="balance-card">
         <span class="sparkle">✨</span>
@@ -500,6 +508,7 @@
       </div>
       <div class="section-title">Plan limpio</div>
       <div id="budgetList"></div>
+      <div id="borrowBox"></div>
     </div>
     <!-- TARJETAS Y MSI -->
     <div class="panel" id="panel-tarjetas">
@@ -571,6 +580,7 @@
         <div class="row mt-6"><input type="number" id="transferAmount" placeholder="Monto $" inputmode="decimal"><button class="btn btn-blue" id="btnTransfer" type="button">Transferir</button></div>
         <p class="note">Las transferencias solo mueven saldo; no alteran tus gastos ni ingresos.</p>
       </div>
+      <div id="questionBox"></div>
       <div class="section-title">Saldos</div>
       <div id="accountList"></div>
     </div>
@@ -768,9 +778,29 @@
             <div class="section-title">Tus suscripciones</div>
       <div id="subList"></div>
     </div>
+
+    <!-- ESTADÍSTICAS · DECISIONES · PACTOS · CARTAS · CONFIGURACIÓN (se pintan desde js/abaco-extras-ui.js) -->
+    <div class="panel" id="panel-estadisticas"><div id="xv-estadisticas"></div></div>
+    <div class="panel" id="panel-decisiones"><div id="xv-decisiones"></div></div>
+    <div class="panel" id="panel-pactos"><div id="xv-pactos"></div></div>
+    <div class="panel" id="panel-cartas"><div id="xv-cartas"></div></div>
+    <div class="panel" id="panel-config"><div id="xv-config"></div></div>
   </div>
 </div>
 
+<div id="brujulaCard" role="dialog" aria-label="Tu brújula"></div>
+<button type="button" id="brujulaBtn" aria-label="Brújula del mes" aria-expanded="false">
+  <svg viewBox="0 0 52 52" aria-hidden="true">
+    <circle cx="26" cy="26" r="24" fill="var(--glass-soft)"/>
+    <g class="needle" id="brujulaNeedle">
+      <g class="wobble">
+        <path d="M26,9 L30,26 L26,43 L22,26 Z" fill="var(--green)"/>
+        <path d="M26,9 L30,26 L22,26 Z" fill="var(--green)" opacity=".55"/>
+      </g>
+    </g>
+    <circle cx="26" cy="26" r="3" fill="var(--text)" opacity=".6"/>
+  </svg>
+</button>
 <div class="pinned-bar" id="pinnedBar"></div>
 </div>
 
@@ -785,6 +815,8 @@
 </div>
 
 <script src="js/boot.js"></script>
+<script src="js/abaco-sky.js"></script>
+<script src="js/abaco-extras.js"></script>
 <script src="js/abaco-core.js"></script>
 <script src="js/abaco-migrate.js"></script>
 <script src="js/abaco-store.js"></script>
@@ -795,6 +827,7 @@
 <script src="js/app.js"></script>
 <script src="js/abaco-simulator-ui.js"></script>
 <script src="js/abaco-delegate.js"></script>
+<script src="js/abaco-extras-ui.js"></script>
 <script src="js/security.js"></script>
 </body>
 </html>

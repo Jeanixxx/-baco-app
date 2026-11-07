@@ -70,6 +70,7 @@ dependencies {
 tasks.register<Copy>("copyAbacoWebAssets") {
     from(rootProject.file("index.html"))
     from(rootProject.file("styles.css"))
+    from(rootProject.file("styles-glass.css"))
     from(rootProject.file("js")) { into("js") }
     into(layout.projectDirectory.dir("src/main/assets"))
 }
