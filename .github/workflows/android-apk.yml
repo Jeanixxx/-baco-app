@@ -17,6 +17,9 @@ permissions:
 jobs:
   build-debug-apk:
     runs-on: ubuntu-latest
+    env:
+      # Solo una bandera (verdadero/falso): el contexto `secrets` no se puede usar en `if` de un paso.
+      HAS_RELEASE_KEY: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 != '' }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -46,12 +49,12 @@ jobs:
           retention-days: 14
 
       - name: Warn when release signing is not configured
-        if: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 == '' }}
+        if: ${{ env.HAS_RELEASE_KEY != 'true' }}
         run: |
           echo "::warning::Sin secretos de firma: no se genera el APK de release. Usa solo el APK firmado con la clave persistente para actualizar Ábaco."
 
       - name: Prepare persistent release signing key
-        if: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_RELEASE_KEY == 'true' }}
         shell: bash
         env:
           ABACO_RELEASE_KEYSTORE_BASE64: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 }}
@@ -63,7 +66,7 @@ jobs:
           echo "ABACO_RELEASE_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
       - name: Build release APK with persistent signature
-        if: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_RELEASE_KEY == 'true' }}
         env:
           ABACO_RELEASE_STORE_PASSWORD: ${{ secrets.ABACO_RELEASE_STORE_PASSWORD }}
           ABACO_RELEASE_KEY_ALIAS: ${{ secrets.ABACO_RELEASE_KEY_ALIAS }}
@@ -71,7 +74,7 @@ jobs:
         run: gradle --no-daemon :app:assembleRelease -PVERSION_CODE=${{ github.run_number }} -PVERSION_NAME=1.0.${{ github.run_number }}
 
       - name: Publish release APK
-        if: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.HAS_RELEASE_KEY == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: abaco-android-release-apk
