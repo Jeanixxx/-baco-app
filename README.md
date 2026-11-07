@@ -16,13 +16,13 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/abaco-sky.js` | Cielo del día: paleta por hora, sol y luna que cruzan la pantalla, tema claro/oscuro automático. Parte pura probada en Node. |
 | `js/abaco-extras.js` | Lógica pura de convivencia: equivalencias, pausa, decisiones, pactos, cartas, préstamos entre sobres, preguntas, medidas, silencio y brújula. |
 | `js/abaco-extras-ui.js` | Interfaz de convivencia: avisos de Inicio, brújula flotante, pausa antes de pagar y las pantallas Estadísticas, Decisiones, Pactos, Cartas y Configuración. |
-| `styles-glass.css` | Cristal líquido sobre el cielo: reasigna las variables de `styles.css`, añade el desenfoque y los estilos de lo nuevo. |
+| `styles.css` | Una sola hoja de estilo: variables de cristal (claro de día, oscuro de noche), componentes y cielo. |
 | `js/app.js` | Interfaz: navegación, pantallas, tablero y datos no financieros. |
 | `js/abaco-simulator-ui.js` | Pantalla del simulador. |
 | `js/security.js` | Bloqueo opcional con PIN o patrón (solo barrera de acceso local). |
 | `js/boot.js` | Arranque mínimo del registro. |
 
-Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core`, `abaco-migrate`, `abaco-store`, `abaco-data`, `abaco-simulate`, `abaco-dialog`, `abaco-app`, `app`, `abaco-simulator-ui`, `abaco-delegate`, `abaco-extras-ui`, `security`. La hoja `styles-glass.css` se carga después de `styles.css`.
+Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core`, `abaco-migrate`, `abaco-store`, `abaco-data`, `abaco-simulate`, `abaco-dialog`, `abaco-app`, `app`, `abaco-simulator-ui`, `abaco-delegate`, `abaco-extras-ui`, `security`.
 
 ## Diseño: ciclo del día y convivencia
 
