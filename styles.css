@@ -1437,3 +1437,14 @@ input, select, textarea { font-size: 16px; }
 .security-overlay input{margin:7px 0}
 .security-menu-item{cursor:pointer}
 @media(min-width:700px){.security-card{padding:28px}}
+
+/* Diálogos propios (confirmar y pedir datos) */
+.abaco-dialog-overlay { position: fixed; inset: 0; z-index: 100050; background: #0007; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.abaco-dialog { width: min(420px, 100%); max-height: 100%; overflow: auto; background: var(--card, #EAEFF5); color: var(--text, #2A3344); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px #0004; }
+.abaco-dialog h3 { font-size: 17px; margin-bottom: 8px; }
+.abaco-dialog-body { font-size: 13px; color: var(--muted, #78859A); margin-bottom: 12px; }
+.abaco-dialog-label { display: block; font-size: 12px; color: var(--muted, #78859A); margin: 10px 0 4px; }
+.abaco-dialog input { width: 100%; font-size: 16px; padding: 10px 12px; border-radius: 12px; border: 1px solid #0002; background: var(--bg, #EAEFF5); color: var(--text, #2A3344); }
+.abaco-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+.abaco-dialog-actions .btn { min-width: 110px; }
+.btn-danger { background: #B42318; color: #fff; }

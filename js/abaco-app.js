@@ -115,10 +115,13 @@
   window.editAccount = async function editAccount(id) {
     const acc = (state.accounts || []).find((a) => a.id === id);
     if (!acc) return;
-    const name = prompt('Nombre de la cuenta', acc.name);
-    if (name === null) return;
-    const balance = prompt('Saldo actual', String(acc.balance || 0));
-    if (balance === null) return;
+    const form = await askFields({ title: 'Editar cuenta', confirmLabel: 'Guardar', fields: [
+      { id: 'name', label: 'Nombre de la cuenta', value: acc.name },
+      { id: 'balance', label: 'Saldo actual $', value: String(acc.balance || 0), type: 'number', inputmode: 'decimal' }
+    ] });
+    if (!form) return;
+    const name = form.name;
+    const balance = form.balance;
     if (name.trim() && name.trim() !== acc.name) {
       const r = await data.renameAccount(id, name);
       if (!r.ok) { toast(r.error); return; }
@@ -159,15 +162,15 @@
   };
 
   window.deleteExpense = async function deleteExpense(id) {
-    if (!confirm('¿Borrar este gasto?')) return;
+    if (!await askConfirm('¿Borrar este gasto?')) return;
     await act(data.reverse(id), { onOk() { closeDetail(); }, okMessage: 'Gasto borrado y saldo corregido' });
   };
   window.deleteIncome = async function deleteIncome(id) {
-    if (!confirm('¿Borrar este ingreso?')) return;
+    if (!await askConfirm('¿Borrar este ingreso?')) return;
     await act(data.reverse(id), { onOk() { closeDetail(); }, okMessage: 'Ingreso borrado y saldo corregido' });
   };
   window.deleteHistorialItem = async function deleteHistorialItem(id) {
-    if (!confirm('¿Borrar esta compra del historial?')) return;
+    if (!await askConfirm('¿Borrar esta compra del historial?')) return;
     await act(data.reverse(id), { onOk() { closeDetail(); }, okMessage: 'Movimiento borrado y saldo corregido' });
   };
 
@@ -184,7 +187,7 @@
   };
 
   window.deleteDebtor = async function deleteDebtor(id) {
-    if (!confirm('¿Borrar este registro?')) return;
+    if (!await askConfirm('¿Borrar este registro?')) return;
     await act(data.deleteRecord(id), { onOk() { closeDetail(); }, okMessage: 'Registro borrado' });
   };
 
@@ -197,7 +200,7 @@
   };
 
   window.deleteInvestment = async function deleteInvestment(id) {
-    if (!confirm('¿Borrar esta inversión?')) return;
+    if (!await askConfirm('¿Borrar esta inversión?')) return;
     await act(data.deleteRecord(id), { onOk() { closeDetail(); }, okMessage: 'Inversión borrada y dinero devuelto' });
   };
 
@@ -215,7 +218,7 @@
   };
 
   window.deleteSaving = async function deleteSaving(id) {
-    if (!confirm('¿Borrar este ahorro? El dinero vuelve a tu disponible.')) return;
+    if (!await askConfirm('¿Borrar este ahorro? El dinero vuelve a tu disponible.')) return;
     await act(data.deleteRecord(id), { onOk() { closeDetail(); }, okMessage: 'Ahorro borrado' });
   };
 
@@ -256,11 +259,12 @@
   window.editCard = async function editCard(id) {
     const c = (state.cards || []).find((x) => x.id === id);
     if (!c) return;
-    const name = prompt('Nombre de la tarjeta', c.name);
-    if (name === null) return;
-    const limit = prompt('Límite', String(c.limit || 0));
-    if (limit === null) return;
-    await act(data.updateCard({ cardId: id, name: name.trim() || c.name, limit: Math.max(0, Number(limit) || 0) }), {
+    const form = await askFields({ title: 'Editar tarjeta', confirmLabel: 'Guardar', fields: [
+      { id: 'name', label: 'Nombre de la tarjeta', value: c.name },
+      { id: 'limit', label: 'Límite $', value: String(c.limit || 0), type: 'number', inputmode: 'decimal' }
+    ] });
+    if (!form) return;
+    await act(data.updateCard({ cardId: id, name: form.name.trim() || c.name, limit: Math.max(0, Number(form.limit) || 0) }), {
       okMessage: 'Tarjeta actualizada'
     });
   };
@@ -269,7 +273,7 @@
     const c = (state.cards || []).find((x) => x.id === id);
     if (!c) return;
     if (Number(c.balance) > 0.005) { toast('No puedes borrar una tarjeta con deuda pendiente'); return; }
-    if (!confirm('¿Borrar esta tarjeta? Sus compras a MSI también se borrarán.')) return;
+    if (!await askConfirm('¿Borrar esta tarjeta? Sus compras a MSI también se borrarán.')) return;
     await act(data.deleteCard(id), { onOk() { closeDetail(); }, okMessage: 'Tarjeta eliminada' });
   };
 
@@ -299,7 +303,7 @@
 
   window.clearMine = async function clearMine() {
     if (!ensureUser()) return;
-    if (!confirm('¿Borrar tus movimientos? No se puede deshacer.')) return;
+    if (!await askConfirm('¿Borrar tus movimientos? No se puede deshacer.')) return;
     const ids = [...(state.expenses || []), ...(state.incomes || []), ...(state.transfers || [])].map((x) => x.id);
     for (const id of ids) {
       const r = await data.reverse(id);
@@ -311,7 +315,7 @@
   };
 
   window.clearAll = async function clearAll() {
-    if (!confirm('¿Borrar todos los datos? No se puede deshacer.')) return;
+    if (!await askConfirm('¿Borrar todos los datos? No se puede deshacer.')) return;
     const fresh = new window.AbacoCore.Ledger({ now: () => Date.now() });
     fresh.ensureDefaultAccounts();
     const r = await data.replaceAll(fresh, {});
@@ -350,13 +354,13 @@
   };
 
   window.deleteBudget = async function deleteBudget(id) {
-    if (!confirm('¿Quitar este concepto del plan?')) return;
+    if (!await askConfirm('¿Quitar este concepto del plan?')) return;
     await act(data.deleteBudget(id), { okMessage: 'Concepto quitado' });
   };
 
   window.clearBudget = async function clearBudget() {
     if (!(state.budgets || []).length) { toast('Este periodo no tiene conceptos'); return; }
-    if (!confirm('¿Limpiar el plan de ' + budgetPeriodLabel().toLowerCase() + '?')) return;
+    if (!await askConfirm('¿Limpiar el plan de ' + budgetPeriodLabel().toLowerCase() + '?')) return;
     for (const b of state.budgets) await data.deleteBudget(b.id);
     refreshUI();
     toast('Plan limpiado');
@@ -414,7 +418,7 @@
         } else {
           throw new Error('Formato no reconocido');
         }
-        if (!confirm('¿Reemplazar tus datos con esta copia?')) return;
+        if (!await askConfirm('¿Reemplazar tus datos con esta copia?')) return;
         const r = await data.replaceAll(next.ledger, next.app);
         if (!r.ok) throw new Error(r.error);
         for (const k of APP_DATA_KEYS) if (next.app[k] !== undefined) state[k] = next.app[k];

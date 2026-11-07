@@ -134,8 +134,8 @@
       await saveSecret(secret,mode);
     });
     overlay.querySelector('#securityLater').addEventListener('click',()=>{closeOverlay();});
-    overlay.querySelector('#securityDisable')?.addEventListener('click',()=>{
-      if(confirm('¿Desactivar el PIN o patrón de Ábaco en este dispositivo?')) {
+    overlay.querySelector('#securityDisable')?.addEventListener('click',async ()=>{
+      if(await askConfirm('¿Desactivar el PIN o patrón de Ábaco en este dispositivo?')) {
         localStorage.removeItem(STORAGE_KEY); closeOverlay(); showToast('Protección desactivada');
       }
     });

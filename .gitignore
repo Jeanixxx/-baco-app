@@ -1,0 +1,21 @@
+# Android / Gradle
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+
+# Claves de firma: nunca al repositorio
+*.jks
+*.keystore
+
+# Archivos generados por la compilación (los copia Gradle desde index.html y js/)
+app/src/main/assets/
+
+# Dependencias de las pruebas locales
+node_modules/
+
+# Temporales
+*.log
+.DS_Store

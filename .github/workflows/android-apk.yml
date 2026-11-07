@@ -17,11 +17,6 @@ permissions:
 jobs:
   build-debug-apk:
     runs-on: ubuntu-latest
-    env:
-      ABACO_RELEASE_KEYSTORE_BASE64: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 }}
-      ABACO_RELEASE_STORE_PASSWORD: ${{ secrets.ABACO_RELEASE_STORE_PASSWORD }}
-      ABACO_RELEASE_KEY_ALIAS: ${{ secrets.ABACO_RELEASE_KEY_ALIAS }}
-      ABACO_RELEASE_KEY_PASSWORD: ${{ secrets.ABACO_RELEASE_KEY_PASSWORD }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -50,9 +45,16 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Warn when release signing is not configured
+        if: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 == '' }}
+        run: |
+          echo "::warning::Sin secretos de firma: no se genera el APK de release. Usa solo el APK firmado con la clave persistente para actualizar Ábaco."
+
       - name: Prepare persistent release signing key
-        if: env.ABACO_RELEASE_KEYSTORE_BASE64 != ''
+        if: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 != '' }}
         shell: bash
+        env:
+          ABACO_RELEASE_KEYSTORE_BASE64: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 }}
         run: |
           set -euo pipefail
           KEYSTORE_PATH="$RUNNER_TEMP/abaco-release-key.jks"
@@ -61,11 +63,15 @@ jobs:
           echo "ABACO_RELEASE_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
 
       - name: Build release APK with persistent signature
-        if: env.ABACO_RELEASE_KEYSTORE_BASE64 != ''
+        if: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 != '' }}
+        env:
+          ABACO_RELEASE_STORE_PASSWORD: ${{ secrets.ABACO_RELEASE_STORE_PASSWORD }}
+          ABACO_RELEASE_KEY_ALIAS: ${{ secrets.ABACO_RELEASE_KEY_ALIAS }}
+          ABACO_RELEASE_KEY_PASSWORD: ${{ secrets.ABACO_RELEASE_KEY_PASSWORD }}
         run: gradle --no-daemon :app:assembleRelease -PVERSION_CODE=${{ github.run_number }} -PVERSION_NAME=1.0.${{ github.run_number }}
 
       - name: Publish release APK
-        if: env.ABACO_RELEASE_KEYSTORE_BASE64 != ''
+        if: ${{ secrets.ABACO_RELEASE_KEYSTORE_BASE64 != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: abaco-android-release-apk

@@ -47,13 +47,20 @@ async function register(name = 'Hugo') {
   if (await page.isVisible('#btnSkipWalletQuiz')) await page.click('#btnSkipWalletQuiz');
 }
 
-/* Llama una acción de la interfaz (asíncrona) y espera a que termine. */
-async function act(fn, args = []) {
-  return page.evaluate(async ({ fn, args }) => {
+/* Llama una acción de la interfaz y responde a su diálogo si lo abre.
+ * answer: 'ok' acepta (botón principal), 'cancel' cancela. */
+async function act(fn, args = [], { answer = 'ok' } = {}) {
+  const pending = page.evaluate(async ({ fn, args }) => {
     await window[fn](...args);
     await new Promise((r) => setTimeout(r, 60));
     return true;
   }, { fn, args });
+  try {
+    await page.waitForSelector('.abaco-dialog', { timeout: 400 });
+    const sel = answer === 'ok' ? '.abaco-dialog-actions .btn-primary, .abaco-dialog-actions .btn-danger' : '.abaco-dialog-actions .btn-ghost';
+    await page.click(sel);
+  } catch (e) { /* la acción no pide confirmación */ }
+  return pending;
 }
 async function fields(values) {
   await page.evaluate((v) => { for (const [id, x] of Object.entries(v)) document.getElementById(id).value = x; }, values);
@@ -67,6 +74,45 @@ async function setBalance(name, amount) {
     AbacoApp.refreshUI();
   }, { name, amount });
 }
+
+test('borrar pide confirmación: si el usuario cancela, no se borra nada', async () => {
+  await open();
+  await register();
+  await setBalance('Efectivo', 1000);
+  await fields({ debtPerson: 'Ana', debtConcept: 'Comida', debtAmount: '300', debtDate: '2026-11-01' });
+  await act('addDebtor');
+  const id = await page.evaluate(() => state.debtors[0].id);
+  await act('deleteDebtor', [id], { answer: 'cancel' });
+  assert.equal(await page.evaluate(() => state.debtors.length), 1);
+  assert.equal(await balance('Efectivo'), 700);
+});
+
+test('editar suscripción: una fecha inválida se rechaza y no cambia nada', async () => {
+  await open();
+  await register();
+  await page.evaluate(() => { state.subscriptions = [{ id: 's1', name: 'Netflix', amount: 199, range: 'mensual', date: '2026-11-15', active: true }]; AbacoApp.persistApp(); });
+  await page.evaluate(() => { editSubscription('s1'); });
+  await page.waitForSelector('.abaco-dialog');
+  await page.fill('#dlg-date', '15/11/2026');
+  await page.click('.abaco-dialog-actions .btn-primary');
+  await page.waitForTimeout(150);
+  assert.equal(await page.evaluate(() => state.subscriptions[0].date), '2026-11-15');
+});
+
+test('editar suscripción: cambia nombre, monto y fecha válidos', async () => {
+  await open();
+  await register();
+  await page.evaluate(() => { state.subscriptions = [{ id: 's1', name: 'Netflix', amount: 199, range: 'mensual', date: '2026-11-15', active: true }]; AbacoApp.persistApp(); });
+  await page.evaluate(() => { editSubscription('s1'); });
+  await page.waitForSelector('.abaco-dialog');
+  await page.fill('#dlg-name', 'Spotify');
+  await page.fill('#dlg-amount', '149');
+  await page.fill('#dlg-date', '2026-12-01');
+  await page.click('.abaco-dialog-actions .btn-primary');
+  await page.waitForTimeout(150);
+  const s = await page.evaluate(() => state.subscriptions[0]);
+  assert.deepEqual([s.name, s.amount, s.date], ['Spotify', 149, '2026-12-01']);
+});
 
 test('registro: crea cuentas por defecto y guarda el usuario', async () => {
   await open();

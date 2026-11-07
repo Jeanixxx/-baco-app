@@ -33,7 +33,7 @@ beforeEach(async () => {
   page = await context.newPage();
   page.on('pageerror', (e) => { throw e; });
   // confirm() se acepta en las pruebas; si no, Playwright lo cancela y la prueba pasa por error.
-  page.on('dialog', (d) => d.accept());
+  page.on('dialog', (d) => d.accept()); // por si el navegador abre un diálogo nativo
   await page.goto(INDEX_URL, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => typeof state === 'object' && !!document.getElementById('btnRegister'));
 });
@@ -57,10 +57,13 @@ async function run(fields, fnName, args = []) {
     }
   }, { fields });
   // Las acciones financieras son asíncronas: esperamos a que terminen y a que el guardado cierre.
-  return page.evaluate(async ({ fnName, args }) => {
+  const pending = page.evaluate(async ({ fnName, args }) => {
     try { await window[fnName](...args); await new Promise((r) => setTimeout(r, 60)); return { ok: true }; }
     catch (e) { return { ok: false, error: e.message }; }
   }, { fnName, args });
+  // Los borrados piden confirmación con un diálogo propio: se acepta.
+  try { await page.waitForSelector('.abaco-dialog', { timeout: 400 }); await page.click('.abaco-dialog-actions .btn-primary, .abaco-dialog-actions .btn-danger'); } catch (e) { /* sin diálogo */ }
+  return pending;
 }
 
 async function addAccount(name, balance, type = 'débito') {

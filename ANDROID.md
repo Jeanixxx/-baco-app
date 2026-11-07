@@ -1,6 +1,6 @@
 # Ábaco para Android (Kotlin)
 
-La app Android usa un WebView local. La interfaz está separada en `index.html`, `styles.css`, `js/boot.js`, `js/app.js` y `js/security.js`. Gradle copia estos archivos al directorio de assets en cada build; las rutas relativas se mantienen y el HTML antiguo `Abaco_Gestor_Finanzas.html` redirige a `index.html`.
+La app Android usa un WebView local. La interfaz está separada en `index.html`, `styles.css`, `js/boot.js`, `js/abaco-core.js`, `js/abaco-migrate.js`, `js/abaco-store.js`, `js/abaco-data.js`, `js/abaco-simulate.js`, `js/abaco-app.js`, `js/abaco-dialog.js`, `js/app.js`, `js/abaco-simulator-ui.js` y `js/security.js`. Gradle copia estos archivos al directorio de assets en cada build; las rutas relativas se mantienen y el HTML antiguo `Abaco_Gestor_Finanzas.html` redirige a `index.html`.
 
 ## Funciones Android
 

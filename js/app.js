@@ -1841,10 +1841,10 @@ function deleteChecklistItem(id){
   
   save(); renderChecklist();
 }
-function clearChecklistDone(){
+async function clearChecklistDone(){
   const doneCount = state.checklist.filter(x=>x.done).length;
   if(!doneCount){ toast('No hay comprados que vaciar'); return; }
-  if(!confirm('¿Quitar los '+doneCount+' productos ya comprados?')) return;
+  if(!await askConfirm('¿Quitar los '+doneCount+' productos ya comprados?')) return;
   state.checklist = state.checklist.filter(x=>!x.done);
   state.checklist=state.checklist.filter(x=>!x.done);
   save(); renderChecklist();
@@ -2048,9 +2048,22 @@ function addSubscription(){
   closeSubForm();
   toast('Suscripción guardada');
 }
-function editSubscription(id){const s=state.subscriptions.find(x=>x.id===id);if(!s)return;const name=prompt('Nombre',s.name);if(name===null)return;const amount=prompt('Monto',String(s.amount));if(amount===null)return;const date=prompt('Fecha de cobro (AAAA-MM-DD)',s.date||todayInputValue());if(date===null)return;s.name=name.trim()||s.name;s.amount=Math.max(0,safeNum(amount));s.date=date.trim()||s.date;save();renderSubscriptions();renderInicio();toast('Suscripción actualizada');}
-function deleteSubscription(id){
-  if(!confirm('¿Borrar esta suscripción?')) return;
+async function editSubscription(id){
+  const s=state.subscriptions.find(x=>x.id===id); if(!s) return;
+  const r=await askFields({title:'Editar suscripción',fields:[
+    {id:'name',label:'Nombre',value:s.name},
+    {id:'amount',label:'Monto $',value:String(s.amount),type:'number',inputmode:'decimal'},
+    {id:'date',label:'Fecha de cobro (AAAA-MM-DD)',value:s.date||todayInputValue(),placeholder:'2026-11-15'}
+  ],confirmLabel:'Guardar'});
+  if(!r) return;
+  const name=r.name.trim()||s.name, amount=Math.max(0,safeNum(r.amount));
+  const date=r.date.trim()||s.date;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||Number.isNaN(new Date(date+'T12:00:00').getTime())){toast('La fecha debe tener el formato AAAA-MM-DD');return;}
+  s.name=name; s.amount=amount; s.date=date;
+  save(); renderSubscriptions(); renderInicio(); toast('Suscripción actualizada');
+}
+async function deleteSubscription(id){
+  if(!await askConfirm('¿Borrar esta suscripción?')) return;
   state.subscriptions = state.subscriptions.filter(s => s.id !== id);
   
   save();
@@ -2166,18 +2179,24 @@ function renderKanban(){
   });
 }
 function addKanban(){const text=($('kanbanText')?.value||'').trim();if(!text){toast('Escribe una tarea');return;}const item={id:uid(),text,scope:$('kanbanScope')?.value||'individual',col:$('kanbanCol')?.value||'todo',user_id:state.user_id,created_at:Date.now()};state.kanban.push(item);save();renderKanban();$('kanbanText').value='';toast('Tarea agregada');}
-function editKanban(id){const k=state.kanban.find(x=>x.id===id);if(!k)return;const text=prompt('Editar tarea',k.text);if(text===null)return;if(!text.trim())return; k.text=text.trim();save();renderKanban();}
-function deleteKanban(id){if(!confirm('¿Borrar esta tarea?'))return;state.kanban=state.kanban.filter(x=>x.id!==id);save();renderKanban();toast('Tarea borrada');}
+async function editKanban(id){
+  const k=state.kanban.find(x=>x.id===id); if(!k) return;
+  const r=await askFields({title:'Editar tarea',fields:[{id:'text',label:'Tarea',value:k.text}],confirmLabel:'Guardar'});
+  if(!r) return;
+  const text=r.text.trim(); if(!text) return;
+  k.text=text; save(); renderKanban();
+}
+async function deleteKanban(id){if(!await askConfirm('¿Borrar esta tarea?'))return;state.kanban=state.kanban.filter(x=>x.id!==id);save();renderKanban();toast('Tarea borrada');}
 function renderReminders(){const el=$('remList');if(!el)return;const rs=[...state.reminders].sort((a,b)=>a.when-b.when);if(!rs.length){el.innerHTML='<div class="empty"><p>Sin recordatorios</p></div>';return;}el.innerHTML=rs.map(r=>`<div class="item ${r.done?'standby':''}" data-rid="${r.id}"><div class="item-icon task">⏰</div><div class="item-body"><div class="item-title">${esc(r.text)}</div><div class="item-meta">${formatDate(r.when)}</div></div><button type="button" class="btn btn-ghost btn-sm" data-rem-toggle="${r.id}">${r.done?'↩':'✓'}</button><button type="button" class="btn btn-ghost btn-sm" data-rem-del="${r.id}">✕</button></div>`).join('');el.querySelectorAll('[data-rem-toggle]').forEach(b=>b.onclick=()=>toggleReminder(b.dataset.remToggle));el.querySelectorAll('[data-rem-del]').forEach(b=>b.onclick=()=>deleteReminder(b.dataset.remDel));}
 function addReminder(){const text=($('remText')?.value||'').trim(),date=$('remDate')?.value,time=$('remTime')?.value||'09:00';if(!text||!date){toast('Completa texto y fecha');return;}const when=new Date(date+'T'+time).getTime();if(!Number.isFinite(when)){toast('Fecha inválida');return;}const r={id:uid(),text,when,done:false,notified:false,user_id:state.user_id,created_at:Date.now()};state.reminders.push(r);try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission();}catch(e){}scheduleReminderNotification(r);save();renderReminders();$('remText').value='';toast('Recordatorio creado');}
 function toggleReminder(id){const r=state.reminders.find(x=>x.id===id);if(!r)return;r.done=!r.done;if(r.done){cancelReminderNotification(r);}else{r.notified=false;if(r.when>Date.now())scheduleReminderNotification(r);}save();renderReminders();}
-function deleteReminder(id){if(!confirm('¿Borrar recordatorio?'))return;const r=state.reminders.find(x=>x.id===id);if(r)cancelReminderNotification(r);state.reminders=state.reminders.filter(x=>x.id!==id);save();renderReminders();}
+async function deleteReminder(id){if(!await askConfirm('¿Borrar recordatorio?'))return;const r=state.reminders.find(x=>x.id===id);if(r)cancelReminderNotification(r);state.reminders=state.reminders.filter(x=>x.id!==id);save();renderReminders();}
 
 
 
 function renderCategories(){const el=$('catList');if(!el)return;el.innerHTML=state.categories.map(c=>`<div class="item" data-cid="${esc(c.id)}"><div class="item-icon shop">${esc(c.icon)}</div><div class="item-body"><div class="item-title">${esc(c.name)}</div><div class="item-meta">Categoría</div></div>${DEFAULT_CATS.some(d=>d.id===c.id)?'':'<button type="button" class="btn btn-ghost btn-sm" data-cat-del="'+esc(c.id)+'">✕</button>'}</div>`).join('');el.querySelectorAll('[data-cat-del]').forEach(b=>b.onclick=()=>deleteCategory(b.dataset.catDel));}
 function addCategory(){const name=($('catName')?.value||'').trim(),icon=($('catIcon')?.value||'📦').trim();if(!name){toast('Escribe el nombre');return;}const id=name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||uid();if(state.categories.some(c=>c.id===id)){toast('Esa categoría ya existe');return;}const c={id,name,icon};state.categories.push(c);save();renderCategories();renderHormiga();renderInicio();$('catName').value='';$('catIcon').value='📦';toast('Categoría creada');}
-function deleteCategory(id){if(DEFAULT_CATS.some(c=>c.id===id)){toast('Las categorías base no se pueden borrar');return;}if(!confirm('¿Borrar categoría? Se conserva en el historial.'))return;state.categories=state.categories.filter(c=>c.id!==id);if(state.hormCat===id)state.hormCat='general';save();renderCategories();renderHormiga();renderInicio();toast('Categoría borrada');}
+async function deleteCategory(id){if(DEFAULT_CATS.some(c=>c.id===id)){toast('Las categorías base no se pueden borrar');return;}if(!await askConfirm('¿Borrar categoría? Se conserva en el historial.'))return;state.categories=state.categories.filter(c=>c.id!==id);if(state.hormCat===id)state.hormCat='general';save();renderCategories();renderHormiga();renderInicio();toast('Categoría borrada');}
 /* Respaldo/Restauración: usa PERSISTED_KEYS (la misma lista que clearAll) para
    que exportar/importar y vaciar datos nunca queden desincronizados. */
 function updateBackupStatusLabel(){
