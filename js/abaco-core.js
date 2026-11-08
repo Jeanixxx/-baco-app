@@ -262,17 +262,20 @@
       return this.debtors.get(id);
     }
 
-    collect({ debtorId, accountId } = {}) {
+    /* Sin `amount` cobra todo lo pendiente; con `amount` registra un abono parcial (topado al pendiente). */
+    collect({ debtorId, accountId, amount } = {}) {
       const d = this.debtors.get(debtorId);
       if (!d) throw new CoreError('NOT_FOUND', 'Registro no encontrado');
       if (d.settled) throw new CoreError('ALREADY_SETTLED', 'Este cobro ya está registrado');
       const acc = this._liquidOrFirst(accountId);
       const remaining = this.balance(debtorId);
-      this.post('cobro', `Cobro a ${d.person}: ${d.concept}`, [
-        { account: debtorId, amount: -remaining },
-        { account: acc.id, amount: remaining }
+      const c = amount == null ? remaining : Math.min(remaining, toCents(amount));
+      const partial = c < remaining;
+      this.post('cobro', `${partial ? 'Abono' : 'Cobro'} de ${d.person}: ${d.concept}`, [
+        { account: debtorId, amount: -c },
+        { account: acc.id, amount: c }
       ], { debtorId });
-      d.settled = true;
+      if (!partial) d.settled = true;
       return d;
     }
 
@@ -350,7 +353,8 @@
       return this.loans.get(id);
     }
 
-    loanPayment({ loanId, accountId } = {}) {
+    /* Sin `amount` paga la mensualidad; con `amount` abona esa cantidad (topada a lo que falta). */
+    loanPayment({ loanId, accountId, amount } = {}) {
       const loan = this.loans.get(loanId);
       if (!loan) throw new CoreError('NOT_FOUND', 'Préstamo no encontrado');
       const remaining = -this.balance(loanId);
@@ -358,7 +362,7 @@
       const acc = this._liquidOrFirst(accountId);
       const interest = Math.round(remaining * (loan.annualRate / 100 / 12));
       const scheduled = loan.paymentC || monthlyPaymentCents(remaining, loan.annualRate, loan.term);
-      const payment = Math.min(remaining + interest, scheduled);
+      const payment = Math.min(remaining + interest, amount == null ? scheduled : toCents(amount));
       const interestPart = Math.min(interest, payment);
       const principalPart = payment - interestPart;
       const postings = [
@@ -367,7 +371,9 @@
       ];
       if (interestPart > 0) postings.push({ account: EXT.EXPENSE, amount: interestPart });
       const entry = this.post('pago_prestamo', 'Pago: ' + loan.name, postings, { loanId, interestC: interestPart, principalC: principalPart });
-      loan.paid = Math.min(loan.term, loan.paid + 1);
+      // Un abono menor a la mensualidad no cuenta como pago completo; si salda la deuda, la marca liquidada.
+      if (remaining - principalPart <= 0) loan.paid = loan.term;
+      else if (amount == null || payment >= scheduled) loan.paid = Math.min(loan.term, loan.paid + 1);
       return { entry, interestC: interestPart, principalC: principalPart, remainingC: remaining - principalPart };
     }
 

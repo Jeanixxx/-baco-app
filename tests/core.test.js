@@ -166,6 +166,38 @@ test('prestar y cobrar: el dinero sale de la cuenta elegida y vuelve completo', 
   assertOk(l);
 });
 
+test('cobro en abonos: cada abono baja lo pendiente y el último lo salda', () => {
+  const l = make();
+  const efectivo = l.createAccount({ name: 'Efectivo', type: 'efectivo', balance: 1000 });
+  const debtor = l.lend({ person: 'Ana', concept: 'Comida', amount: 300, accountId: efectivo.id });
+  l.collect({ debtorId: debtor.id, accountId: efectivo.id, amount: 100 });
+  assert.equal(l.balance(debtor.id), 20000);
+  assert.equal(debtor.settled, false);
+  assert.equal(l.balance(efectivo.id), 80000);
+  // Un abono mayor a lo pendiente se topa: no se cobra de más.
+  l.collect({ debtorId: debtor.id, accountId: efectivo.id, amount: 500 });
+  assert.equal(l.balance(debtor.id), 0);
+  assert.equal(debtor.settled, true);
+  assert.equal(l.balance(efectivo.id), 100000);
+  assertOk(l);
+});
+
+test('abono libre a una deuda sin intereses: no marca liquidado hasta saldar', () => {
+  const l = make();
+  const c = l.createAccount({ name: 'Cartera', type: 'efectivo', balance: 5000 });
+  const loan = l.loan({ name: 'Juan', principal: 500, annualRate: 0, term: 1 });
+  const r = l.loanPayment({ loanId: loan.id, accountId: c.id, amount: 200 });
+  assert.equal(r.principalC, 20000);
+  assert.equal(r.remainingC, 30000);
+  assert.equal(loan.paid, 0, 'un abono parcial no es el pago completo');
+  l.loanPayment({ loanId: loan.id, accountId: c.id, amount: 1000 });
+  assert.equal(l.balance(loan.id), 0, 'el abono se topa a lo que falta');
+  assert.equal(loan.paid, 1);
+  assert.equal(l.balance(c.id), 450000);
+  assert.throws(() => l.loanPayment({ loanId: loan.id, accountId: c.id, amount: 10 }), (e) => e.code === 'ALREADY_PAID');
+  assertOk(l);
+});
+
 test('ahorro y aportes se acumulan en la meta sin mover el patrimonio', () => {
   const l = make();
   const bbva = l.createAccount({ name: 'BBVA', type: 'débito', balance: 1000 });

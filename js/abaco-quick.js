@@ -1,9 +1,12 @@
-/* Ábaco · gastos anotados desde la notificación de Android.
+/* Ábaco · frases anotadas desde la notificación de Android.
  *
  * La notificación fija (app/src/main/java/mx/abaco/app/QuickExpense.kt) guarda en una cola lo que
- * la persona escribe, por ejemplo "85 tacos". Al abrir o volver a Ábaco, sync() lee esa cola,
- * registra cada gasto con la hora en que se anotó y le dice a Android cuáles ya quedaron guardados.
- * Si un gasto no se puede guardar (por ejemplo, sin saldo), se queda en la cola para otro intento.
+ * la persona escribe: "85 tacos", "me pagaron 8 mil", "le debo 500 a Juan", "recuérdame pagar la luz".
+ * Al abrir o volver a Ábaco, sync() lee esa cola, interpreta cada frase con AbacoIntent
+ * (js/abaco-intent.js) y la guarda como gasto, ingreso, deuda, préstamo, abono, cobro, recordatorio
+ * o artículo de la lista, con la hora en que se anotó. Luego le dice a Android cuáles ya quedaron.
+ * Si el motor rechaza algo (por ejemplo, sin saldo), se queda en la cola para otro intento;
+ * lo que no se entiende se descarta con un aviso.
  *
  * En el navegador (sin AndroidBridge) no hace nada.
  */
@@ -63,7 +66,78 @@
   }
 
   let running = null;
-  const warned = new Set(); // avisar una sola vez por sesión de cada gasto que no se pudo guardar
+  const warned = new Set(); // avisar una sola vez por sesión de cada frase que no se pudo guardar
+
+  const intentApi = () => root.AbacoIntent || (typeof require === 'function' ? require('./abaco-intent.js') : null);
+  const newId = () => (typeof uid === 'function' ? uid() : 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+  const persist = () => { if (typeof save === 'function') save(); };
+
+  function contextFor(item) {
+    return {
+      now: Number(item.at) > 0 ? Number(item.at) : Date.now(),
+      categories: state.categories || [],
+      loans: state.loans || [],
+      debtors: state.debtors || [],
+      accounts: (state.accounts || []).filter((a) => a.kind !== 'credit' && !a.archived)
+    };
+  }
+
+  const LISTA_SUPER = /\b(leche|pan|huevo|huevos|tortillas|fruta|verdura|carne|pollo|arroz|frijol|cafe|azucar|aceite|jabon|papel|detergente|agua|refresco|queso|jamon)\b/;
+
+  /* Guarda una frase según lo que la persona quiso decir. Devuelve { ok, kind, label } o { ok:false, msg, retry }. */
+  async function apply(item, data) {
+    const I = intentApi();
+    const r = I.detect(item.text, contextFor(item));
+    const quote = '«' + item.text + '»';
+    if (!r.intent) return { ok: false, msg: quote + ' no lo entendí' };
+    if (r.missing.includes('amount')) return { ok: false, msg: quote + ' no tiene un monto' };
+    if (r.missing.includes('person')) return { ok: false, msg: quote + ': falta con quién' };
+    if (r.missing.includes('description')) return { ok: false, msg: quote + ' está vacío' };
+    const at = Number(item.at) > 0 ? Number(item.at) : undefined;
+    const past = r.when != null && r.when <= Date.now() ? r.when : at;
+    let res;
+    switch (r.intent) {
+      case 'gasto':
+        res = await data.expense({ amount: r.amount, description: r.description || 'Gasto rápido', category: r.category || 'general', accountId: r.accountId, source: 'notificacion', at: past });
+        break;
+      case 'ingreso':
+        res = await data.income({ amount: r.amount, description: r.description || 'Ingreso', type: r.incomeType || 'otro', accountId: r.accountId, at: past });
+        break;
+      case 'debo':
+        res = await data.loan({ name: r.person + (r.description ? ' · ' + r.description : ''), principal: r.amount, annualRate: 0, term: 1, type: 'personal', disburse: r.disburse, accountId: r.accountId });
+        break;
+      case 'me_deben':
+        res = await data.lend({ person: r.person, concept: r.description || 'Préstamo', amount: r.amount, accountId: r.accountId });
+        break;
+      case 'abono':
+        res = await data.loanPayment({ loanId: r.targetId, amount: r.amount || undefined, accountId: r.accountId });
+        break;
+      case 'cobro':
+        res = await data.collect({ debtorId: r.targetId, amount: r.amount || undefined, accountId: r.accountId });
+        break;
+      case 'recordatorio': {
+        const rem = { id: newId(), text: r.description, when: r.when, done: false, notified: false, user_id: state.user_id, created_at: Date.now(), source: 'notificacion' };
+        state.reminders = state.reminders || [];
+        state.reminders.push(rem);
+        if (typeof scheduleReminderNotification === 'function') scheduleReminderNotification(rem);
+        persist();
+        res = { ok: true };
+        break;
+      }
+      case 'lista': {
+        const cat = LISTA_SUPER.test(I.fold(r.description)) ? 'super' : 'otro';
+        state.checklist = state.checklist || [];
+        state.checklist.push({ id: newId(), text: r.description, qty: '', cat, done: false, user_id: state.user_id, created_at: Date.now(), source: 'notificacion' });
+        persist();
+        res = { ok: true };
+        break;
+      }
+      default:
+        return { ok: false, msg: quote + ' no lo entendí' };
+    }
+    if (!res.ok) return { ok: false, retry: true, msg: quote + ': ' + res.error };
+    return { ok: true, kind: r.intent, label: I.summary(r) };
+  }
 
   async function runSync() {
     await window.AbacoApp.ready;
@@ -74,22 +148,25 @@
     const data = window.AbacoApp.data();
     const done = [];
     const failed = [];
-    let saved = 0;
+    const savedItems = [];
     for (const item of list) {
-      const p = parse(item.text);
-      if (!p) { done.push(item.id); failed.push({ id: item.id, msg: '«' + item.text + '» no tiene un monto' }); continue; }
-      const r = await data.expense({
-        amount: p.amount, description: p.description || 'Gasto rápido',
-        category: guessCategory(p.description, state.categories), source: 'notificacion',
-        at: Number(item.at) > 0 ? Number(item.at) : undefined
-      });
-      if (r.ok) { done.push(item.id); saved++; } else failed.push({ id: item.id, msg: '«' + item.text + '»: ' + r.error });
+      let r;
+      try { r = await apply(item, data); } catch (err) { r = { ok: false, retry: true, msg: '«' + item.text + '»: ' + (err && err.message) }; }
+      if (r.ok) { done.push(item.id); savedItems.push(r); continue; }
+      if (!r.retry) done.push(item.id); // lo que no se entiende no se reintenta
+      failed.push({ id: item.id, msg: r.msg });
     }
-    const message = saved ? 'Listo: guardé ' + saved + (saved === 1 ? ' gasto' : ' gastos') + ' en Ábaco.' : '';
+    const saved = savedItems.length;
+    const allGastos = savedItems.every((x) => x.kind === 'gasto');
+    const noun = allGastos ? (saved === 1 ? 'gasto' : 'gastos') : (saved === 1 ? 'cosa' : 'cosas');
+    let message = '';
+    if (saved === 1 && !allGastos) message = 'Listo: ' + savedItems[0].label + '.';
+    else if (saved) message = 'Listo: guardé ' + saved + ' ' + noun + ' en Ábaco.';
     try { bridge().confirmQuickExpenses(JSON.stringify(done), message); } catch (e) { /* sin puente */ }
     if (saved) {
       window.AbacoApp.refreshUI();
-      toast(saved === 1 ? 'Se guardó el gasto que anotaste en la notificación' : 'Se guardaron ' + saved + ' gastos que anotaste en la notificación');
+      if (saved === 1) toast(allGastos ? 'Se guardó el gasto que anotaste en la notificación' : 'Guardé lo que anotaste: ' + savedItems[0].label);
+      else toast('Se guardaron ' + saved + ' ' + noun + ' que anotaste en la notificación');
     }
     const fresh = failed.filter((f) => !warned.has(f.id));
     fresh.forEach((f) => warned.add(f.id));

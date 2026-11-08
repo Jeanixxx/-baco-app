@@ -35,7 +35,7 @@ internal object QuickExpense {
     private const val KEY_ENABLED = "enabled"
     private const val KEY_QUEUE = "queue"
     private const val KEY_MESSAGE = "message"
-    private const val HINT = "Escribe el monto y qué fue, por ejemplo: 85 tacos"
+    private const val HINT = "Escribe como hablas: 85 tacos, me pagaron 8 mil, le debo 500 a Juan, recuérdame pagar la luz el viernes"
 
     private fun prefs(context: Context) = context.getSharedPreferences(STORE, Context.MODE_PRIVATE)
 
@@ -50,7 +50,7 @@ internal object QuickExpense {
     fun createChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(CHANNEL_ID, "Anotar gasto rápido", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Notificación fija y silenciosa para anotar un gasto desde la barra"
+                description = "Notificación fija y silenciosa para anotar gastos, ingresos, deudas y recordatorios desde la barra"
                 setSound(null, null)
                 enableVibration(false)
                 setShowBadge(false)
@@ -81,15 +81,15 @@ internal object QuickExpense {
         val mutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
         val addIntent = Intent(context, QuickExpenseReceiver::class.java).setAction(ACTION_ADD).setPackage(context.packageName)
         val add = PendingIntent.getBroadcast(context, NOTIFICATION_ID + 1, addIntent, PendingIntent.FLAG_UPDATE_CURRENT or mutable)
-        val input = RemoteInput.Builder(KEY_TEXT).setLabel("Monto y qué fue · 85 tacos").build()
-        val action = NotificationCompat.Action.Builder(R.drawable.ic_notification, "Anotar gasto", add)
+        val input = RemoteInput.Builder(KEY_TEXT).setLabel("85 tacos · le debo 500 a Juan · recuérdame…").build()
+        val action = NotificationCompat.Action.Builder(R.drawable.ic_notification, "Anotar", add)
             .addRemoteInput(input)
             .setAllowGeneratedReplies(false)
             .build()
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Anotar un gasto")
+            .setContentTitle("Anotar en Ábaco")
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(open)

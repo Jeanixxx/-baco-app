@@ -18,7 +18,8 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/abaco-shell.js` | Estructura del rediseño: cabecera de título grande (se compacta al desplazar), formularios como hojas inferiores, ayuda desde el menú. |
 | `js/abaco-calm.js` | Modo calmado: Inicio «Hoy, solo tres cosas», Registrar en dos pasos, Sobres y Tarjetas con hoja de detalle, menú con lo que más usas. |
 | `js/abaco-tour.js` | Tour de bienvenida que se puede saltar: enseña Hoy y Registrar y recoge saldos, día de pago, sobres y un pago fijo. |
-| `js/abaco-quick.js` | Gastos anotados desde la notificación de Android: interpreta «85 tacos», guarda con su hora y confirma a Android. |
+| `js/abaco-intent.js` | Detector de frases (reglas, sin internet): distingue gasto, ingreso, «le debo», «me debe», abono, cobro, recordatorio y lista; lee montos con letra («mil quinientos», «2k»), personas, fechas y horas, categoría y cuenta. |
+| `js/abaco-quick.js` | Frases anotadas desde la notificación de Android: las interpreta con `abaco-intent.js`, las guarda con su hora y confirma a Android. |
 | `js/abaco-extras-ui.js` | Interfaz de convivencia: avisos de Inicio, brújula flotante, pausa antes de pagar y las pantallas Estadísticas, Decisiones, Pactos, Cartas y Configuración. |
 | `styles.css` | Una sola hoja de estilo: variables de cristal (claro de día, oscuro de noche), componentes y cielo. |
 | `js/app.js` | Interfaz: navegación, pantallas, tablero y datos no financieros. |
@@ -49,7 +50,7 @@ Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core
   - *Tour de bienvenida*: seis pasos que se pueden saltar; enseña Hoy y Registrar y recoge lo mínimo para empezar. Si dices cada cuánto te pagan, Hoy te recuerda anotar el ingreso ese día.
   - *Sobres* y *Tarjetas*: un renglón o tarjeta por elemento; el detalle y las acciones en una hoja. *Ajustes*: una lista; cada renglón abre una sola decisión. *Estadísticas*: una frase y las barras; lo demás en «Ver más». *Menú*: lo que más usas arriba; el resto plegado.
   - La brújula queda quieta. El motor tiene `annotate` para cambiar la categoría o la nota de un gasto sin tocar importes.
-- **Notificación rápida (Android).** Una notificación fija y silenciosa con respuesta directa: escribes «85 tacos» en la barra de notificaciones y queda en una cola local; al abrir Ábaco se registra como gasto con la hora en que lo anotaste. Se apaga en Ajustes.
+- **Notificación rápida (Android).** Una notificación fija y silenciosa con respuesta directa: escribes como hablas en la barra de notificaciones («85 tacos», «me pagaron la quincena 8 mil», «le debo 500 a Juan», «Ana me pagó 300», «recuérdame pagar la luz el viernes», «comprar leche») y queda en una cola local; al abrir Ábaco cada frase se guarda como lo que es, con la hora en que la anotaste. Se apaga en Ajustes.
 - **Probar otra hora o fecha.** Abrir con `?hora=19` (o `?hora=19.5`) fija la hora del cielo; `window.__abacoNow = <ms>` fija la fecha de la capa de convivencia. No hay ningún control visible para esto.
 
 ## Datos
@@ -76,6 +77,7 @@ node --test tests/extras.test.js        # lógica de convivencia
 node --test tests/glass.test.js         # cristal líquido y convivencia en Chromium, 390x844
 node --test tests/shell.test.js         # estructura del rediseño: cabecera, hojas, menú, barra
 node --test tests/calm.test.js          # modo calmado: Hoy, Sobres, Tarjetas, menú
+node --test tests/intent.test.js        # más de 200 frases y lo que Ábaco debe entender
 node --test tests/quick.test.js         # notificación rápida con un puente de Android simulado
 ```
 

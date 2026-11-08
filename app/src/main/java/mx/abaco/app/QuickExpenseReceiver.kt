@@ -14,10 +14,8 @@ class QuickExpenseReceiver : BroadcastReceiver() {
             ?.toString()
             ?.trim()
             .orEmpty()
-        if (text.isEmpty() || text.none { it.isDigit() }) {
-            QuickExpense.feedback(context, "No vi un monto. Escribe algo como: 85 tacos")
-            return
-        }
+        if (text.isEmpty()) return
+        // Ábaco interpreta la frase al abrirse (gasto, ingreso, deuda, cobro, recordatorio o lista).
         QuickExpense.enqueue(context, text.take(120))
         // Volver a publicar la notificación cierra el campo de respuesta y muestra la confirmación.
         QuickExpense.feedback(context, "Anotado: «${text.take(60)}». Se guarda al abrir Ábaco.")

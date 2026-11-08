@@ -58,11 +58,13 @@ gradle --no-daemon :app:assembleDebug
 
 El APK de prueba queda en `app/build/outputs/apk/debug/app-debug.apk`. El workflow de GitHub Actions compila en cada push a las ramas configuradas, en cada pull request a `main` y manualmente desde Actions.
 
-## Notificación rápida para anotar gastos
+## Notificación rápida para anotar (gastos, ingresos, deudas, recordatorios)
 
-`QuickExpense.kt` publica una notificación fija en un canal de importancia baja: no suena, no vibra y no muestra globo. Tiene una acción «Anotar gasto» con respuesta directa (`RemoteInput`).
+`QuickExpense.kt` publica una notificación fija en un canal de importancia baja: no suena, no vibra y no muestra globo. Tiene una acción «Anotar» con respuesta directa (`RemoteInput`).
 
-- Lo que la persona escribe (por ejemplo «85 tacos») lo recibe `QuickExpenseReceiver` y lo guarda en una cola de `SharedPreferences`, junto con la hora. La notificación confirma «Anotado».
+- Lo que la persona escribe (por ejemplo «85 tacos», «le debo 500 a Juan» o «recuérdame pagar la luz el viernes») lo recibe `QuickExpenseReceiver` y lo guarda en una cola de `SharedPreferences`, junto con la hora. La notificación confirma «Anotado».
+- Al abrir Ábaco, `js/abaco-intent.js` interpreta cada frase y la guarda como gasto, ingreso, deuda, préstamo, abono, cobro, recordatorio (programado con `scheduleLocalNotification`) o artículo de la lista. Lo que no entiende se descarta con un aviso; lo que el motor rechaza (por ejemplo, sin saldo) se queda en la cola.
+- Las reglas están en `AbacoIntent.RULES` para que un motor nativo pueda leer las mismas y confirmar al instante sin abrir la app (siguiente fase).
 - Al abrir o volver a la app, `js/abaco-quick.js` lee la cola (`AndroidBridge.pendingQuickExpenses`), registra cada gasto con su hora y confirma cuáles quedaron guardados (`confirmQuickExpenses`). Un gasto que el motor rechaza (por ejemplo, sin saldo) se queda en la cola para otro intento.
 - Tocar la notificación abre Ábaco en Registrar.
 - Viene activada. Se apaga y se enciende en Ajustes (`setQuickExpenseEnabled`). En Android 13 o superior la app pide el permiso de notificaciones una sola vez.

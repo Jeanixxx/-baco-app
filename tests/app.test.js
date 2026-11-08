@@ -110,7 +110,7 @@ test('editar suscripción: cambia nombre, monto y fecha válidos', async () => {
   await page.fill('#dlg-amount', '149');
   await page.fill('#dlg-date', '2026-12-01');
   await page.click('.abaco-dialog-actions .btn-primary');
-  await page.waitForTimeout(150);
+  await page.waitForFunction(() => state.subscriptions[0].name === 'Spotify', null, { timeout: 3000 }).catch(() => {});
   const s = await page.evaluate(() => state.subscriptions[0]);
   assert.deepEqual([s.name, s.amount, s.date], ['Spotify', 149, '2026-12-01']);
 });

@@ -113,6 +113,58 @@ test('un gasto que el motor rechaza se queda en la cola; un texto sin monto se d
   assert.equal(await page.evaluate(() => state.expenses.length), 0);
 });
 
+test('sync entiende ingresos, deudas, préstamos, abonos, recordatorios y la lista', async () => {
+  await openApp();
+  const t0 = Date.now() - 60000;
+  await queue([
+    { id: '1', text: 'me pagaron la quincena 500', at: t0 },
+    { id: '2', text: 'le presté 300 a Luis', at: t0 + 1 },
+    { id: '3', text: 'le debo 200 a Juan por la pizza', at: t0 + 2 },
+    { id: '4', text: 'recuérdame pagar la luz el viernes', at: t0 + 3 },
+    { id: '5', text: 'comprar leche', at: t0 + 4 },
+    { id: '6', text: 'hola', at: t0 + 5 }
+  ]);
+  const r = await page.evaluate(() => AbacoQuick.sync());
+  assert.deepEqual(r, { saved: 5, failed: 1 });
+  const s = await page.evaluate(() => ({
+    incomes: state.incomes.map((i) => [i.description, i.amount]),
+    debtors: state.debtors.map((d) => [d.person, d.remaining]),
+    loans: state.loans.map((l) => [l.name, l.current]),
+    reminders: state.reminders.map((x) => [x.text, new Date(x.when).getDay(), new Date(x.when).getHours()]),
+    checklist: state.checklist.map((x) => [x.text, x.cat])
+  }));
+  assert.ok(s.incomes.some(([d, a]) => d === 'quincena' && a === 500));
+  assert.deepEqual(s.debtors, [['Luis', 300]]);
+  assert.deepEqual(s.loans, [['Juan · pizza', 200]]);
+  assert.deepEqual(s.reminders, [['Pagar la luz', 5, 9]], 'el viernes a las 9:00');
+  assert.deepEqual(s.checklist, [['Leche', 'super']]);
+  const bridge = await page.evaluate(() => window.AndroidBridge);
+  assert.equal(bridge.queue.length, 0, 'lo que no se entiende tampoco se queda en la cola');
+  assert.equal(bridge.confirmed[0].message, 'Listo: guardé 5 cosas en Ábaco.');
+  assert.match(await page.textContent('#toast'), /hola/);
+
+  // Abonos contra lo que ya está registrado.
+  await queue([{ id: '7', text: 'Luis me pagó 100', at: Date.now() }, { id: '8', text: 'le abono 50 a Juan', at: Date.now() }]);
+  assert.deepEqual(await page.evaluate(() => AbacoQuick.sync()), { saved: 2, failed: 0 });
+  const after = await page.evaluate(() => ({
+    debtors: state.debtors.map((d) => [d.person, d.remaining, d.settled]),
+    loans: state.loans.map((l) => [l.name, l.current])
+  }));
+  assert.deepEqual(after.debtors, [['Luis', 200, false]]);
+  assert.deepEqual(after.loans, [['Juan · pizza', 150]]);
+  // Un solo movimiento: el aviso dice exactamente qué se guardó.
+  await queue([{ id: '9', text: 'Luis me pagó 200', at: Date.now() }]);
+  await page.evaluate(() => AbacoQuick.sync());
+  assert.equal(await page.evaluate(() => window.AndroidBridge.confirmed.at(-1).message), 'Listo: Luis te pagó · $200.');
+  assert.deepEqual(await page.evaluate(() => state.debtors.map((d) => d.settled)), [true]);
+  // Lo guardado sobrevive a recargar la app.
+  await page.evaluate(() => AbacoApp.persistApp && AbacoApp.persistApp());
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.AbacoApp && window.AbacoApp.ready);
+  await page.evaluate(() => window.AbacoApp.ready);
+  assert.deepEqual(await page.evaluate(() => [state.reminders.length, state.checklist.length, state.loans.length]), [1, 1, 1]);
+});
+
 test('abrir desde la notificación lleva a Registrar', async () => {
   await openApp();
   await page.evaluate(() => goPanel('cuentas'));
