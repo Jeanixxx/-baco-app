@@ -32,10 +32,34 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: 'platforms;android-35 build-tools;35.0.0'
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+      # Gradle 8.10.2 se guarda en caché: solo se descarga la primera vez (o si la caché expira).
+      # La descarga reintenta con espera creciente, porque services.gradle.org devuelve 504 a veces.
+      - name: Restore Gradle 8.10.2 from cache
+        id: gradle-cache
+        uses: actions/cache@v4
         with:
-          gradle-version: '8.10.2'
+          path: ${{ runner.temp }}/gradle-8.10.2
+          key: gradle-8.10.2-linux
+
+      - name: Set up Gradle 8.10.2
+        shell: bash
+        run: |
+          set -uo pipefail
+          DIR="${{ runner.temp }}/gradle-8.10.2"
+          if [ ! -x "$DIR/bin/gradle" ]; then
+            ok=0
+            for i in 1 2 3 4 5 6; do
+              if curl -fsSL --retry 2 --retry-all-errors --connect-timeout 30 -o "${{ runner.temp }}/gradle.zip" https://services.gradle.org/distributions/gradle-8.10.2-bin.zip; then
+                ok=1; break
+              fi
+              echo "Descarga de Gradle falló (intento $i); espero $((i * 15)) s"
+              sleep $((i * 15))
+            done
+            if [ "$ok" != 1 ]; then echo "::error::No se pudo descargar Gradle 8.10.2"; exit 1; fi
+            unzip -q "${{ runner.temp }}/gradle.zip" -d "${{ runner.temp }}"
+          fi
+          echo "$DIR/bin" >> "$GITHUB_PATH"
+          "$DIR/bin/gradle" --version
 
       - name: Build debug APK with increasing version
         run: gradle --no-daemon :app:assembleDebug -PVERSION_CODE=${{ github.run_number }} -PVERSION_NAME=1.0.${{ github.run_number }}
