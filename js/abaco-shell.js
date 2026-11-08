@@ -18,7 +18,8 @@
     ingresos: 'Ingresos', ahorros: 'Ahorros', tarjetas: 'Tarjetas', prestamos: 'Deudas', deudores: 'Deudas',
     inversiones: 'Inversiones', suscripciones: 'Suscripciones', presupuesto: 'Sobres', simulador: 'Simulador',
     compras: 'Compras', lista: 'Qué comprar', kanban: 'Pendientes', recordatorios: 'Recordatorios', categorias: 'Categorías',
-    decisiones: 'Decisiones', pactos: 'Pactos', cartas: 'Cartas', config: 'Ajustes'
+    decisiones: 'Decisiones', pactos: 'Pactos', cartas: 'Cartas', config: 'Ajustes',
+    proximos: 'Lo que viene', constancia: 'Constancia'
   };
 
   /* Formularios que se presentan como hoja inferior. */

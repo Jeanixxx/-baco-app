@@ -467,9 +467,9 @@ $('btnThemeMenu').onclick = () => {
 
 const MENU_GROUPS = [
   {label:'Principal', items:['inicio','hormiga','presupuesto']},
-  {label:'Dinero', items:['compras','ingresos','ahorros','tarjetas','cuentas','prestamos','suscripciones','inversiones','simulador']},
+  {label:'Dinero', items:['compras','ingresos','ahorros','tarjetas','cuentas','prestamos','suscripciones','proximos','inversiones','simulador']},
   {label:'Organiza', items:['lista','kanban','recordatorios']},
-  {label:'Consulta', items:['historial','estadisticas','categorias','cartas']},
+  {label:'Consulta', items:['historial','estadisticas','constancia','categorias','cartas']},
   {label:'Contigo', items:['decisiones','pactos','config']}
 ];
 const NAV_META = {
@@ -480,6 +480,7 @@ const NAV_META = {
   kanban:{label:'Pendientes'}, recordatorios:{label:'Recordatorios'},
   historial:{label:'Movimientos'}, categorias:{label:'Categorías'},
   estadisticas:{label:'Estadísticas'}, cartas:{label:'Cartas'}, decisiones:{label:'Decisiones'}, pactos:{label:'Pactos'}, config:{label:'Ajustes'},
+  proximos:{label:'Lo que viene'}, constancia:{label:'Constancia'},
 };
 const NAV_ICON_PATHS = {
   hormiga:'<path d="M5 3h14v18l-3-2-4 2-4-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
@@ -504,6 +505,8 @@ const NAV_ICON_PATHS = {
   cartas:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
   decisiones:'<path d="M3 8h18v12H3z"/><path d="m3 8 2-4h14l2 4M10 13h4"/>',
   pactos:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12 3 3 5-6"/>',
+  proximos:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',
+  constancia:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
   config:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>'
 };
 function navIconSvg(section){
@@ -524,6 +527,7 @@ const PANEL_RENDERERS = {
   historial: () => renderHistorial(), categorias: () => renderCategories(),
   estadisticas: () => renderExtrasPanel('estadisticas'), cartas: () => renderExtrasPanel('cartas'),
   decisiones: () => renderExtrasPanel('decisiones'), pactos: () => renderExtrasPanel('pactos'), config: () => renderExtrasPanel('config'),
+  proximos: () => window.AbacoFocus && AbacoFocus.renderProximos(), constancia: () => window.AbacoFocus && AbacoFocus.renderConstancia(),
 };
 /* Las pantallas de convivencia las pinta js/abaco-extras-ui.js (se carga después de este archivo). */
 function renderExtrasPanel(name){ if (window.AbacoExtrasUI) AbacoExtrasUI.render(name); }
@@ -537,6 +541,8 @@ const PANEL_HELP = {
   estadisticas: { title: 'Estadísticas', body: 'Tus gastos de la semana, lo que más pesó y las medidas que tú elegiste. Aquí también está la lista de cartas.' },
   cartas: { title: 'Cartas', body: 'Al cerrar cada mes, Ábaco te escribe una carta corta con lo que pasó. Puedes guardarla, editarla o borrarla; si la borras, no vuelve a aparecer.' },
   decisiones: { title: 'Cajón de decisiones', body: 'Anota por qué hiciste una compra grande. Tiempo después, Ábaco te pregunta si valió la pena y tú decides la respuesta.' },
+  proximos: { title: 'Lo que viene', body: 'Tus próximos cobros con una barra que se llena mientras se acercan. Si un cobro está cerca, Ábaco te pregunta si lo usaste; si no, te ayuda a cancelarlo en pasos chiquitos.' },
+  constancia: { title: 'Constancia', body: 'Los días que anotaste algo este mes. Los días sin anotar no borran nada: aquí no hay rachas que se rompan.' },
   pactos: { title: 'Pactos contigo', body: 'Acuerdos que haces contigo, como "no pedir comida los martes". Tú marcas si los cumpliste o los rompiste; no hay castigos.' },
   config: { title: 'Configuración', body: 'Elige cómo te habla Ábaco, tu unidad de equivalencia, la pausa antes de pagar, el silencio por encargo y tus medidas.' },
   hormiga: {
@@ -825,7 +831,7 @@ function renderMenu() {
 /* Barra inferior fija: Inicio, Movimientos, Registrar, Estadísticas, Cuentas. Las pantallas que no
    están en la barra iluminan la más cercana (las de "Contigo" y consulta, Estadísticas; las de dinero, Cuentas). */
 const BAR_ITEMS = ['inicio','historial','hormiga','estadisticas','cuentas'];
-const BAR_PARENT = { cartas:'estadisticas', decisiones:'estadisticas', pactos:'estadisticas', config:'estadisticas', categorias:'estadisticas' };
+const BAR_PARENT = { proximos:'cuentas', constancia:'estadisticas', cartas:'estadisticas', decisiones:'estadisticas', pactos:'estadisticas', config:'estadisticas', categorias:'estadisticas' };
 const BAR_ICON_PLUS = '<svg class="nav-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>';
 function renderPinned(){
   const bar=$('pinnedBar'); if(!bar)return;
@@ -2149,7 +2155,7 @@ ensureFinancialCore();
 function openMenu(){try{closeCalc();}catch(e){console.warn('No se pudo cerrar calculadora',e)}const menu=$('menuPage'),ov=$('menuOverlay');if(menu)menu.classList.add('open');if(ov){ov.classList.add('open');ov.style.pointerEvents='auto';}document.querySelector('.app')?.classList.add('menu-open');try{renderMenu();}catch(e){console.warn('No se pudo renderizar menú',e)}}
 function closeMenu(){const menu=$('menuPage'),ov=$('menuOverlay');if(menu){menu.classList.remove('open');menu.style.transform='';menu.style.transition='';}if(ov){ov.classList.remove('open');ov.style.transform='';ov.style.transition='';ov.style.opacity='';ov.style.pointerEvents='';}document.querySelector('.app')?.classList.remove('menu-open');}
 function toggleMenu(){if($('menuPage')?.classList.contains('open'))closeMenu();else openMenu();}
-function goPanel(name){if(name==='deudores'){name='prestamos';window.AbacoCalm&&AbacoCalm.setDebtPane('cobrar');}closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}try{window.AbacoShell&&AbacoShell.onPanel(name);}catch(e){console.warn('Estructura no actualizada',e)}try{window.AbacoCalm&&AbacoCalm.onPanel(name);}catch(e){console.warn('Modo calmado no actualizado',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();},150);}
+function goPanel(name){if(name==='deudores'){name='prestamos';window.AbacoCalm&&AbacoCalm.setDebtPane('cobrar');}closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}try{window.AbacoShell&&AbacoShell.onPanel(name);}catch(e){console.warn('Estructura no actualizada',e)}try{window.AbacoCalm&&AbacoCalm.onPanel(name);}catch(e){console.warn('Modo calmado no actualizado',e)}try{window.AbacoFocus&&AbacoFocus.onPanel(name);}catch(e){console.warn('Herramientas no actualizadas',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();},150);}
 
 
 

@@ -30,7 +30,12 @@ beforeEach(async () => {
   await page.click('#btnRegister');
   await page.waitForFunction(() => !!state.user_id);
   if (await page.isVisible('#btnSkipWalletQuiz')) await page.click('#btnSkipWalletQuiz');
-  await page.evaluate(async () => { await AbacoApp.data().income({ description: 'Fondo', amount: 10000, type: 'otro' }); AbacoApp.refreshUI(); });
+  await page.evaluate(async () => {
+    await AbacoApp.data().income({ description: 'Fondo', amount: 10000, type: 'otro' });
+    // La revisión de domingo se prueba en focus.test.js; aquí no debe depender del día.
+    AbacoExtrasUI.extras().sundays = [{ week: AbacoFocus.sundayKey(Date.now()), goal: null, at: Date.now() }];
+    AbacoApp.refreshUI();
+  });
 });
 
 const go = (n) => page.evaluate((x) => goPanel(x), n);

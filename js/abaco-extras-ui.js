@@ -295,7 +295,7 @@
     const eq = top ? X.equivalence(top[1], X.selectedUnit(e)) : null;
     const m = X.computeMetrics(viewForExtras(), t);
     const chosen = e.prefs.metrics.map((id) => X.METRICS.find((x) => x.id === id)).filter(Boolean);
-    const tiles = '<div class="x-tiles">' + [['charts', 'estadisticas', 'Gráficas'], ['cartas', 'cartas', 'Cartas'], ['decisiones', 'decisiones', 'Decisiones'], ['pactos', 'pactos', 'Pactos']]
+    const tiles = '<div class="x-tiles">' + [['charts', 'estadisticas', 'Gráficas'], ['constancia', 'constancia', 'Constancia'], ['proximos', 'proximos', 'Lo que viene'], ['cartas', 'cartas', 'Cartas'], ['decisiones', 'decisiones', 'Decisiones'], ['pactos', 'pactos', 'Pactos']]
       .map(([to, icon, label]) => '<button type="button" class="x-tile" ' + (to === 'charts' ? 'data-x="charts"' : 'data-go="' + to + '"') + '>' + navIconSvg(icon) + '<span>' + label + '</span></button>').join('') + '</div>';
     box.innerHTML = '<div class="calm-sentence">' + (total ? 'Esta semana gastaste <b>' + money(total) + '</b>. Lo que más pesó fue ' + esc(catLabel(top[0]).toLowerCase()) + '.' : 'Esta semana todavía no hay gastos.') + '</div>' +
       '<div class="x-card hi"><div class="x-bars">' + bars + '</div></div>' +

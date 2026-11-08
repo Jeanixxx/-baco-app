@@ -128,18 +128,28 @@
       list.push({ key: 'pago:' + dayKey(t), title: 'Hoy es día de pago', sub: 'Cuando te llegue, anótalo como ingreso', income: true });
     }
 
+    // Lo pesado (pagar la tarjeta, cancelar algo que no usas) llega partido en pasos chiquitos.
+    const F = window.AbacoFocus;
+    if (F) F.tramiteItems(t).forEach((x) => list.push(x));
+
     const soon = [];
     for (const s of state.subscriptions || []) {
+      if (s.active === false) continue;
       const d = nextCharge(s, t);
-      if (d && d - start <= 2 * DAY) soon.push({ d, key: 'sub:' + s.id + ':' + dayKey(d), title: whenWord(d, t) + ' se cobra ' + s.name, sub: money(s.amount), go: 'suscripciones' });
+      if (d && d - start <= 2 * DAY) soon.push({ d, key: 'sub:' + s.id + ':' + dayKey(d), title: whenWord(d, t) + ' se cobra ' + s.name, sub: money(s.amount), go: 'proximos' });
     }
-    for (const p of state.msiPlans || []) {
-      const i = (p.installments || []).find((x) => !x.paid);
-      if (!i || !i.due) continue;
-      const d = new Date(i.due); d.setHours(0, 0, 0, 0);
-      if (d - start <= 2 * DAY) soon.push({ d, key: 'msi:' + p.id + ':' + i.number, title: (d < start ? 'Mensualidad pendiente: ' : whenWord(d, t) + ' toca pagar ') + p.concept, sub: money(i.amount), go: 'tarjetas' });
+    if (!F) {
+      for (const p of state.msiPlans || []) {
+        const i = (p.installments || []).find((x) => !x.paid);
+        if (!i || !i.due) continue;
+        const d = new Date(i.due); d.setHours(0, 0, 0, 0);
+        if (d - start <= 2 * DAY) soon.push({ d, key: 'msi:' + p.id + ':' + i.number, title: (d < start ? 'Mensualidad pendiente: ' : whenWord(d, t) + ' toca pagar ') + p.concept, sub: money(i.amount), go: 'tarjetas' });
+      }
     }
     soon.sort((a, b) => a.d - b.d).forEach((s) => list.push(s));
+
+    // Domingo (o lunes, si se pasó): la revisión de un minuto.
+    if (F && e && F.sundayDue(e, t)) list.push({ key: 'domingo:' + F.sundayKey(t), title: 'Revisión de domingo', sub: 'Un minuto, tres tarjetas', tag: '1 min', focus: 'domingo' });
 
     const over = (state.budgets || []).map((b) => ({ c: b.category, o: (Number(b.spent) || 0) - (Number(b.amount) || 0) })).filter((b) => b.o > 0).sort((a, b) => b.o - a.o)[0];
     if (over) list.push({ key: 'sobre:' + over.c, title: 'Echar un ojo al sobre de ' + label(over.c).toLowerCase(), sub: 'va ' + money(over.o) + ' arriba, sin prisa', go: 'presupuesto' });
@@ -175,7 +185,8 @@
         return '<div class="hoy-row' + (done ? ' done' : '') + (it.key === just ? ' just' : '') + '">' +
           '<button type="button" class="hoy-check" data-calm="check" data-k="' + esc(it.key) + '" aria-pressed="' + done + '" aria-label="' + (done ? 'Desmarcar' : 'Marcar como hecho') + ': ' + esc(it.title) + '">' +
           (done ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>' : '') + '</button>' +
-          '<button type="button" class="hoy-text" ' + (it.income ? 'data-calm="go-income"' : 'data-go="' + it.go + '"') + '><span class="ht">' + esc(it.title) + '</span><span class="hs">' + esc(it.sub) + '</span></button></div>';
+          '<button type="button" class="hoy-text" ' + (it.income ? 'data-calm="go-income"' : it.focus === 'domingo' ? 'data-fx="domingo"' : it.focus ? 'data-fx="tramite" data-kind="' + it.focus + '" data-id="' + esc(it.id) + '"' : 'data-go="' + it.go + '"') + '><span class="ht">' + esc(it.title) + '</span><span class="hs">' + esc(it.sub) + '</span></button>' +
+          (it.tag && !done ? '<span class="hoy-tag">' + esc(it.tag) + '</span>' : '') + '</div>';
       }).join('') + '</div>' +
       '<div class="hoy-end">' + (allDone ? 'Listo por hoy. Aquí no hay nada más pendiente.' : 'Cuando termines, aquí no hay nada más pendiente.') + '</div>' +
       '<button type="button" class="btn btn-primary hoy-add" data-go="hormiga">＋ Anotar un gasto</button>';

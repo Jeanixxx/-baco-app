@@ -54,6 +54,7 @@
     try { if (window.AbacoExtrasUI) window.AbacoExtrasUI.afterRefresh(); } catch (e) { console.warn('convivencia', e); }
     try { if (window.AbacoShell) window.AbacoShell.refresh(); } catch (e) { console.warn('estructura', e); }
     try { if (window.AbacoCalm) window.AbacoCalm.afterRefresh(); } catch (e) { console.warn('modo calmado', e); }
+    try { if (window.AbacoFocus) window.AbacoFocus.afterRefresh(); } catch (e) { console.warn('herramientas', e); }
   }
 
   /* Como act(), pero no llama a updateUI: el asistente de bienvenida depende de esa función
@@ -108,6 +109,7 @@
       syncFinance();
       refreshUI();
       if (window.AbacoExtrasUI) window.AbacoExtrasUI.start();
+      if (window.AbacoFocus) window.AbacoFocus.start();
       if (r.status === 'migrated') toast('Tus datos se actualizaron a la nueva versión de Ábaco');
       readyResolve(true);
     } catch (err) {

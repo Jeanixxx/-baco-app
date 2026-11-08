@@ -19,6 +19,7 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/abaco-calm.js` | Modo calmado: Inicio «Hoy, solo tres cosas», Registrar en dos pasos, Sobres y Tarjetas con hoja de detalle, menú con lo que más usas. |
 | `js/abaco-tour.js` | Tour de bienvenida que se puede saltar: enseña Hoy y Registrar y recoge saldos, día de pago, sobres y un pago fijo. |
 | `js/abaco-intent.js` | Detector de frases (reglas, sin internet): distingue gasto, ingreso, «le debo», «me debe», abono, cobro, recordatorio y lista; lee montos con letra («mil quinientos», «2k»), personas, fechas y horas, categoría y cuenta. |
+| `js/abaco-focus.js` | Herramientas para TDAH: volver sin culpa, trámites en pasos, Lo que viene, Constancia y revisión de domingo. |
 | `js/abaco-quick.js` | Frases anotadas desde la notificación de Android: las interpreta con `abaco-intent.js`, las guarda con su hora y confirma a Android. |
 | `js/abaco-extras-ui.js` | Interfaz de convivencia: avisos de Inicio, brújula flotante, pausa antes de pagar y las pantallas Estadísticas, Decisiones, Pactos, Cartas y Configuración. |
 | `styles.css` | Una sola hoja de estilo: variables de cristal (claro de día, oscuro de noche), componentes y cielo. |
@@ -50,6 +51,12 @@ Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core
   - *Tour de bienvenida*: seis pasos que se pueden saltar; enseña Hoy y Registrar y recoge lo mínimo para empezar. Si dices cada cuánto te pagan, Hoy te recuerda anotar el ingreso ese día.
   - *Sobres* y *Tarjetas*: un renglón o tarjeta por elemento; el detalle y las acciones en una hoja. *Ajustes*: una lista; cada renglón abre una sola decisión. *Estadísticas*: una frase y las barras; lo demás en «Ver más». *Menú*: lo que más usas arriba; el resto plegado.
   - La brújula queda quieta. El motor tiene `annotate` para cambiar la categoría o la nota de un gasto sin tocar importes.
+- **Herramientas para TDAH.**
+  - *Volver sin culpa:* si pasan 7 días o más sin abrir Ábaco, no pide anotar lo atrasado; pregunta cuánto tienes hoy en cada cuenta y la diferencia queda como «gastos sin detalle».
+  - *Trámites en pasos:* pagar la tarjeta o cancelar una suscripción aparecen en Hoy partidos en 4 pasos chiquitos, uno por pantalla, con temporizador opcional y «lo sigo después».
+  - *Lo que viene:* cada cobro con una barra que se llena mientras se acerca; si está cerca, pregunta «¿lo usaste?» y, si no, ayuda a cancelarlo.
+  - *Constancia:* días anotando en el mes, sin rachas que se rompan, y lo que vas juntando (pausas, domingos, pactos).
+  - *Revisión de domingo:* tres tarjetas en un minuto (lo mejor, en qué se fue más, un objetivo pequeño).
 - **Notificación rápida (Android).** Una notificación fija y silenciosa con respuesta directa: escribes como hablas en la barra de notificaciones («85 tacos», «me pagaron la quincena 8 mil», «le debo 500 a Juan», «Ana me pagó 300», «recuérdame pagar la luz el viernes», «comprar leche») y queda en una cola local; al abrir Ábaco cada frase se guarda como lo que es, con la hora en que la anotaste. Se apaga en Ajustes.
 - **Probar otra hora o fecha.** Abrir con `?hora=19` (o `?hora=19.5`) fija la hora del cielo; `window.__abacoNow = <ms>` fija la fecha de la capa de convivencia. No hay ningún control visible para esto.
 
@@ -78,6 +85,7 @@ node --test tests/glass.test.js         # cristal líquido y convivencia en Chro
 node --test tests/shell.test.js         # estructura del rediseño: cabecera, hojas, menú, barra
 node --test tests/calm.test.js          # modo calmado: Hoy, Sobres, Tarjetas, menú
 node --test tests/intent.test.js        # más de 200 frases y lo que Ábaco debe entender
+node --test tests/focus.test.js         # herramientas para TDAH, cálculo y flujos
 node --test tests/quick.test.js         # notificación rápida con un puente de Android simulado
 ```
 

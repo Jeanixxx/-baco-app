@@ -198,12 +198,12 @@ test('el paso 2 no compromete: se puede ignorar y nunca vuelve a preguntar', asy
   assert.deepEqual(errors, []);
 });
 
-test('las gráficas se abren desde Estadísticas y el mosaico tiene las cuatro entradas', async () => {
+test('las gráficas se abren desde Estadísticas y el mosaico tiene sus seis entradas', async () => {
   await register();
   await go('estadisticas');
   await page.click('#xv-estadisticas [data-x="stats-more"]');
   const entradas = await page.$$eval('#xv-estadisticas .x-tile', (els) => els.map((e) => e.textContent.trim()));
-  assert.deepEqual(entradas, ['Gráficas', 'Cartas', 'Decisiones', 'Pactos']);
+  assert.deepEqual(entradas, ['Gráficas', 'Constancia', 'Lo que viene', 'Cartas', 'Decisiones', 'Pactos']);
   await page.click('#xv-estadisticas [data-x="charts"]');
   await page.waitForFunction(() => document.getElementById('chartsBlock').classList.contains('chart-modal-open'));
   assert.equal(await page.evaluate(() => state.activePanel), 'inicio');
