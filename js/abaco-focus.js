@@ -539,7 +539,8 @@
     for (let k = 0; k < first; k++) cal += '<span class="fx-day blank"></span>';
     for (let d = 1; d <= c.total; d++) {
       const cls = c.days.has(d) ? 'on' : d > c.today ? 'future' : '';
-      cal += '<span class="fx-day ' + cls + (d === c.today ? ' today' : '') + '">' + d + '</span>';
+      const glow = d === c.today && glowPending ? ' glow' : '';
+      cal += '<span class="fx-day ' + cls + (d === c.today ? ' today' : '') + glow + '">' + d + '</span>';
     }
     const skipped = e ? e.decisions.filter((d) => d.kind === 'no-compre') : [];
     const saved = skipped.reduce((s, d) => s + (Number(d.amount) || 0), 0);
@@ -549,6 +550,7 @@
     if (e && e.sundays.length) rows.push(['☀️', e.sundays.length + (e.sundays.length === 1 ? ' domingo revisado' : ' domingos revisados'), 'desde ' + new Date(e.sundays[0].at).toLocaleDateString('es-MX', { month: 'long' })]);
     if (kept) rows.push(['🤝', kept + (kept === 1 ? ' pacto cumplido' : ' pactos cumplidos'), 'contigo, sin castigos']);
     if (e && e.returns.length) rows.push(['🧭', 'Volviste ' + e.returns.length + (e.returns.length === 1 ? ' vez' : ' veces') + ' después de una pausa', 'y te pusiste al día']);
+    glowPending = false; // el brillo se ve una sola vez, al abrir la pantalla después de anotar
     box.innerHTML = '<div class="fx-card hi fx-hero"><div class="fx-big">' + c.count + '</div><b>' + (c.count === 1 ? 'día anotando este mes' : 'días anotando este mes') + '</b><small>' + lead + '</small></div>' +
       '<div class="fx-card"><div class="fx-cal">' + cal + '</div></div>' +
       '<div class="section-title">Lo que vas juntando</div>' +
@@ -662,13 +664,24 @@
   /* Volver después de días: al abrir y al regresar a la app. */
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReturn(); });
 
-  function start() { checkReturn(); }
+  function start() { checkReturn(); if (typeof state === 'object') todayAnotado = constancy(state, now()).days.has(new Date(now()).getDate()); }
   function onPanel(name) {
     if (name === 'proximos') { showAll = false; renderProximos(); }
     if (name === 'constancia') renderConstancia();
   }
+  /* Brilla el día de hoy cuando pasa de vacío a anotado (una sola vez). */
+  let glowPending = false;
+  let todayAnotado = null;
+  function trackToday() {
+    const d = new Date(now());
+    const on = constancy(state, now()).days.has(d.getDate());
+    if (todayAnotado === false && on) glowPending = true;
+    todayAnotado = on;
+  }
+
   function afterRefresh() {
     if (typeof state !== 'object') return;
+    trackToday();
     if (state.activePanel === 'proximos') renderProximos();
     if (state.activePanel === 'constancia') renderConstancia();
   }

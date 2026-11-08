@@ -72,11 +72,16 @@
     const e = ex();
     const c = X.compass(viewForExtras(), e, now(), catLabel);
     const quiet = X.isSilent(e, now());
-    needle.style.transform = 'rotate(' + c.angle + 'deg)';
+    // La aguja apunta donde está el sol o la luna en este momento; el saludo sale de la hora.
+    const sky = window.AbacoSky;
+    const hour = sky ? sky.resolveHour(new Date(now()), window) : new Date(now()).getHours();
+    const angle = sky ? sky.needleAngleAt(hour) : c.angle;
+    const greet = sky ? sky.saludoAt(hour) : c.headline;
+    needle.style.transform = 'rotate(' + angle + 'deg)';
     btn.classList.toggle('calm', c.calm || quiet);
     btn.classList.toggle('restless', !c.calm && !quiet);
     btn.dataset.key = c.key;
-    card.innerHTML = '<div class="bc-title">Tu brújula <span>✦</span></div><div class="bc-body"><b>' + esc(c.headline) + '.</b> ' + esc(c.detail) +
+    card.innerHTML = '<div class="bc-title">Tu brújula <span>✦</span></div><div class="bc-body"><b>' + esc(greet) + '.</b> ' + esc(c.headline) + '. ' + esc(c.detail) +
       '</div><div class="bc-hint">Toca de nuevo para cerrar</div>';
   }
 

@@ -345,13 +345,13 @@ test('brújula: la aguja apunta a donde conviene mirar, quieta (modo calmado)', 
   await register();
   await seed();
   await go('inicio');
-  assert.equal(await page.evaluate(() => document.getElementById('brujulaNeedle').style.transform), 'rotate(180deg)');
+  // La aguja apunta al sol o a la luna según la hora (js/abaco-sky.js), no al estado de las cuentas.
+  assert.equal(await page.evaluate(() => document.getElementById('brujulaNeedle').style.transform), 'rotate(' + await page.evaluate(() => AbacoSky.needleAngleAt(AbacoSky.resolveHour(new Date(), window))) + 'deg)');
   assert.equal(await page.evaluate(() => document.getElementById('brujulaBtn').classList.contains('restless')), true);
   const anim = await page.evaluate(() => getComputedStyle(document.querySelector('#brujulaBtn .wobble')).animationName);
   assert.equal(anim, 'none', 'no se sacude: menos movimiento en pantalla');
   // Sin sobres excedidos apunta a la meta y se calma.
   await page.evaluate(async () => { await AbacoApp.data().setBudget({ category: 'comida', amount: 9000, description: '' }); AbacoApp.refreshUI(); });
-  assert.equal(await page.evaluate(() => document.getElementById('brujulaNeedle').style.transform), 'rotate(90deg)');
   assert.equal(await page.evaluate(() => document.getElementById('brujulaBtn').classList.contains('calm')), true);
 });
 

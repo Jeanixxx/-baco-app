@@ -149,6 +149,18 @@
     return d.getHours() + d.getMinutes() / 60;
   }
 
+  /* ---------- la aguja de la brújula apunta al sol o a la luna ---------- */
+
+  /* Grados de la aguja según dónde está el astro: -90 a la izquierda (salida), 0 arriba (mediodía), 90 a la derecha (puesta).
+   * De día es el sol (6:00 a 18:30); de noche es la luna, que entra por la derecha a las 18:30 y sale por la izquierda. */
+  function needleAngleAt(h) {
+    const x = normHour(h);
+    const clampDeg = (d) => Math.max(-90, Math.min(90, d));
+    if (x >= SUNRISE && x <= SUNSET) return Math.round(clampDeg(((x - 12.25) / (SUNSET - 12.25)) * 90));
+    const t = x >= SUNSET ? x - SUNSET : x + (24 - SUNSET); // horas desde que entra la luna
+    return Math.round(clampDeg(90 - (t / (24 - SUNSET + SUNRISE)) * 180));
+  }
+
   /* ---------- paralaje: inclinación del teléfono ---------- */
 
   /* gamma (inclinación izquierda-derecha, en grados) -> desplazamiento horizontal en píxeles. */
@@ -235,6 +247,8 @@
       if (Math.abs(t.target - t.x) < 0.05) t.x = t.target;
       const layer = doc.getElementById('skyLayer');
       if (layer) layer.style.setProperty('--tilt-x', t.x.toFixed(2) + 'px');
+      // El reflejo del cristal sigue la misma inclinación (styles.css, --sheen-x).
+      doc.documentElement.style.setProperty('--sheen-x', t.x.toFixed(2) + 'px');
       t.raf = t.x === t.target ? 0 : win.requestAnimationFrame(step);
     };
     win.addEventListener('deviceorientation', (e) => {
@@ -296,7 +310,7 @@
 
   const api = {
     SUNRISE, SUNSET, STOPS, MODES, MODE_LABEL,
-    mixHex, luminance, normHour, isNight, momentoAt, saludoAt, skyColors, skyAt, resolveHour, tiltOffset,
+    mixHex, luminance, normHour, isNight, momentoAt, saludoAt, skyColors, skyAt, resolveHour, tiltOffset, needleAngleAt,
     init, refresh, current, getMode, setMode, cycleMode, tilt
   };
 

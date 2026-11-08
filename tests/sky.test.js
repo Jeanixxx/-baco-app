@@ -91,3 +91,18 @@ test('la inclinación del teléfono mueve el cielo de lado, con tope', () => {
   assert.equal(Sky.tiltOffset(90), 28, 'no se va más allá del tope');
   assert.equal(Sky.tiltOffset(null), 0);
 });
+
+test('la aguja apunta al sol de día y a la luna de noche', () => {
+  assert.equal(Sky.needleAngleAt(6), -90, 'el sol sale por la izquierda');
+  assert.equal(Sky.needleAngleAt(12.25), 0, 'al mediodía, arriba');
+  assert.equal(Sky.needleAngleAt(18.5), 90, 'el sol se pone por la derecha');
+  assert.ok(Sky.needleAngleAt(9) < Sky.needleAngleAt(15), 'de mañana a tarde avanza hacia la derecha');
+  // La luna entra por la derecha y sale por la izquierda.
+  assert.equal(Sky.needleAngleAt(18.6) > 80, true, 'la luna entra por la derecha');
+  assert.ok(Sky.needleAngleAt(21) > Sky.needleAngleAt(2), 'de noche avanza hacia la izquierda');
+  assert.ok(Math.abs(Sky.needleAngleAt(0.5)) < 10, 'a medianoche, casi arriba');
+  for (let h = 0; h < 24; h += 0.5) {
+    const a = Sky.needleAngleAt(h);
+    assert.ok(a >= -90 && a <= 90, 'dentro del arco: ' + h + ' -> ' + a);
+  }
+});

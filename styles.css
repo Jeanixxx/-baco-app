@@ -2162,3 +2162,22 @@ body.focus-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .fx-inner.fx-in, .fx-inner.fx-step, .fx-ok, .fx-bar i, .fx-compare i { animation: none; }
 }
+
+/* ---------- Brillo del cristal (js/abaco-sky.js pone --sheen-x con la inclinación) ---------- */
+/* Un reflejo suave sobre las tarjetas de vidrio. Sin giroscopio queda en su lugar; con él se mueve con el teléfono. */
+.hoy-list, .x-card, .fx-card, .calm-card { position: relative; }
+.hoy-list::after, .x-card::after, .fx-card::after, .calm-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(120% 70% at calc(32% + var(--sheen-x, 0px) * 1.4) 0%, rgba(255, 255, 255, .34) 0%, rgba(255, 255, 255, 0) 58%);
+}
+:root[data-theme="dark"] .hoy-list::after, :root[data-theme="dark"] .x-card::after, :root[data-theme="dark"] .fx-card::after, :root[data-theme="dark"] .calm-card::after {
+  background: radial-gradient(120% 70% at calc(32% + var(--sheen-x, 0px) * 1.4) 0%, rgba(255, 255, 255, .12) 0%, rgba(255, 255, 255, 0) 58%);
+}
+/* Constancia: el día de hoy brilla una vez al anotar por primera vez. */
+.fx-day.glow { animation: fxGlow 1.6s ease-out; }
+@keyframes fxGlow {
+  0% { box-shadow: 0 0 0 0 rgba(18, 112, 79, 0); }
+  30% { box-shadow: 0 0 0 6px rgba(18, 112, 79, .25), 0 0 22px rgba(18, 112, 79, .6); }
+  100% { box-shadow: 0 0 0 0 rgba(18, 112, 79, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .fx-day.glow { animation: none; } }
