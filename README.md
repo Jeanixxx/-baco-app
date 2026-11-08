@@ -17,6 +17,7 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/abaco-extras.js` | Lógica pura de convivencia: equivalencias, pausa, decisiones, pactos, cartas, préstamos entre sobres, preguntas, medidas, silencio y brújula. |
 | `js/abaco-shell.js` | Estructura del rediseño: cabecera de título grande (se compacta al desplazar), formularios como hojas inferiores, ayuda desde el menú. |
 | `js/abaco-calm.js` | Modo calmado: Inicio «Hoy, solo tres cosas», Registrar en dos pasos, Sobres y Tarjetas con hoja de detalle, menú con lo que más usas. |
+| `js/abaco-tour.js` | Tour de bienvenida que se puede saltar: enseña Hoy y Registrar y recoge saldos, día de pago, sobres y un pago fijo. |
 | `js/abaco-quick.js` | Gastos anotados desde la notificación de Android: interpreta «85 tacos», guarda con su hora y confirma a Android. |
 | `js/abaco-extras-ui.js` | Interfaz de convivencia: avisos de Inicio, brújula flotante, pausa antes de pagar y las pantallas Estadísticas, Decisiones, Pactos, Cartas y Configuración. |
 | `styles.css` | Una sola hoja de estilo: variables de cristal (claro de día, oscuro de noche), componentes y cielo. |
@@ -25,11 +26,11 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/security.js` | Bloqueo opcional con PIN o patrón (solo barrera de acceso local). |
 | `js/boot.js` | Arranque mínimo del registro. |
 
-Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core`, `abaco-migrate`, `abaco-store`, `abaco-data`, `abaco-simulate`, `abaco-dialog`, `abaco-app`, `app`, `abaco-simulator-ui`, `abaco-delegate`, `abaco-shell`, `abaco-calm`, `abaco-quick`, `abaco-extras-ui`, `security`. La tipografía Inter viene en `fonts/` para funcionar sin internet.
+Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core`, `abaco-migrate`, `abaco-store`, `abaco-data`, `abaco-simulate`, `abaco-dialog`, `abaco-app`, `app`, `abaco-simulator-ui`, `abaco-delegate`, `abaco-shell`, `abaco-calm`, `abaco-tour`, `abaco-quick`, `abaco-extras-ui`, `security`. La tipografía Inter viene en `fonts/` para funcionar sin internet.
 
 ## Diseño: ciclo del día y convivencia
 
-- **Cielo.** El fondo sigue la hora: amanecer, mañana, tarde, atardecer y noche. El sol cruza de 6:00 a 19:30 y después entra la luna hasta las 6:00. El tema es claro de día y oscuro de noche. El botón *Tema* del menú alterna automático, día fijo y noche fija (`theme_mode`).
+- **Cielo.** El fondo sigue la hora: amanecer, mañana, tarde, atardecer y noche. El sol cruza de 6:00 a 18:30 (en México la noche empieza más o menos a esa hora) y después entra la luna hasta las 6:00. El tema sigue lo oscuro que está el cielo, así el texto siempre se lee. Al inclinar el teléfono, el sol, la luna y las estrellas se desplazan de lado (paralaje suave; se desactiva si el sistema pide menos movimiento). El botón *Tema* del menú alterna automático, día fijo y noche fija (`theme_mode`).
 - **Cristal.** Las tarjetas, la cabecera, el menú, los diálogos y la barra inferior son cristal translúcido con desenfoque.
 - **Convivencia.** Informar con cifras, ofrecer opciones, dejar decidir, no culpar. Lo que la persona elige vive en `state.extras` y se guarda con el resto de los datos no financieros (y viaja en la copia de seguridad):
   - *Equivalencias*: si elige una unidad (café, cine, comida, pasaje o una propia), cada gasto muestra "Son 3 cafés". Por defecto no compara nada.
@@ -43,7 +44,9 @@ Orden de carga en `index.html`: `boot`, `abaco-sky`, `abaco-extras`, `abaco-core
 - **Estructura (canvas aprobado).** Cada pantalla tiene un título grande con el momento del día (en Inicio, el saludo y la hora). El menú es un mosaico de secciones. La barra inferior es fija: Inicio, Movimientos, Registrar, Estadísticas y Cuentas. Los formularios se abren como hojas inferiores.
 - **Modo calmado (la interfaz de la app).** Pensado para que nada abrume, también para personas con TDAH: un dato principal, una acción y el detalle solo al tocar.
   - *Hoy*: como máximo tres cosas calculadas de tus datos (anotar lo de hoy, un cobro cercano, un sobre que se pasó, una carta o decisión pendiente). Se palomean y se recuerda por día.
-  - *Registrar*: 1) el monto con teclado y Guardar; 2) «¿Qué fue?» opcional, sin presión: el gasto ya está guardado y nunca se vuelve a preguntar. Nota, cuenta e impulso en «Más opciones».
+  - *Registrar*: gasto o ingreso en el mismo lugar. 1) el monto con teclado y Guardar; 2) «¿Qué fue?» opcional, sin presión: el gasto ya está guardado y nunca se vuelve a preguntar. Nota, cuenta e impulso en «Más opciones».
+  - *Deudas*: lo que debo (préstamos) y lo que me deben (por cobrar) en una pantalla con dos pestañas.
+  - *Tour de bienvenida*: seis pasos que se pueden saltar; enseña Hoy y Registrar y recoge lo mínimo para empezar. Si dices cada cuánto te pagan, Hoy te recuerda anotar el ingreso ese día.
   - *Sobres* y *Tarjetas*: un renglón o tarjeta por elemento; el detalle y las acciones en una hoja. *Ajustes*: una lista; cada renglón abre una sola decisión. *Estadísticas*: una frase y las barras; lo demás en «Ver más». *Menú*: lo que más usas arriba; el resto plegado.
   - La brújula queda quieta. El motor tiene `annotate` para cambiar la categoría o la nota de un gasto sin tocar importes.
 - **Notificación rápida (Android).** Una notificación fija y silenciosa con respuesta directa: escribes «85 tacos» en la barra de notificaciones y queda en una cola local; al abrir Ábaco se registra como gasto con la hora en que lo anotaste. Se apaga en Ajustes.

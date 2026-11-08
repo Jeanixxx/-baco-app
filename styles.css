@@ -1343,9 +1343,6 @@ header, .content, .mode-choice, .pinned-bar {
   display: flex; flex-direction: column; justify-content: center;
   padding: 28px clamp(16px,5vw,48px); box-sizing: border-box;
 }
-#onboarding.wallet-fullscreen .wallet-quiz-fields { width: min(760px,100%); margin: 0 auto; }
-#onboarding.wallet-fullscreen .wallet-quiz-choice { width: min(760px,100%); margin: 0 auto; }
-#onboarding.wallet-fullscreen #walletQuizBody { width: 100%; }
 #onboarding.wallet-fullscreen .row { width: min(760px,100%); margin-left:auto; margin-right:auto; }
 
 /* ===== Ventana de gráficas a pantalla completa ===== */
@@ -1972,3 +1969,93 @@ body, button, input, select, textarea { font-family: Inter, -apple-system, Blink
 .app .menu-all { width: 100%; min-height: 0; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 16px 18px; border-radius: 18px; font-size: 15px; font-weight: 600; color: var(--text); background: var(--glass-soft); border: 1px solid var(--glass-edge); box-shadow: none; }
 .menu-all-n { font-size: 13px; color: var(--muted); font-weight: 500; }
 .menu-page:not(.all-open) .menu-footer { display: none; }
+
+/* Paralaje: al inclinar el teléfono el cielo se desplaza de lado (js/abaco-sky.js pone --tilt-x).
+   Las estrellas se mueven menos que el sol y la luna: así se siente la profundidad. */
+#skyLayer .sky-sun, #skyLayer .sky-sun-glow { transform: translateX(var(--tilt-x, 0px)); }
+#skyLayer .sky-moon { transform: translateX(var(--tilt-x, 0px)) rotate(-14deg); }
+#skyLayer .sky-star { transform: translateX(calc(var(--tilt-x, 0px) * .45)); }
+
+/* Registrar: gasto o ingreso en la misma pantalla */
+.reg-mode { display: flex; width: min(240px, 80%); margin: 4px auto 0; padding: 3px; border-radius: 15px; background: var(--glass-soft); border: 1px solid var(--glass-edge); }
+.app .reg-mode button { flex: 1; min-height: 0; padding: 8px 0; border-radius: 12px; border: none; background: transparent; box-shadow: none; color: var(--text); font-size: 14px; font-weight: 500; transition: background .25s ease, box-shadow .25s ease, color .25s ease; }
+.app .reg-mode button.on { background: var(--glass-hi); color: var(--green); font-weight: 700; box-shadow: 0 2px 8px var(--glass-shadow); }
+.mode-ingreso .only-gasto, .mode-ingreso #hormChips, .mode-ingreso #hormWhyWrap, .mode-ingreso #hormEquiv { display: none !important; }
+.mode-ingreso .reg-cur, .mode-ingreso .reg-big input { color: var(--green); }
+
+/* Deudas: una pantalla, dos pestañas */
+.debt-tabs { margin: 0 auto 16px; }
+#panel-prestamos[data-pane="debo"] .debt-pane[data-pane="cobrar"],
+#panel-prestamos[data-pane="cobrar"] .debt-pane[data-pane="debo"] { display: none; }
+.debt-pane { animation: panelFade .25s ease; }
+
+/* ======================================================================
+   Tour de bienvenida
+   ====================================================================== */
+.onboard-card.tour { text-align: left; padding: 18px 18px 16px; min-height: 560px; display: flex; flex-direction: column; }
+.onboard-card.tour.hidden { display: none; }
+.tour-top { display: flex; justify-content: space-between; align-items: center; }
+.tour-dots { display: flex; gap: 6px; }
+.tour-dots span { width: 8px; height: 8px; border-radius: 99px; background: var(--muted); opacity: .35; transition: width .3s ease, opacity .3s ease, background .3s ease; }
+.tour-dots span.past { opacity: .7; }
+.tour-dots span.on { width: 22px; opacity: 1; background: var(--green); }
+.app .tour-skip { min-height: 0; padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--muted); background: transparent; border: none; box-shadow: none; }
+.tour-body { flex: 1; margin-top: 18px; }
+.tour-body h2 { font-size: 26px; font-weight: 700; letter-spacing: -.5px; margin: 0 0 6px; }
+.tour-body > p { font-size: 15px; color: var(--muted); line-height: 1.45; margin: 0 0 18px; }
+.tour-content .x-label { margin-top: 12px; }
+.tour-content input { width: 100%; }
+.tour-two { display: flex; gap: 10px; }
+.tour-two > div { flex: 1; min-width: 0; }
+.tour-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.app .tour-chip { min-height: 0; padding: 12px 16px; border-radius: 16px; font-size: 15px; font-weight: 600; color: var(--text); background: var(--glass-soft); border: 1px solid var(--glass-edge); box-shadow: none; transition: background .2s ease, color .2s ease, transform .15s ease; }
+.app .tour-chip.on { background: var(--glass-hi); color: var(--green); box-shadow: 0 3px 10px var(--glass-shadow); }
+.app .tour-chip:active { transform: scale(.96); }
+.tour-actions { display: flex; gap: 10px; margin-top: 18px; }
+.tour-actions .btn { flex: 1; }
+.tour-actions .btn.hidden { display: none; }
+.tour-in { animation: tourIn .32s cubic-bezier(.22, 1, .36, 1); }
+.tour-back { animation: tourBack .32s cubic-bezier(.22, 1, .36, 1); }
+@keyframes tourIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes tourBack { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+/* Vistas previas de ventanas dentro del tour */
+.tour-preview { border-radius: 22px; padding: 14px 16px; background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--card-shadow); }
+.tp-label { font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.tp-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--glass-edge); font-size: 15px; }
+.tp-row:last-child { border-bottom: none; }
+.tp-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--muted); box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.tp-row.done .tp-check { background: var(--accent); border-color: transparent; animation: checkPop .5s .4s both; }
+.tp-row.done span:last-child { color: var(--muted); text-decoration: line-through; }
+.tp-check svg { width: 14px; height: 14px; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.tp-reg { text-align: center; }
+.tp-tabs { display: inline-flex; padding: 3px; border-radius: 12px; background: var(--glass-soft); font-size: 13px; }
+.tp-tabs span { padding: 5px 14px; border-radius: 10px; }
+.tp-tabs span.on { background: var(--glass-hi); color: var(--green); font-weight: 700; }
+.tp-amount { font-size: 44px; font-weight: 700; letter-spacing: -1px; margin: 8px 0; }
+.tp-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tp-keys span { padding: 8px 0; border-radius: 12px; background: var(--glass-soft); border: 1px solid var(--glass-edge); font-size: 17px; }
+.tp-save { margin-top: 10px; padding: 11px 0; border-radius: 14px; background: var(--accent); color: #fff; font-weight: 600; }
+
+/* ======================================================================
+   Movimiento: entradas suaves, cierre de hojas y palomita
+   ====================================================================== */
+@keyframes stepIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes sheetDown { from { transform: none; } to { transform: translateY(100%); } }
+@keyframes checkPop { 0% { transform: scale(.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+#regStep1:not(.hidden), #regStep2:not(.hidden) { animation: stepIn .3s cubic-bezier(.22, 1, .36, 1); }
+.calm-sheet.closing { animation: sheetDown .22s ease-in forwards; pointer-events: none; }
+.sheet-scrim { transition: opacity .22s ease; }
+.hoy-row.just .hoy-check { animation: checkPop .35s cubic-bezier(.22, 1, .36, 1); }
+.hoy-row .ht { transition: color .25s ease; }
+#homeToday { animation: stepIn .35s cubic-bezier(.22, 1, .36, 1); }
+.app .calm-row, .app .calm-card, .app .menu-tile, .app .x-tile { transition: transform .15s ease, background .2s ease; }
+.app .calm-row:active, .app .calm-card:active, .app .menu-tile:active, .app .x-tile:active { transform: scale(.98); }
+@media (prefers-reduced-motion: reduce) {
+  .tour-in, .tour-back, #regStep1, #regStep2, .calm-sheet, .calm-sheet.closing, .hoy-row .hoy-check, #homeToday, .tp-row.done .tp-check { animation: none !important; }
+}
+
+/* Tour y bienvenida a pantalla completa: se ve el cielo detrás y la tarjeta es de cristal */
+#onboarding.wallet-fullscreen { background: transparent; padding: calc(var(--safe-top) + 12px) 16px calc(16px + var(--safe-bottom)); align-items: center; }
+#onboarding.wallet-fullscreen .onboard-card { min-height: min(640px, calc(100dvh - var(--safe-top) - 44px)); margin: auto 0; border-radius: 28px; box-shadow: var(--card-shadow); justify-content: flex-start; padding: 18px; }
+/* De noche, la barra inferior es más opaca para que se lea sobre el resplandor del atardecer */
+[data-theme="dark"] .pinned-bar { background: rgba(14, 18, 44, .78); }

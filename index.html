@@ -93,14 +93,15 @@
       </div>
       <button class="btn btn-primary" id="btnRegister" type="button">Continuar</button>
     </div>
-    <div class="onboard-card hidden" id="step-wallet">
-      <div class="brand-mark small" aria-hidden="true">Á</div>
-      <h2>Antes de empezar</h2>
-      <p>Agrega tus cuentas, pagos y deudas ahora o después.</p>
-      <div class="wallet-quiz-progress"><span id="walletQuizProgress">1 de 3</span></div>
-      <div id="walletQuizBody"></div>
-      <div class="row mt-6">
-        <button class="btn btn-ghost" id="btnSkipWalletQuiz" data-quiz="skip" type="button">Saltar</button>
+    <!-- Tour de bienvenida (js/abaco-tour.js): se puede saltar completo o paso por paso. -->
+    <div class="onboard-card tour hidden" id="step-wallet">
+      <div class="tour-top">
+        <div class="tour-dots" id="tourDots" aria-hidden="true"></div>
+        <button class="tour-skip" id="btnSkipWalletQuiz" data-quiz="skip" type="button">Saltar tour</button>
+      </div>
+      <div class="tour-body" id="tourBody" aria-live="polite"></div>
+      <div class="tour-actions">
+        <button class="btn btn-ghost" id="btnTourLater" type="button">Ahora no</button>
         <button class="btn btn-primary" id="btnNextWalletQuiz" data-quiz="next" type="button">Continuar</button>
       </div>
     </div>
@@ -112,8 +113,12 @@
     <div class="panel active" id="panel-hormiga">
       <!-- Paso 1: solo el monto. Paso 2 (opcional, js/abaco-calm.js): qué fue. -->
       <div id="regStep1">
+        <div class="reg-mode" role="tablist" aria-label="Qué vas a anotar">
+          <button type="button" role="tab" class="on" aria-selected="true" data-calm="mode" data-v="gasto">Gasto</button>
+          <button type="button" role="tab" aria-selected="false" data-calm="mode" data-v="ingreso">Ingreso</button>
+        </div>
         <div class="reg-amount">
-          <div class="reg-q">¿Cuánto fue?</div>
+          <div class="reg-q" id="regQ">¿Cuánto gastaste?</div>
           <div class="reg-big"><span class="reg-cur">$</span><input type="text" id="hormAmount" inputmode="none" autocomplete="off" placeholder="0" aria-label="Monto"></div>
           <div class="x-equiv hidden" id="hormEquiv"></div>
         </div>
@@ -124,16 +129,16 @@
           <button type="button" data-key=".">.</button><button type="button" data-key="0">0</button><button type="button" data-key="del" aria-label="Borrar">⌫</button>
         </div>
         <button type="button" class="btn btn-primary" id="btnRegSave">Guardar</button>
-        <button type="button" class="reg-more-btn" id="regMoreBtn" aria-expanded="false" aria-controls="regMore">Más opciones: nota, cuenta, impulso ›</button>
+        <button type="button" class="reg-more-btn" id="regMoreBtn" aria-expanded="false" aria-controls="regMore">Más opciones ›</button>
         <div class="form-card reg-more hidden" id="regMore">
           <div class="field"><label class="x-label" for="hormDesc">¿Qué fue?</label><input type="text" id="hormDesc" placeholder="Antojo, súper, pasaje…"></div>
           <div class="chips" id="hormChips"></div>
-          <div class="reg-impulse">
+          <div class="reg-impulse only-gasto">
             <div><div class="xc-title">Fue por impulso</div><div class="xc-sub">Te doy una pausa antes de guardar</div></div>
             <div class="chip x-switch" id="hormImpulse" role="switch" aria-pressed="false" aria-label="Fue por impulso"></div>
           </div>
           <div class="field x-why hidden" id="hormWhyWrap"><label class="x-label" for="hormWhy">¿Por qué? (opcional)</label><input type="text" id="hormWhy" placeholder="Para revisarlo después"></div>
-          <div class="field"><label class="x-label" for="hormFromAccount">Sale de</label><select id="hormFromAccount"></select></div>
+          <div class="field"><label class="x-label" for="hormFromAccount" id="regAccountLabel">Sale de</label><select id="hormFromAccount"></select></div>
         </div>
       </div>
       <div id="regStep2" class="hidden"></div>
@@ -568,7 +573,14 @@
     </div>
 
     <!-- PRÉSTAMOS -->
-    <div class="panel" id="panel-prestamos">
+    <!-- DEUDAS: lo que yo debo (préstamos) y lo que me deben (por cobrar), en una sola pantalla -->
+    <div class="panel" id="panel-prestamos" data-pane="debo">
+      <div class="reg-mode debt-tabs" role="tablist" aria-label="Deudas">
+        <button type="button" role="tab" class="on" aria-selected="true" data-calm="debts" data-v="debo">Yo debo</button>
+        <button type="button" role="tab" aria-selected="false" data-calm="debts" data-v="cobrar">Me deben</button>
+      </div>
+      <div class="debt-pane" data-pane="debo">
+      <div class="calm-lead" id="debtLeadDebo"></div>
       <div class="op-header">
         <div class="op-title-card">
           <div class="op-emoji">🏠</div>
@@ -605,10 +617,9 @@
       </div>
       <div class="module-note">Marca cada pago aquí sin volver a registrarlo como gasto. Así el saldo de la deuda avanza, pero tus reportes no se duplican.</div>
       <div id="loanList"></div>
-    </div>
-
-    <!-- DEUDORES -->
-    <div class="panel" id="panel-deudores">
+      </div>
+      <div class="debt-pane" data-pane="cobrar">
+      <div class="calm-lead" id="debtLeadCobrar"></div>
       <div class="op-header">
         <div class="op-title-card">
           <div class="op-emoji">🤝</div>
@@ -634,6 +645,7 @@
       </div>
       <div class="section-title">Pendientes</div>
       <div id="debtorsList"></div>
+      </div>
     </div>
 
     <!-- INVERSIONES -->
@@ -811,6 +823,7 @@
 <script src="js/abaco-delegate.js"></script>
 <script src="js/abaco-shell.js"></script>
 <script src="js/abaco-calm.js"></script>
+<script src="js/abaco-tour.js"></script>
 <script src="js/abaco-quick.js"></script>
 <script src="js/abaco-extras-ui.js"></script>
 <script src="js/security.js"></script>

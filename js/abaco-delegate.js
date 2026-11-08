@@ -31,9 +31,6 @@
     'data-quiz': (v) => {
       if (v === 'next') nextWalletQuiz();
       else if (v === 'skip') finishWalletQuiz(true);
-      else if (v === 'add-account') window.quizAddAccount();
-      else if (v === 'add-sub') window.quizAddSub();
-      else if (v === 'add-debt') window.quizAddDebt();
     },
     'data-home': (v, el, e) => {
       if (v === 'charts') toggleHomeCharts();

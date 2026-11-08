@@ -1,8 +1,10 @@
 /* Ábaco · cielo del día.
  *
  * El fondo de la app sigue la hora real: amanecer, mañana, tarde, atardecer y noche.
- * El sol cruza la pantalla de izquierda a derecha entre las 6:00 y las 19:30; después
- * entra la luna por la derecha y cruza hasta las 6:00. De noche aparecen las estrellas.
+ * El sol cruza la pantalla de izquierda a derecha entre las 6:00 y las 18:30 (en México la noche
+ * empieza más o menos a esa hora); después entra la luna por la derecha y cruza hasta las 6:00.
+ * De noche aparecen las estrellas. Al inclinar el teléfono, el sol, la luna y las estrellas se
+ * desplazan un poco hacia los lados (paralaje), como si el cielo estuviera detrás de la pantalla.
  *
  * Dos partes:
  *  - Funciones puras (skyAt, momentoAt, saludoAt...): no tocan el documento, se prueban en Node.
@@ -16,21 +18,28 @@
   'use strict';
 
   const SUNRISE = 6;
-  const SUNSET = 19.5;
+  const SUNSET = 18.5;
 
   /* Colores del cielo por hora (0 a 24). Entre dos hileras se mezclan en línea recta. */
   const STOPS = [
     { h: 0, top: '#070B1F', mid: '#111838', bot: '#2A2F62' },
     { h: 5.5, top: '#2B3A67', mid: '#7A6A9A', bot: '#F5B88A' },
-    { h: 7.5, top: '#9FD3F0', mid: '#CFE8F5', bot: '#FFF4E0' },
+    { h: 7, top: '#9FD3F0', mid: '#CFE8F5', bot: '#FFF4E0' },
     { h: 12, top: '#8CC8EC', mid: '#CFE8F5', bot: '#FBE3B8' },
     { h: 17, top: '#5C7DB8', mid: '#F4C48F', bot: '#FFD38A' },
-    { h: 19.5, top: '#2B3A67', mid: '#8C5F86', bot: '#F4A67A' },
-    { h: 21, top: '#111838', mid: '#1E2552', bot: '#2A2F62' },
+    { h: 18.5, top: '#22305C', mid: '#5E4A7A', bot: '#C9806A' },
+    { h: 19.5, top: '#111838', mid: '#1E2552', bot: '#2A2F62' },
     { h: 24, top: '#070B1F', mid: '#111838', bot: '#2A2F62' }
   ];
 
   const hex = (c) => [1, 3, 5].map((i) => parseInt(c.substr(i, 2), 16));
+
+  /* Luminancia relativa (0 negro, 1 blanco). */
+  function luminance(c) {
+    const lin = (v) => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+    const [r, g, b] = hex(c);
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  }
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
 
   function mixHex(a, b, k) {
@@ -63,7 +72,7 @@
   function saludoAt(h) {
     const t = normHour(h);
     if (t < 12) return 'Buenos días';
-    if (t < 19) return 'Buenas tardes';
+    if (t < SUNSET) return 'Buenas tardes';
     return 'Buenas noches';
   }
 
@@ -116,7 +125,9 @@
       bot: colors.bot,
       grad: 'linear-gradient(180deg,' + colors.top + ' 0%,' + colors.mid + ' 60%,' + colors.bot + ' 100%)',
       night,
-      theme: night ? 'dark' : 'light',
+      // El tema sigue lo oscuro que está el cielo donde van las tarjetas (no solo la hora):
+      // así el texto siempre se lee, también al atardecer y al amanecer.
+      theme: luminance(colors.mid) < 0.3 ? 'dark' : 'light',
       momento: momentoAt(t),
       saludo: saludoAt(t),
       sun,
@@ -136,6 +147,16 @@
     } catch (e) { /* sin ?hora */ }
     const d = now instanceof Date ? now : new Date();
     return d.getHours() + d.getMinutes() / 60;
+  }
+
+  /* ---------- paralaje: inclinación del teléfono ---------- */
+
+  /* gamma (inclinación izquierda-derecha, en grados) -> desplazamiento horizontal en píxeles. */
+  const TILT_MAX = 28;
+  function tiltOffset(gamma) {
+    const g = Number(gamma);
+    if (!Number.isFinite(g)) return 0;
+    return Math.round((clamp(g, -30, 30) / 30) * TILT_MAX * 10) / 10;
   }
 
   /* ---------- parte con documento ---------- */
@@ -203,6 +224,26 @@
 
   function current() { return env ? env.last : null; }
 
+  /* Sigue la inclinación con suavidad: cada cuadro se acerca un poco al objetivo (sin saltos). */
+  function startTilt(win, doc) {
+    const reduce = win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('DeviceOrientationEvent' in win)) return;
+    env.tilt = { target: 0, x: 0, raf: 0 };
+    const step = () => {
+      const t = env.tilt;
+      t.x += (t.target - t.x) * 0.12;
+      if (Math.abs(t.target - t.x) < 0.05) t.x = t.target;
+      const layer = doc.getElementById('skyLayer');
+      if (layer) layer.style.setProperty('--tilt-x', t.x.toFixed(2) + 'px');
+      t.raf = t.x === t.target ? 0 : win.requestAnimationFrame(step);
+    };
+    win.addEventListener('deviceorientation', (e) => {
+      env.tilt.target = tiltOffset(e.gamma);
+      if (!env.tilt.raf) env.tilt.raf = win.requestAnimationFrame(step);
+    });
+  }
+  function tilt() { return env && env.tilt ? env.tilt.x : 0; }
+
   function refresh() {
     if (!env) return null;
     const real = resolveHour(new Date(), env.win);
@@ -248,14 +289,15 @@
     refresh();
     // El sol avanza mientras la app está abierta; al volver a primer plano se pone al día.
     env.timer = win.setInterval(refresh, 60000);
+    startTilt(win, doc);
     doc.addEventListener('visibilitychange', () => { if (!doc.hidden) refresh(); });
     return env.last;
   }
 
   const api = {
     SUNRISE, SUNSET, STOPS, MODES, MODE_LABEL,
-    mixHex, normHour, isNight, momentoAt, saludoAt, skyColors, skyAt, resolveHour,
-    init, refresh, current, getMode, setMode, cycleMode
+    mixHex, luminance, normHour, isNight, momentoAt, saludoAt, skyColors, skyAt, resolveHour, tiltOffset,
+    init, refresh, current, getMode, setMode, cycleMode, tilt
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

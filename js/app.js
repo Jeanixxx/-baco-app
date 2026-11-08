@@ -467,7 +467,7 @@ $('btnThemeMenu').onclick = () => {
 
 const MENU_GROUPS = [
   {label:'Principal', items:['inicio','hormiga','presupuesto']},
-  {label:'Dinero', items:['compras','ingresos','ahorros','tarjetas','cuentas','prestamos','suscripciones','inversiones','deudores','simulador']},
+  {label:'Dinero', items:['compras','ingresos','ahorros','tarjetas','cuentas','prestamos','suscripciones','inversiones','simulador']},
   {label:'Organiza', items:['lista','kanban','recordatorios']},
   {label:'Consulta', items:['historial','estadisticas','categorias','cartas']},
   {label:'Contigo', items:['decisiones','pactos','config']}
@@ -476,7 +476,7 @@ const NAV_META = {
   hormiga:{label:'Registrar'}, inicio:{label:'Inicio'}, presupuesto:{label:'Sobres'}, compras:{label:'Compras'},
   lista:{label:'Qué comprar'},
   ingresos:{label:'Ingresos'}, ahorros:{label:'Ahorros'}, tarjetas:{label:'Tarjetas'},
-  cuentas:{label:'Cuentas'}, prestamos:{label:'Préstamos'}, suscripciones:{label:'Suscripciones'}, inversiones:{label:'Inversiones'}, deudores:{label:'Por cobrar'}, simulador:{label:'Simulador'},
+  cuentas:{label:'Cuentas'}, prestamos:{label:'Deudas'}, suscripciones:{label:'Suscripciones'}, inversiones:{label:'Inversiones'}, deudores:{label:'Por cobrar'}, simulador:{label:'Simulador'},
   kanban:{label:'Pendientes'}, recordatorios:{label:'Recordatorios'},
   historial:{label:'Movimientos'}, categorias:{label:'Categorías'},
   estadisticas:{label:'Estadísticas'}, cartas:{label:'Cartas'}, decisiones:{label:'Decisiones'}, pactos:{label:'Pactos'}, config:{label:'Ajustes'},
@@ -519,7 +519,7 @@ const PANEL_RENDERERS = {
   hormiga: () => renderHormiga(), inicio: () => renderInicio(), presupuesto: () => renderBudget(),
   compras: () => renderShop(), lista: () => renderChecklist(), ingresos: () => renderIncomes(),
   ahorros: () => renderSavings(), tarjetas: () => renderCards(), cuentas: () => renderAccounts(),
-  prestamos: () => renderLoans(), suscripciones: () => renderSubscriptions(), inversiones: () => renderInvestments(), simulador: () => renderSimulator(),
+  prestamos: () => { renderLoans(); renderDebtors(); }, suscripciones: () => renderSubscriptions(), inversiones: () => renderInvestments(), simulador: () => renderSimulator(),
   deudores: () => renderDebtors(), kanban: () => renderKanban(), recordatorios: () => renderReminders(),
   historial: () => renderHistorial(), categorias: () => renderCategories(),
   estadisticas: () => renderExtrasPanel('estadisticas'), cartas: () => renderExtrasPanel('cartas'),
@@ -576,8 +576,8 @@ const PANEL_HELP = {
     body: 'Registra tus cuentas y transfiere saldo entre ellas.'
   },
   prestamos: {
-    title: 'Mis préstamos',
-    body: 'Registra deudas y pagos sin duplicar gastos.'
+    title: 'Deudas',
+    body: 'En "Yo debo" llevas tus préstamos y marcas cada pago sin duplicar gastos. En "Me deben" anotas a quién le prestaste y lo marcas cuando te pague.'
   },
   simulador: {
     title: 'Simulador',
@@ -795,16 +795,11 @@ function setupAndroidNavigation() {
   } catch (e) {}
 }
 
-let walletQuizStep = 0;
-const WALLET_QUIZ = [
-  {title:'TU DINERO', copy:'Conecta efectivo, débito y crédito.', kind:'accounts'},
-  {title:'TUS PAGOS', copy:'Conecta tus cobros fijos.', kind:'subscriptions'},
-  {title:'TUS DEUDAS', copy:'Conecta créditos y MSI.', kind:'debts'}
-];
 function todayInputValue(){ const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
-function startWalletQuiz(){ walletQuizStep=0; renderWalletQuiz(); $('onboarding').classList.remove('hidden'); $('onboarding').classList.add('wallet-fullscreen'); $('step-register').classList.add('hidden'); $('step-wallet').classList.remove('hidden'); }
-function finishWalletQuiz(skip=false){ state.walletQuiz={done:true,skipped:!!skip}; LS_SET('wallet_quiz',JSON.stringify(state.walletQuiz)); $('step-wallet')?.classList.add('hidden'); $('onboarding')?.classList.add('hidden'); $('onboarding')?.classList.remove('wallet-fullscreen'); $('appPanels')?.classList.remove('hidden'); goPanel('hormiga'); updateUI(); }
-function nextWalletQuiz(){ if(walletQuizStep<WALLET_QUIZ.length-1){walletQuizStep++;renderWalletQuiz();}else finishWalletQuiz(false); }
+/* El tour de bienvenida vive en js/abaco-tour.js. Se marca como pendiente para que updateUI no lo cierre. */
+function startWalletQuiz(){ if(!LS('wallet_quiz')){state.walletQuiz={done:false};LS_SET('wallet_quiz',JSON.stringify(state.walletQuiz));} window.AbacoTour&&AbacoTour.start(); $('onboarding').classList.remove('hidden'); $('onboarding').classList.add('wallet-fullscreen'); $('step-register').classList.add('hidden'); $('step-wallet').classList.remove('hidden'); }
+function finishWalletQuiz(skip=false){ state.walletQuiz={done:true,skipped:!!skip}; LS_SET('wallet_quiz',JSON.stringify(state.walletQuiz)); $('step-wallet')?.classList.add('hidden'); $('onboarding')?.classList.add('hidden'); $('onboarding')?.classList.remove('wallet-fullscreen'); $('appPanels')?.classList.remove('hidden'); goPanel('inicio'); updateUI(); }
+function nextWalletQuiz(){ if(window.AbacoTour) AbacoTour.next(); else finishWalletQuiz(false); }
 
 function renderMenu() {
   const list = $('menuList');
@@ -2154,10 +2149,8 @@ ensureFinancialCore();
 function openMenu(){try{closeCalc();}catch(e){console.warn('No se pudo cerrar calculadora',e)}const menu=$('menuPage'),ov=$('menuOverlay');if(menu)menu.classList.add('open');if(ov){ov.classList.add('open');ov.style.pointerEvents='auto';}document.querySelector('.app')?.classList.add('menu-open');try{renderMenu();}catch(e){console.warn('No se pudo renderizar menú',e)}}
 function closeMenu(){const menu=$('menuPage'),ov=$('menuOverlay');if(menu){menu.classList.remove('open');menu.style.transform='';menu.style.transition='';}if(ov){ov.classList.remove('open');ov.style.transform='';ov.style.transition='';ov.style.opacity='';ov.style.pointerEvents='';}document.querySelector('.app')?.classList.remove('menu-open');}
 function toggleMenu(){if($('menuPage')?.classList.contains('open'))closeMenu();else openMenu();}
-function goPanel(name){closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}try{window.AbacoShell&&AbacoShell.onPanel(name);}catch(e){console.warn('Estructura no actualizada',e)}try{window.AbacoCalm&&AbacoCalm.onPanel(name);}catch(e){console.warn('Modo calmado no actualizado',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();},150);}
+function goPanel(name){if(name==='deudores'){name='prestamos';window.AbacoCalm&&AbacoCalm.setDebtPane('cobrar');}closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}try{window.AbacoShell&&AbacoShell.onPanel(name);}catch(e){console.warn('Estructura no actualizada',e)}try{window.AbacoCalm&&AbacoCalm.onPanel(name);}catch(e){console.warn('Modo calmado no actualizado',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();},150);}
 
-function renderWalletQuiz(){const body=$('walletQuizBody'),prog=$('walletQuizProgress');if(!body)return;const q=WALLET_QUIZ[walletQuizStep];if(prog)prog.textContent=`${walletQuizStep+1} de ${WALLET_QUIZ.length}`;let html=`<div class="wallet-quiz-title">${q.title}</div><div class="wallet-quiz-copy">${q.copy}</div>`;if(q.kind==='accounts')html+=`<div class="wallet-quiz-fields"><input id="quizAccountName" type="text" placeholder="Nombre (ej. BBVA, efectivo)"><div class="row"><select id="quizAccountType"><option value="débito">Débito</option><option value="crédito">Crédito</option><option value="efectivo">Efectivo</option></select><input id="quizAccountBalance" type="number" inputmode="decimal" placeholder="Saldo / límite $"></div><button type="button" class="btn" id="quizAddAccount" data-quiz="add-account">＋ Agregar a mi billetera</button><div class="wallet-entity-note" id="quizAccountList">${state.accounts.map(a=>`${esc(a.name)} · ${esc(a.type)}`).join(' · ')||'Aún no agregas cuentas'}</div></div>`;if(q.kind==='subscriptions')html+=`<div class="wallet-quiz-fields"><input id="quizSubName" type="text" placeholder="Ej. Netflix"><div class="row"><input id="quizSubAmount" type="number" inputmode="decimal" placeholder="Monto $"><select id="quizSubRange"><option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="semanal">Semanal</option></select></div><button type="button" class="btn" id="quizAddSub" data-quiz="add-sub">＋ Agregar suscripción</button><div class="wallet-entity-note" id="quizSubList">${state.subscriptions.map(a=>`${esc(a.name)} · ${money(a.amount)}`).join(' · ')||'Aún no agregas suscripciones'}</div></div>`;if(q.kind==='debts'){const cards=state.cards.filter(c=>financialType(c.type)==='credito');html+=`<div class="wallet-quiz-fields"><select id="quizDebtKind"><option value="loan">Préstamo / crédito</option><option value="msi">Compra a meses</option></select><select id="quizDebtCard"><option value="">${cards.length?'Tarjeta para MSI':'Primero agrega una tarjeta de crédito'}</option>${cards.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select><input id="quizDebtName" type="text" placeholder="Nombre de la deuda o compra"><div class="row"><input id="quizDebtAmount" type="number" inputmode="decimal" placeholder="Monto pendiente $"><input id="quizDebtMonths" type="number" min="2" placeholder="Meses"></div><div class="field"><label class="note">Fecha de compra / inicio</label><input id="quizDebtDate" type="date" value="${todayInputValue()}"></div><button type="button" class="btn" id="quizAddDebt" data-quiz="add-debt">＋ Agregar deuda</button><div class="wallet-entity-note" id="quizDebtList">${[...state.loans.map(a=>a.name),...state.msiPlans.map(a=>a.concept)].map(esc).join(' · ')||'Aún no agregas deudas'}</div></div>`;}body.innerHTML=html;
-}
 
 
 

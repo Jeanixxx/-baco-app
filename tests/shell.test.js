@@ -45,7 +45,7 @@ test('la bienvenida no muestra la cabecera; al registrarse aparece con el títul
 
 test('cada pantalla pone su título; Inicio (Hoy) saluda, sin chip de hora', async () => {
   await register();
-  const titulos = { inicio: 'Hoy', hormiga: 'Registrar', historial: 'Movimientos', presupuesto: 'Sobres', deudores: 'Por cobrar', lista: 'Qué comprar', config: 'Ajustes', cartas: 'Cartas' };
+  const titulos = { inicio: 'Hoy', hormiga: 'Registrar', historial: 'Movimientos', presupuesto: 'Sobres', deudores: 'Deudas', prestamos: 'Deudas', lista: 'Qué comprar', config: 'Ajustes', cartas: 'Cartas' };
   for (const [panel, titulo] of Object.entries(titulos)) {
     await go(panel);
     assert.equal(await page.textContent('#tbTitle'), titulo, panel);
@@ -74,38 +74,38 @@ test('la cabecera se compacta al desplazar y vuelve al cambiar de pantalla', asy
 
 test('un formulario se abre como hoja inferior; el fondo y "volver" la cierran', async () => {
   await register();
-  await go('ingresos');
-  await page.click('#btnOpenIncForm');
+  await go('cuentas');
+  await page.click('#btnOpenAccountForm');
   const estado = () => page.evaluate(() => ({
-    hoja: document.getElementById('incFormPanel').classList.contains('sheet-open'),
-    oculta: document.getElementById('incFormPanel').classList.contains('hidden'),
+    hoja: document.getElementById('accountFormPanel').classList.contains('sheet-open'),
+    oculta: document.getElementById('accountFormPanel').classList.contains('hidden'),
     fondo: document.getElementById('sheetScrim').classList.contains('open'),
-    pos: getComputedStyle(document.getElementById('incFormPanel')).position
+    pos: getComputedStyle(document.getElementById('accountFormPanel')).position
   }));
   assert.deepEqual(await estado(), { hoja: true, oculta: false, fondo: true, pos: 'fixed' });
   await page.waitForTimeout(450); // la hoja termina de subir (0.32 s)
-  const caja = await page.evaluate(() => { const r = document.getElementById('incFormPanel').getBoundingClientRect(); return { bottom: Math.round(r.bottom), width: Math.round(r.width) }; });
+  const caja = await page.evaluate(() => { const r = document.getElementById('accountFormPanel').getBoundingClientRect(); return { bottom: Math.round(r.bottom), width: Math.round(r.width) }; });
   assert.equal(caja.bottom, 844, 'pegada al borde inferior de la pantalla');
   assert.equal(caja.width, 390);
   await page.click('#sheetScrim', { position: { x: 20, y: 40 } });
   assert.deepEqual(await estado(), { hoja: false, oculta: true, fondo: false, pos: 'static' });
   // "Volver" de Android cierra la hoja antes que cualquier otra cosa.
-  await page.click('#btnOpenIncForm');
+  await page.click('#btnOpenAccountForm');
   await page.evaluate(() => window.handleAndroidBack());
   assert.equal((await estado()).oculta, true);
-  assert.equal(await page.evaluate(() => state.activePanel), 'ingresos', 'no cambió de pantalla');
+  assert.equal(await page.evaluate(() => state.activePanel), 'cuentas', 'no cambió de pantalla');
 });
 
 test('guardar desde la hoja la cierra y quita el fondo', async () => {
   await register();
-  await go('ingresos');
-  await page.click('#btnOpenIncForm');
-  await page.fill('#incDesc', 'Quincena');
-  await page.fill('#incAmount', '1000');
-  await page.evaluate(() => addIncome());
-  await page.waitForFunction(() => document.getElementById('incFormPanel').classList.contains('hidden'));
+  await go('cuentas');
+  await page.click('#btnOpenAccountForm');
+  await page.fill('#accountName', 'Ahorro');
+  await page.fill('#accountBalance', '1000');
+  await page.evaluate(() => addAccount());
+  await page.waitForFunction(() => document.getElementById('accountFormPanel').classList.contains('hidden'));
   assert.equal(await page.evaluate(() => document.getElementById('sheetScrim').classList.contains('open')), false);
-  assert.equal(await page.evaluate(() => state.incomes.length), 1);
+  assert.ok(await page.evaluate(() => state.accounts.some((a) => a.name === 'Ahorro')));
 });
 
 test('el menú: lo que más usas arriba, el resto plegado; navega y marca la actual', async () => {
@@ -117,7 +117,8 @@ test('el menú: lo que más usas arriba, el resto plegado; navega y marca la act
   assert.equal(await page.$$eval('#menuList .menu-grid', (els) => els.length), 0, 'el resto está plegado');
   await page.click('#menuAllToggle');
   const mosaicos = await page.$$eval('#menuList .menu-grid .menu-tile', (els) => els.map((e) => e.dataset.go));
-  assert.ok(mosaicos.length >= 23, 'todas las secciones');
+  assert.ok(mosaicos.length >= 22, 'todas las secciones');
+  assert.ok(!mosaicos.includes('deudores'), 'Por cobrar vive dentro de Deudas');
   for (const s of ['inicio', 'hormiga', 'presupuesto', 'ingresos', 'simulador', 'kanban', 'historial', 'estadisticas', 'cartas', 'decisiones', 'pactos', 'config']) assert.ok(mosaicos.includes(s), s);
   assert.equal(await page.evaluate(() => document.querySelector('#menuList .menu-tile.on').dataset.go), 'ahorros');
   assert.equal(await page.$('#menuList .pin-btn'), null, 'ya no hay botones de fijar');

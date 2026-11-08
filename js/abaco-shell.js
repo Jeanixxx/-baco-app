@@ -15,7 +15,7 @@
 
   const TITLES = {
     inicio: 'Hoy', hormiga: 'Registrar', historial: 'Movimientos', estadisticas: 'Estadísticas', cuentas: 'Cuentas',
-    ingresos: 'Ingresos', ahorros: 'Ahorros', tarjetas: 'Tarjetas', prestamos: 'Préstamos', deudores: 'Por cobrar',
+    ingresos: 'Ingresos', ahorros: 'Ahorros', tarjetas: 'Tarjetas', prestamos: 'Deudas', deudores: 'Deudas',
     inversiones: 'Inversiones', suscripciones: 'Suscripciones', presupuesto: 'Sobres', simulador: 'Simulador',
     compras: 'Compras', lista: 'Qué comprar', kanban: 'Pendientes', recordatorios: 'Recordatorios', categorias: 'Categorías',
     decisiones: 'Decisiones', pactos: 'Pactos', cartas: 'Cartas', config: 'Ajustes'

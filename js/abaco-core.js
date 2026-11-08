@@ -518,15 +518,16 @@
       return entry;
     }
 
-    /* Cambia solo la descripción y la categoría de un gasto o ingreso ya guardado.
-       Los importes no se tocan, así que los saldos y la verificación no cambian. */
-    annotate(entryId, { description, category } = {}) {
+    /* Cambia solo la descripción, la categoría (gasto) o el tipo (ingreso) de un movimiento ya
+       guardado. Los importes no se tocan, así que los saldos y la verificación no cambian. */
+    annotate(entryId, { description, category, incomeType } = {}) {
       const entry = this.entries.find((e) => e.id === entryId);
       if (!entry) throw new CoreError('NOT_FOUND', 'Movimiento no encontrado');
       if (entry.reversed) throw new CoreError('ALREADY_REVERSED', 'Este movimiento ya fue revertido');
       if (entry.type !== 'gasto' && entry.type !== 'ingreso') throw new CoreError('INVALID_ENTRY', 'Solo se pueden anotar gastos o ingresos');
       if (description != null && String(description).trim()) entry.description = String(description).trim();
       if (category != null && String(category).trim()) entry.meta = { ...(entry.meta || {}), category: String(category).trim() };
+      if (incomeType != null && String(incomeType).trim() && entry.type === 'ingreso') entry.meta = { ...(entry.meta || {}), incomeType: String(incomeType).trim() };
       return entry;
     }
 

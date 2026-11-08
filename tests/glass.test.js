@@ -114,7 +114,7 @@ test('cielo: el tema sigue la hora y el sol y la luna se mueven', async () => {
   };
   const manana = await lectura(8);
   const mediodia = await lectura(12.75);
-  const tarde = await lectura(18);
+  const tarde = await lectura(17);
   const noche = await lectura(22);
   const madrugada = await lectura(3);
   assert.equal(manana.theme, 'light');

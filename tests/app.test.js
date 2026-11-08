@@ -182,14 +182,6 @@ test('compra de la lista: se rechaza si supera el presupuesto y no toca el saldo
   assert.equal(await page.evaluate(() => state.expenses.length), 0);
 });
 
-test('asistente de bienvenida: agrega una cuenta con el saldo indicado', async () => {
-  await open();
-  await register();
-  await fields({ quizAccountName: 'BBVA', quizAccountType: 'débito', quizAccountBalance: '2500' });
-  await act('quizAddAccount');
-  assert.equal(await balance('BBVA'), 2500);
-});
-
 test('presupuesto: el gasto de cada concepto se calcula con los movimientos', async () => {
   await open();
   await register();
@@ -394,50 +386,88 @@ test('tablero: Ver todas abre el listado de categorías', async () => {
   assert.match(await page.evaluate(() => document.body.innerText), /Todas las categorías/);
 });
 
-/* ---------- asistente de bienvenida: botones por delegación ---------- */
+/* ---------- tour de bienvenida (js/abaco-tour.js) ---------- */
 
-test('asistente: agregar una cuenta, avanzar y saltar, todo con clics', async () => {
-  await open();
-  await page.fill('#userName', 'Hugo');
+async function registerOnly(name = 'Hugo') {
+  await page.fill('#userName', name);
   await page.click('#btnRegister');
   await page.waitForFunction(() => !!state.user_id);
-  await page.evaluate(() => startWalletQuiz());
-  await page.waitForTimeout(200);
-  assert.equal(await page.isVisible('#step-wallet'), true, 'el asistente se muestra');
-  assert.match(await page.textContent('#walletQuizProgress'), /^1 de/);
+  await page.waitForSelector('#step-wallet:not(.hidden)');
+}
 
-  await page.fill('#quizAccountName', 'BBVA');
-  await page.fill('#quizAccountBalance', '2500');
-  await page.click('[data-quiz="add-account"]');
-  await page.waitForTimeout(200);
-  const bbva = await page.evaluate(() => (state.accounts || []).find((a) => a.name === 'BBVA'));
-  assert.ok(bbva, 'la cuenta se creó desde el asistente');
-  assert.equal(bbva.balance, 2500);
-
-  await page.click('[data-quiz="next"]');
-  await page.waitForTimeout(150);
-  assert.match(await page.textContent('#walletQuizProgress'), /^2 de/, 'Continuar avanza al paso siguiente');
-
-  await page.click('[data-quiz="skip"]');
-  await page.waitForTimeout(150);
-  assert.equal(await page.isVisible('#step-wallet'), false, 'Saltar cierra el asistente');
+test('tour: recoge saldos, día de pago, sobres y un pago fijo, y termina en Hoy', async () => {
+  await open();
+  await registerOnly();
+  assert.match(await page.textContent('#tourBody'), /Así funciona tu día/);
+  assert.equal(await page.isVisible('#btnTourLater'), false, 'el primer paso solo enseña');
+  await page.click('#btnNextWalletQuiz');
+  await page.fill('#tourCash', '1200');
+  await page.fill('#tourBank', '15000');
+  await page.click('#btnNextWalletQuiz');
+  await page.waitForFunction(() => /Cada cuánto/.test(document.getElementById('tourBody').textContent));
+  await page.click('[data-tour-pay="quincenal"]');
+  await page.fill('#tourPayAmount', '16200');
+  await page.click('#btnNextWalletQuiz');
+  await page.waitForFunction(() => !!document.getElementById('tourFood'));
+  await page.fill('#tourFood', '3000');
+  await page.click('#btnNextWalletQuiz');
+  await page.waitForFunction(() => !!document.getElementById('tourSubName'));
+  await page.fill('#tourSubName', 'Streaming');
+  await page.fill('#tourSubAmount', '199');
+  await page.fill('#tourSubDay', '15');
+  await page.click('#btnNextWalletQuiz');
+  await page.waitForFunction(() => /Anota en un toque/.test(document.getElementById('tourBody').textContent));
+  assert.equal(await page.textContent('#btnNextWalletQuiz'), 'Empezar');
+  await page.click('#btnNextWalletQuiz');
+  await page.waitForFunction(() => state.activePanel === 'inicio');
+  assert.equal(await page.isVisible('#step-wallet'), false);
+  const r = await page.evaluate(() => ({
+    efectivo: state.accounts.find((a) => a.name === 'Efectivo').balance,
+    debito: state.accounts.find((a) => a.name === 'Débito').balance,
+    sobre: state.budgets.find((b) => b.category === 'comida').amount,
+    sub: state.subscriptions.map((x) => [x.name, x.amount, Number(x.date.slice(8, 10))]),
+    perfil: AbacoExtrasUI.extras().profile
+  }));
+  assert.deepEqual(r, { efectivo: 1200, debito: 15000, sobre: 3000, sub: [['Streaming', 199, 15]], perfil: { payFreq: 'quincenal', payAmount: 16200 } });
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('wallet_quiz')).done), true);
 });
 
-test('asistente: agregar una suscripción desde su paso con un clic', async () => {
+test('tour: "Ahora no" salta un paso sin guardar y "Saltar tour" termina en cualquier momento', async () => {
   await open();
-  await page.fill('#userName', 'Hugo');
-  await page.click('#btnRegister');
-  await page.waitForFunction(() => !!state.user_id);
-  await page.evaluate(() => startWalletQuiz());
-  await page.waitForTimeout(150);
-  await page.click('[data-quiz="next"]');   // paso 2
-  await page.waitForTimeout(150);
-  await page.fill('#quizSubName', 'Netflix');
-  await page.fill('#quizSubAmount', '199');
-  await page.click('[data-quiz="add-sub"]');
-  await page.waitForTimeout(200);
-  const subs = await page.evaluate(() => state.subscriptions || []);
-  assert.equal(subs.length, 1);
-  assert.equal(subs[0].name, 'Netflix');
-  assert.equal(subs[0].amount, 199);
+  await registerOnly();
+  await page.click('#btnNextWalletQuiz');
+  await page.fill('#tourCash', '999');
+  await page.click('#btnTourLater');
+  await page.waitForFunction(() => /Cada cuánto/.test(document.getElementById('tourBody').textContent));
+  assert.equal(await page.evaluate(() => state.accounts.find((a) => a.name === 'Efectivo').balance), 0, '"Ahora no" no guarda');
+  await page.click('#btnSkipWalletQuiz');
+  await page.waitForFunction(() => document.getElementById('step-wallet').classList.contains('hidden'));
+  assert.equal(await page.isVisible('#appPanels'), true);
+});
+
+test('tour: valida sin regañar (un monto negativo no avanza)', async () => {
+  await open();
+  await registerOnly();
+  await page.click('#btnNextWalletQuiz');
+  await page.fill('#tourCash', '-5');
+  await page.click('#btnNextWalletQuiz');
+  await page.waitForFunction(() => /no puede ser negativo/.test(document.getElementById('toast').textContent));
+  assert.ok(await page.$('#tourCash'), 'se queda en el mismo paso');
+});
+
+test('Hoy recuerda anotar el ingreso el día de pago (según el tour)', async () => {
+  await open();
+  await register();
+  const quincena = await page.evaluate(() => {
+    AbacoExtrasUI.extras().profile = { payFreq: 'quincenal' };
+    const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 15, 10).getTime();
+  });
+  await page.evaluate((t) => { window.__abacoNow = t; goPanel('inicio'); }, quincena);
+  assert.match(await page.textContent('#homeToday'), /Hoy es día de pago/);
+  await page.click('#homeToday [data-calm="go-income"]');
+  assert.equal(await page.evaluate(() => state.activePanel), 'hormiga');
+  assert.equal(await page.textContent('#regQ'), '¿Cuánto te entró?', 'abre Registrar en modo ingreso');
+  assert.equal(await page.evaluate(() => AbacoTour.isPayday('semanal', new Date(2026, 10, 13).getTime())), true, 'viernes');
+  assert.equal(await page.evaluate(() => AbacoTour.isPayday('mensual', new Date(2026, 10, 30).getTime())), true, 'último día');
+  assert.equal(await page.evaluate(() => AbacoTour.isPayday('variable', new Date(2026, 10, 30).getTime())), false);
 });

@@ -60,7 +60,21 @@
     app.classList.add('calm-sheet-open');
   }
   function openSheet(def) { sheet = def; paintSheet(); }
-  function closeSheet() { const was = !!sheet; sheet = null; paintSheet(); return was; }
+  /* Se cierra deslizando hacia abajo; el id se libera enseguida para poder abrir otra. */
+  function closeSheet() {
+    const was = !!sheet;
+    sheet = null;
+    const el = $('calmSheet');
+    const scrim = $('calmScrim');
+    if (el) {
+      el.removeAttribute('id');
+      el.classList.add('closing');
+      if (scrim) { scrim.removeAttribute('id'); scrim.classList.remove('open'); }
+      (document.querySelector('.app') || document.body).classList.remove('calm-sheet-open');
+      setTimeout(() => { el.remove(); if (scrim) scrim.remove(); }, 220);
+    }
+    return was;
+  }
   function refreshSheet() { if (sheet) paintSheet(); }
 
   /* ---------- Inicio: hoy, solo tres cosas ---------- */
@@ -107,6 +121,13 @@
     }];
     if (e && window.AbacoExtras && AbacoExtras.isSilent(e, t)) return list;
 
+    // Día de pago (lo que se dijo en el tour): recordar anotar el ingreso, si aún no se anotó hoy.
+    const pay = e && e.profile && e.profile.payFreq;
+    const ingresoHoy = (state.incomes || []).some((x) => x.created_at >= start.getTime());
+    if (pay && window.AbacoTour && AbacoTour.isPayday(pay, t) && !ingresoHoy) {
+      list.push({ key: 'pago:' + dayKey(t), title: 'Hoy es día de pago', sub: 'Cuando te llegue, anótalo como ingreso', income: true });
+    }
+
     const soon = [];
     for (const s of state.subscriptions || []) {
       const d = nextCharge(s, t);
@@ -136,7 +157,7 @@
     return list.slice(0, 3);
   }
 
-  function renderHome() {
+  function renderHome(just) {
     const box = $('homeToday');
     if (!box || typeof state !== 'object') return;
     const st = todayState();
@@ -151,10 +172,10 @@
       '<div class="section-title">' + count + '</div>' +
       '<div class="hoy-list">' + items.map((it) => {
         const done = isDone(it);
-        return '<div class="hoy-row' + (done ? ' done' : '') + '">' +
+        return '<div class="hoy-row' + (done ? ' done' : '') + (it.key === just ? ' just' : '') + '">' +
           '<button type="button" class="hoy-check" data-calm="check" data-k="' + esc(it.key) + '" aria-pressed="' + done + '" aria-label="' + (done ? 'Desmarcar' : 'Marcar como hecho') + ': ' + esc(it.title) + '">' +
           (done ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>' : '') + '</button>' +
-          '<button type="button" class="hoy-text" data-go="' + it.go + '"><span class="ht">' + esc(it.title) + '</span><span class="hs">' + esc(it.sub) + '</span></button></div>';
+          '<button type="button" class="hoy-text" ' + (it.income ? 'data-calm="go-income"' : 'data-go="' + it.go + '"') + '><span class="ht">' + esc(it.title) + '</span><span class="hs">' + esc(it.sub) + '</span></button></div>';
       }).join('') + '</div>' +
       '<div class="hoy-end">' + (allDone ? 'Listo por hoy. Aquí no hay nada más pendiente.' : 'Cuando termines, aquí no hay nada más pendiente.') + '</div>' +
       '<button type="button" class="btn btn-primary hoy-add" data-go="hormiga">＋ Anotar un gasto</button>';
@@ -168,7 +189,7 @@
     if (i >= 0) st.done.splice(i, 1);
     else if (!it.auto) st.done.push(key);
     persist();
-    renderHome();
+    renderHome(key);
   }
 
   /* ---------- Registrar: paso 1 (monto) y paso 2 opcional ---------- */
@@ -196,7 +217,7 @@
     const open = typeof force === 'boolean' ? force : box.classList.contains('hidden');
     box.classList.toggle('hidden', !open);
     btn.setAttribute('aria-expanded', String(open));
-    btn.textContent = open ? 'Ocultar opciones ⌃' : 'Más opciones: nota, cuenta, impulso ›';
+    btn.textContent = open ? 'Ocultar opciones ⌃' : 'Más opciones ›';
   }
 
   /* Las tres categorías que más usas (sin "general"); si faltan, las de siempre. */
@@ -209,14 +230,40 @@
     return ids.filter((c) => known.has(c)).slice(0, 3);
   }
 
-  let step2 = null; // { id, amount, category }
+  let step2 = null; // { id, amount, category, kind }
+  let mode = 'gasto'; // Registrar anota gastos o ingresos
 
-  function afterSave(entry, info) {
+  const INCOME_TYPES = [['salario', 'Salario'], ['freelance', 'Freelance'], ['extra', 'Extra'], ['otro', 'Otro']];
+
+  /* Cambia Registrar entre gasto e ingreso: misma pantalla, distintas palabras. */
+  function setMode(next) {
+    mode = next === 'ingreso' ? 'ingreso' : 'gasto';
+    const panel = $('panel-hormiga');
+    if (panel) panel.classList.toggle('mode-ingreso', mode === 'ingreso');
+    document.querySelectorAll('#regStep1 [data-calm="mode"]').forEach((b) => {
+      const on = b.dataset.v === mode;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    const ing = mode === 'ingreso';
+    if ($('regQ')) $('regQ').textContent = ing ? '¿Cuánto te entró?' : '¿Cuánto gastaste?';
+    if ($('regAccountLabel')) $('regAccountLabel').textContent = ing ? 'Llega a' : 'Sale de';
+    if ($('hormDesc')) $('hormDesc').placeholder = ing ? 'Quincena, venta, regalo…' : 'Antojo, súper, pasaje…';
+    if ($('btnRegSave')) $('btnRegSave').textContent = ing ? 'Guardar ingreso' : 'Guardar';
+  }
+
+  function save() {
+    if (mode === 'ingreso') { if (typeof registerQuickIncome === 'function') registerQuickIncome(); }
+    else if (typeof registerHormiga === 'function') registerHormiga();
+  }
+
+  function afterSave(entry, info, kind) {
     toggleMore(false);
     const amount = Number(info && info.amount) || 0;
+    const k = kind === 'ingreso' ? 'ingreso' : 'gasto';
     // Si ya dijo qué fue en "Más opciones", no hay nada que preguntar.
-    if (!entry || !entry.id || (info && info.description)) { toast('✓ Gasto guardado'); return; }
-    step2 = { id: entry.id, amount, category: null };
+    if (!entry || !entry.id || (info && info.description)) { toast(k === 'ingreso' ? '✓ Ingreso guardado' : '✓ Gasto guardado'); return; }
+    step2 = { id: entry.id, amount, category: null, kind: k };
     paintStep2();
   }
 
@@ -226,14 +273,16 @@
     if (!s1 || !s2) return;
     if (!step2) { s2.classList.add('hidden'); s2.innerHTML = ''; s1.classList.remove('hidden'); return; }
     const e = extras();
-    const big = e && step2.amount >= e.prefs.bigAmount;
+    const ing = step2.kind === 'ingreso';
+    const big = !ing && e && step2.amount >= e.prefs.bigAmount;
+    const options = ing ? INCOME_TYPES : topCategories().map((c) => [c, label(c)]);
     s1.classList.add('hidden');
     s2.classList.remove('hidden');
     s2.innerHTML =
       '<div class="reg-saved"><span class="rs-ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg></span>' +
       '<div><b>Guardado: ' + money(step2.amount) + '</b><small>Ya está en tus movimientos</small></div></div>' +
-      '<div class="reg2-q">¿Qué fue? <span>si quieres</span></div>' +
-      '<div class="reg2-chips">' + topCategories().map((c) => '<button type="button" class="reg2-chip' + (step2.category === c ? ' on' : '') + '" data-calm="cat" data-v="' + esc(c) + '" aria-pressed="' + (step2.category === c) + '">' + esc(label(c)) + '</button>').join('') + '</div>' +
+      '<div class="reg2-q">' + (ing ? '¿De qué fue?' : '¿Qué fue?') + ' <span>si quieres</span></div>' +
+      '<div class="reg2-chips">' + options.map(([c, t]) => '<button type="button" class="reg2-chip' + (step2.category === c ? ' on' : '') + '" data-calm="cat" data-v="' + esc(c) + '" aria-pressed="' + (step2.category === c) + '">' + esc(t) + '</button>').join('') + '</div>' +
       '<input type="text" id="regNote" placeholder="' + (big ? '¿Por qué lo compraste? (si quieres)' : 'Una nota (si quieres)') + '" aria-label="Nota">' +
       '<button type="button" class="btn btn-primary" data-calm="reg-done">Listo</button>' +
       '<div class="reg2-free">Puedes dejarlo así: ya está guardado.</div>';
@@ -245,7 +294,7 @@
     paintStep2();
     const d = data();
     if (!d) return;
-    const r = await d.annotate(step2.id, { category: cat });
+    const r = await d.annotate(step2.id, step2.kind === 'ingreso' ? { incomeType: cat } : { category: cat });
     if (r.ok) AbacoApp.refreshUI();
   }
 
@@ -260,7 +309,7 @@
       const d = data();
       if (d) { const r = await d.annotate(cur.id, { description: note }); if (r.ok) AbacoApp.refreshUI(); }
       const e = extras();
-      if (e && window.AbacoExtras && cur.amount >= e.prefs.bigAmount) {
+      if (e && window.AbacoExtras && cur.kind !== 'ingreso' && cur.amount >= e.prefs.bigAmount) {
         AbacoExtras.addDecision(e, { title: label(cur.category || 'general'), amount: cur.amount, reason: note, now: now() });
         persist();
       }
@@ -361,6 +410,29 @@
     });
   }
 
+  /* ---------- Deudas: lo que debo y lo que me deben ---------- */
+
+  let debtPane = 'debo';
+
+  function setDebtPane(v) {
+    debtPane = v === 'cobrar' ? 'cobrar' : 'debo';
+    const panel = $('panel-prestamos');
+    if (panel) panel.dataset.pane = debtPane;
+    document.querySelectorAll('#panel-prestamos [data-calm="debts"]').forEach((b) => {
+      const on = b.dataset.v === debtPane;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    renderDebtLeads();
+  }
+
+  function renderDebtLeads() {
+    const debo = (state.loans || []).filter((l) => !l.paid).reduce((s, l) => s + (Number(l.current) || 0), 0);
+    const cobrar = (state.debtors || []).filter((d) => !d.settled).reduce((s, d) => s + (Number(d.remaining) || 0), 0);
+    if ($('debtLeadDebo')) $('debtLeadDebo').innerHTML = debo > 0 ? 'Debes <b>' + money(debo) + '</b> en total.' : 'No debes nada por ahora.';
+    if ($('debtLeadCobrar')) $('debtLeadCobrar').innerHTML = cobrar > 0 ? 'Te deben <b>' + money(cobrar) + '</b> en total.' : 'Nadie te debe por ahora.';
+  }
+
   /* ---------- Menú ---------- */
 
   function usage() { try { return JSON.parse(localStorage.getItem('nav_usage') || '{}') || {}; } catch (e) { return {}; } }
@@ -387,7 +459,7 @@
     if (!t || !t.closest) return;
     const key = t.closest('#regPad [data-key]');
     if (key) { typeKey(key.dataset.key); return; }
-    if (t.closest('#btnRegSave')) { if (typeof registerHormiga === 'function') registerHormiga(); return; }
+    if (t.closest('#btnRegSave')) { save(); return; }
     if (t.closest('#regMoreBtn')) { toggleMore(); return; }
     if (t.closest('#btnNewSobre')) { if (typeof openBudgetEntry === 'function') openBudgetEntry(); return; }
     if (t.closest('#btnNewCard')) { if (typeof openOpForm === 'function') openOpForm('cardFormPanel'); return; }
@@ -397,6 +469,9 @@
     if (!el) return;
     const a = el.dataset.calm;
     if (a === 'close') closeSheet();
+    else if (a === 'mode') setMode(el.dataset.v);
+    else if (a === 'debts') setDebtPane(el.dataset.v);
+    else if (a === 'go-income') { setMode('ingreso'); if (typeof goPanel === 'function') goPanel('hormiga'); }
     else if (a === 'check') toggleCheck(el.dataset.k);
     else if (a === 'cat') setCategory(el.dataset.v);
     else if (a === 'reg-done') finishStep2();
@@ -417,18 +492,24 @@
     countUse(name);
     closeSheet();
     if (name !== 'hormiga' && step2) finishStep2();
+    if (name !== 'hormiga') setMode('gasto'); // al volver a Registrar, empieza en gasto (lo más común)
     if (name === 'inicio') renderHome();
+    if (name === 'prestamos') renderDebtLeads();
   }
 
   function afterRefresh() {
     if (typeof state !== 'object') return;
     if (state.activePanel === 'inicio') renderHome();
+    if (state.activePanel === 'prestamos') renderDebtLeads();
     refreshSheet();
   }
 
   Object.assign(api, {
     onPanel, afterRefresh, afterSave, renderHome, renderSobres, renderTarjetas, favorites, homeItems, nextCharge,
-    openSheet, closeSheet, refreshSheet, typeKey
+    openSheet, closeSheet, refreshSheet, typeKey, setMode, mode: () => mode, setDebtPane
   });
+  /* "Agregar ingreso" (pantalla Ingresos) lleva a Registrar en modo ingreso: un solo lugar para anotar. */
+  const incBtn = $('btnOpenIncForm');
+  if (incBtn) incBtn.onclick = () => { setMode('ingreso'); if (typeof goPanel === 'function') goPanel('hormiga'); };
   window.AbacoCalm = api;
 })();

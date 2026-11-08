@@ -143,6 +143,7 @@ test('sin Android (navegador) no hace nada y Ajustes lo explica', async () => {
   await p.fill('#userName', 'Ana');
   await p.click('#btnRegister');
   await p.waitForFunction(() => !!state.user_id);
+  await p.click('#btnSkipWalletQuiz');
   await p.evaluate(() => goPanel('config'));
   await p.click('[data-x="cfg"][data-v="quick"]');
   assert.match(await p.textContent('#calmSheet'), /Disponible en la app de Android/);

@@ -184,6 +184,19 @@
     if ($$('hormAmount')) $$('hormAmount').focus();
   };
 
+  /* Ingreso desde Registrar (modo "Ingreso"): mismo teclado y mismo paso opcional que un gasto. */
+  window.registerQuickIncome = async function registerQuickIncome() {
+    if (!ensureUser()) return null;
+    const info = { amount: val('hormAmount'), description: val('hormDesc').trim() };
+    const r = await data.income({ description: info.description || 'Ingreso', amount: info.amount, type: 'otro', accountId: val('hormFromAccount') || undefined });
+    if (!r.ok) { toast(r.error); return null; }
+    refreshUI();
+    clear('hormAmount', 'hormDesc');
+    if (window.AbacoCalm) window.AbacoCalm.afterSave(r.result, info, 'ingreso');
+    else toast('✓ Ingreso guardado');
+    return r.result;
+  };
+
   window.deleteExpense = async function deleteExpense(id) {
     if (!await askConfirm('¿Borrar este gasto?')) return;
     await act(data.reverse(id), { onOk() { closeDetail(); }, okMessage: 'Gasto borrado y saldo corregido' });
@@ -480,49 +493,6 @@
 
   /* ---------- asistente de bienvenida ---------- */
 
-  window.quizAddAccount = async function quizAddAccount() {
-    const name = val('quizAccountName').trim();
-    const type = val('quizAccountType') || 'débito';
-    const amount = Number(val('quizAccountBalance') || 0);
-    if (!name) { toast('Escribe un nombre'); return; }
-    if (amount < 0) { toast('El monto no puede ser negativo'); return; }
-    const op = /crédito|credito/i.test(type) ? data.createCard({ name, limit: amount }) : data.addAccount({ name, type, balance: amount });
-    await actQuiet(op, {
-      onOk() { clear('quizAccountName', 'quizAccountBalance'); renderWalletQuiz(); },
-      okMessage: 'Cuenta añadida y conectada'
-    });
-  };
-
-  window.quizAddSub = function quizAddSub() {
-    const name = val('quizSubName').trim();
-    const amount = Number(val('quizSubAmount') || 0);
-    const range = val('quizSubRange') || 'mensual';
-    if (!name || amount <= 0) { toast('Completa nombre y monto'); return; }
-    state.subscriptions = [...(state.subscriptions || []), { id: uid(), name, amount, range, date: todayInputValue(), active: true, user_id: state.user_id, created_at: Date.now() }];
-    persistApp();
-    syncFinance();
-    try { renderInicio(); renderSubscriptions(); } catch (e) { console.warn('render suscripciones', e); }
-    clear('quizSubName', 'quizSubAmount');
-    renderWalletQuiz();
-    toast('Suscripción añadida');
-  };
-
-  window.quizAddDebt = async function quizAddDebt() {
-    const kind = val('quizDebtKind') || 'loan';
-    const name = val('quizDebtName').trim();
-    const amount = Number(val('quizDebtAmount') || 0);
-    const months = Math.max(1, Math.floor(Number(val('quizDebtMonths') || 0)));
-    const date = val('quizDebtDate') || todayInputValue();
-    const cardId = val('quizDebtCard');
-    if (!name || amount <= 0) { toast('Completa nombre y monto'); return; }
-    const op = kind === 'msi'
-      ? data.msiPurchase({ cardId, concept: name, total: amount, months: Math.max(2, months), purchaseDate: date })
-      : data.loan({ name, principal: amount, annualRate: 0, term: months, type: 'personal' });
-    await actQuiet(op, {
-      onOk() { clear('quizDebtName', 'quizDebtAmount', 'quizDebtMonths'); renderWalletQuiz(); },
-      okMessage: kind === 'msi' ? 'Compra a meses registrada' : 'Deuda registrada'
-    });
-  };
 
   /* ---------- lectura para el motor del tablero (sin escribir) ---------- */
 

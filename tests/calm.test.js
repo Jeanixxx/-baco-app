@@ -146,3 +146,69 @@ test('Menú: lo que más abres sube a "Lo que más usas"', async () => {
   assert.ok(!fav.some((f) => ['inicio', 'historial', 'hormiga', 'estadisticas', 'cuentas'].includes(f)), 'lo de la barra no se repite');
   assert.deepEqual(errors, []);
 });
+
+test('Registrar anota ingresos en el mismo lugar: cambia el texto y el paso 2 pregunta el tipo', async () => {
+  await go('hormiga');
+  await page.click('#regStep1 [data-calm="mode"][data-v="ingreso"]');
+  assert.equal(await page.textContent('#regQ'), '¿Cuánto te entró?');
+  assert.equal(await page.textContent('#btnRegSave'), 'Guardar ingreso');
+  for (const k of ['1', '6', '2', '0', '0']) await page.click('#regPad [data-key="' + k + '"]');
+  await page.click('#btnRegSave');
+  await page.waitForSelector('#regStep2:not(.hidden)');
+  assert.match(await page.textContent('#regStep2'), /¿De qué fue\?/);
+  await page.click('#regStep2 [data-calm="cat"][data-v="salario"]');
+  await page.waitForFunction(() => state.incomes.some((i) => i.amount === 16200 && i.type === 'salario'));
+  await page.click('#regStep2 [data-calm="reg-done"]');
+  assert.equal(await page.evaluate(() => state.expenses.length), 0, 'no se registró como gasto');
+  // "Agregar ingreso" en Ingresos abre este mismo lugar.
+  await go('ingresos');
+  await page.click('#btnOpenIncForm');
+  assert.equal(await page.evaluate(() => state.activePanel), 'hormiga');
+  assert.equal(await page.textContent('#regQ'), '¿Cuánto te entró?');
+  // Al salir y volver por la barra, empieza otra vez en gasto.
+  await go('inicio');
+  await go('hormiga');
+  assert.equal(await page.textContent('#regQ'), '¿Cuánto gastaste?');
+});
+
+test('Deudas: lo que debo y lo que me deben en una pantalla con dos pestañas', async () => {
+  await page.evaluate(async () => {
+    const d = AbacoApp.data();
+    await d.loan({ name: 'Auto', principal: 12000, annualRate: 0, term: 12, type: 'auto' });
+    await d.lend({ person: 'Ana', concept: 'Comida', amount: 450, accountId: state.accounts.find((a) => a.balance > 0).id });
+    AbacoApp.refreshUI();
+  });
+  await go('prestamos');
+  assert.equal(await page.textContent('#tbTitle'), 'Deudas');
+  assert.match(await page.textContent('#debtLeadDebo'), /Debes \$12,000/);
+  assert.equal(await page.isVisible('#loanList'), true);
+  assert.equal(await page.isVisible('#debtorsList'), false);
+  await page.click('#panel-prestamos [data-calm="debts"][data-v="cobrar"]');
+  assert.equal(await page.isVisible('#debtorsList'), true);
+  assert.equal(await page.isVisible('#loanList'), false);
+  assert.match(await page.textContent('#debtLeadCobrar'), /Te deben \$450/);
+  assert.match(await page.textContent('#debtorsList'), /Ana/);
+  // El nombre anterior lleva a la misma pantalla, en la pestaña correcta.
+  await go('inicio');
+  await go('deudores');
+  assert.equal(await page.evaluate(() => state.activePanel), 'prestamos');
+  assert.equal(await page.getAttribute('#panel-prestamos', 'data-pane'), 'cobrar');
+  await page.evaluate(() => openMenu());
+  await page.click('#menuAllToggle');
+  assert.equal(await page.$('#menuList [data-go="deudores"]'), null, 'ya no hay una sección aparte');
+});
+
+test('el cielo se mueve de lado al inclinar el teléfono, con suavidad', async () => {
+  const tilt = () => page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('skyLayer')).getPropertyValue('--tilt-x')) || 0);
+  assert.equal(await tilt(), 0);
+  await page.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { gamma: 30, beta: 0, alpha: 0 })));
+  await page.waitForTimeout(80);
+  const midway = await tilt();
+  assert.ok(midway > 0 && midway < 28, 'se acerca poco a poco, sin saltar: ' + midway);
+  await page.waitForFunction(() => AbacoSky.tilt() === 28);
+  const t = await page.evaluate(() => getComputedStyle(document.querySelector('#skyLayer .sky-sun')).transform);
+  assert.match(t, /matrix\(1, 0, 0, 1, 28/, 'el sol se desplaza');
+  await page.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { gamma: -30, beta: 0, alpha: 0 })));
+  await page.waitForFunction(() => AbacoSky.tilt() === -28);
+  assert.deepEqual(errors, []);
+});
