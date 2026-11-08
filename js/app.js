@@ -452,92 +452,7 @@ function showConfetti() {
   setTimeout(()=>layer.remove(), 1800);
 }
 
-/* Swipe */
-let swipeX=0, swiping=false;
-function updateSwipePreview() {
-  const amount = parseInt($('hormAmount').value,10)||0;
-  const desc = $('hormDesc').value.trim()||'Gasto rápido';
-  $('scAmount').textContent = money(amount);
-  $('scDesc').textContent = amount ? desc : 'Escribe un monto';
-  $('scCat').textContent = amount ? (catIcon(state.hormCat)+' '+catName(state.hormCat)) : '';
-  const badge = $('scBadge');
-  if (badge) {
-    badge.textContent = 'Personal';
-    badge.className = 'sc-badge personal';
-  }
-}
-['hormAmount','hormDesc'].forEach(id => {
-  $(id).addEventListener('input', updateSwipePreview);
-});
-
-function setupSwipe() {
-  const card = $('swipeCard');
-  if(!card) return;
-  let startX=0;
-  const onStart = e => {
-    swiping=true; swipeX=0;
-    startX = e.touches ? e.touches[0].clientX : e.clientX;
-    card.style.transition='none';
-  };
-  const onMove = e => {
-    if(!swiping) return;
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    swipeX = x - startX;
-    card.style.transform = `translateX(${swipeX}px) rotate(${swipeX*0.04}deg)`;
-    const op = Math.min(1, Math.abs(swipeX)/80);
-    $('stampOk').style.opacity = swipeX>20 ? op : 0;
-    $('stampNo').style.opacity = swipeX<-20 ? op : 0;
-  };
-  const onEnd = () => {
-    if(!swiping) return;
-    swiping=false;
-    card.style.transition='transform .25s, opacity .25s';
-    if(swipeX > 90) { commitSwipe(true); }
-    else if(swipeX < -90) { commitSwipe(false); }
-    else {
-      card.style.transform='';
-      $('stampOk').style.opacity=0; $('stampNo').style.opacity=0;
-    }
-    swipeX=0;
-  };
-  card.addEventListener('touchstart', onStart, {passive:true});
-  card.addEventListener('touchmove', onMove, {passive:true});
-  card.addEventListener('touchend', onEnd);
-  card.addEventListener('mousedown', onStart);
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('mouseup', onEnd);
-}
-function commitSwipe(saveIt) {
-  const card = $('swipeCard');
-  if(!card) return;
-  card.classList.remove('saving','discarding');
-  void card.offsetWidth;
-  if(saveIt) {
-    card.classList.add('saving');
-    setTimeout(() => { registerHormiga(); resetSwipeCard(); }, 460);
-  } else {
-    card.classList.add('discarding');
-    setTimeout(() => {
-      $('hormAmount').value=''; $('hormDesc').value='';
-      resetSwipeCard(); toast('Descartado');
-    }, 420);
-  }
-}
-function resetSwipeCard() {
-  const card=$('swipeCard');
-  card.classList.remove('saving','discarding');
-  card.style.transition='none';
-  card.style.transform='';
-  card.style.opacity='1';
-  $('stampOk').style.opacity=0; $('stampNo').style.opacity=0;
-  updateSwipePreview();
-  requestAnimationFrame(()=>{ card.style.transition='transform .15s, opacity .15s'; });
-}
-$('btnSwipeOk').onclick = () => commitSwipe(true);
-$('btnSwipeNo').onclick = () => commitSwipe(false);
-
-if(LS('swipe_hint_closed')==='1') $('swipeHint').classList.add('hidden');
-$('btnCloseHint').onclick = () => { $('swipeHint').classList.add('hidden'); LS_SET('swipe_hint_closed','1'); };
+/* Registrar (monto, teclado, paso opcional) vive en js/abaco-calm.js. */
 
 
 /* El tema sigue al cielo: claro de día y oscuro de noche (js/abaco-sky.js).
@@ -897,12 +812,19 @@ function renderMenu() {
   const overdue = getOverdueReminders().length;
   updateBackupStatusLabel();
   const active = state.activePanel || 'inicio';
-  const tile = t => {
+  const tile = (t, big) => {
     const meta = NAV_META[t] || { label: t };
     const badge = (t === 'recordatorios' && overdue) ? `<span class="menu-badge">${overdue}</span>` : '';
-    return `<button type="button" class="menu-tile${t === active ? ' on' : ''}" data-go="${t}">${navIconSvg(t)}<span>${meta.label}</span>${badge}</button>`;
+    return `<button type="button" class="menu-tile${big ? ' big' : ''}${t === active ? ' on' : ''}" data-go="${t}">${navIconSvg(t)}<span>${meta.label}</span>${badge}</button>`;
   };
-  list.innerHTML = MENU_GROUPS.map(group => `<div class="menu-section">${group.label}</div><div class="menu-grid">${group.items.map(tile).join('')}</div>`).join('');
+  /* Modo calmado: arriba lo que más usas; el resto, plegado hasta pedirlo. */
+  const fav = window.AbacoCalm ? AbacoCalm.favorites() : ['ingresos','presupuesto','tarjetas','ahorros'];
+  const open = !!(window.AbacoCalm && AbacoCalm.menuAllOpen);
+  const others = MENU_GROUPS.reduce((n, g) => n + g.items.length, 0) - fav.length;
+  $('menuPage')?.classList.toggle('all-open', open);
+  list.innerHTML = `<div class="menu-section">Lo que más usas</div><div class="menu-fav">${fav.map(t => tile(t, true)).join('')}</div>`
+    + `<button type="button" class="menu-all" id="menuAllToggle" aria-expanded="${open}"><span>Todas las secciones</span><span class="menu-all-n">${others} ${open ? '⌃' : '⌄'}</span></button>`
+    + (open ? MENU_GROUPS.map(group => `<div class="menu-section">${group.label}</div><div class="menu-grid">${group.items.map(t => tile(t, false)).join('')}</div>`).join('') : '');
 }
 
 /* Barra inferior fija: Inicio, Movimientos, Registrar, Estadísticas, Cuentas. Las pantallas que no
@@ -992,24 +914,7 @@ function renderHormiga() {
     `<div class="chip ${state.hormCat===c.id?'active':''}" data-val="${esc(c.id)}">${esc(c.icon)} ${esc(c.name)}</div>`
   ).join('');
   $('hormChips').querySelectorAll('.chip').forEach(ch => {
-    ch.onclick = () => { state.hormCat=ch.dataset.val; renderHormiga(); updateSwipePreview(); };
-  });
-  const horm = state.expenses.filter(e=>e.hormiga).sort((a,b)=>(b.created_at||0)-(a.created_at||0)).slice(0,20);
-  if(!horm.length) { $('hormigaList').innerHTML='<div class="empty"><p>Todavía no has anotado gastos rápidos</p></div>'; return; }
-  $('hormigaList').innerHTML = horm.map(e => `
-    <div class="item" data-eid="${e.id}">
-      <div class="item-icon exp">${catIcon(e.category)}</div>
-      <div class="item-body">
-        <div class="item-title">${esc(e.description||'Gasto')}</div>
-        <div class="item-meta">${esc(whoLabel(e.user_id))} · ${esc(catName(e.category))} · ${timeAgo(e.created_at)}</div>
-        ${reactHtml(e.id)}
-      </div>
-      <div class="item-amount neg">-${money(e.amount)}</div>
-    </div>
-  `).join('');
-  $('hormigaList').querySelectorAll('.item').forEach(el => {
-    const e = state.expenses.find(x=>x.id===el.dataset.eid);
-    if(e) bindLongPress(el, () => expenseDetail(e), () => expenseDetail(e));
+    ch.onclick = () => { state.hormCat=ch.dataset.val; renderHormiga(); };
   });
 }
 
@@ -1936,6 +1841,7 @@ function setBudgetPeriod(period){
   closeBudgetEntry(); renderBudget();
 }
 function renderBudget(){
+  if(window.AbacoCalm){ AbacoCalm.renderSobres(); return; }
   const period=state.budgetPeriod||'mensual', items=state.budgets.filter(b=>b.period===period);
   $('budgetPeriodLabel').textContent=BUDGET_PERIODS[period]?.description||BUDGET_PERIODS.mensual.description;
   $('budgetPeriodChips').querySelectorAll('.chip').forEach(ch=>ch.classList.toggle('active',ch.dataset.budgetPeriod===period));
@@ -1953,20 +1859,18 @@ function renderCardSelect(){
   const select=$('msiCardSelect'); if(!select)return;
   select.innerHTML=state.cards.length?state.cards.map(c=>`<option value="${c.id}">${esc(c.name)} · ${esc(c.type)}</option>`).join(''):'<option value="">Primero agrega una tarjeta</option>';
 }
+/* Detalle completo de una tarjeta (planes a meses y acciones). Lo usa la hoja de js/abaco-calm.js. */
+function cardDetailHtml(card){
+    const plans=state.msiPlans.filter(p=>p.cardId===card.id);
+    return `<div class="form-card" data-card-id="${card.id}"><div class="budget-row-top"><div><div class="item-title">💳 ${esc(card.name)}</div><div class="account-type">${esc(card.type)} · Límite ${money(card.limit||0)}</div></div><div class="account-balance">${money(card.balance||0)}</div></div><div class="row mt-6"><button type="button" class="btn btn-ghost btn-sm" data-card-edit="${card.id}">Editar</button><button type="button" class="btn btn-ghost btn-sm" data-card-del="${card.id}">Borrar</button></div>${plans.length?plans.map(p=>{const paid=p.installments.filter(i=>i.paid).length;return `<div class="module-note mt-6"><div class="budget-row-top"><b>${esc(p.concept)}</b><b>${money(p.monthly)}/mes</b></div><div class="module-kpis"><span>${paid}/${p.months} mensualidades pagadas</span><span>Total ${money(p.total)}</span></div>${p.installments.map((i,idx)=>`<div class="msi-row"><div class="item-body"><b>Mes ${i.number}</b><div class="item-meta">${formatDate(i.due)}</div></div><span class="status-pill ${i.paid?'paid':''}">${i.paid?'Pagada':'Pendiente'}</span><button class="btn btn-ghost btn-sm" type="button" data-msi-paid="${p.id}:${idx}">${i.paid?'Desmarcar':'Marcar pagada'}</button></div>`).join('')}</div>`;}).join(''):'<p class="note mt-6">Sin compras a MSI.</p>'}</div>`;
+}
 function renderCards(){
   renderCardSelect();
   const list=$('cardList'); if(!list)return;
+  if(window.AbacoCalm){ AbacoCalm.renderTarjetas(); return; }
   if(!state.cards.length){list.innerHTML='<div class="empty"><p>Aún no tienes tarjetas o cuentas registradas.</p></div>';return;}
-  list.innerHTML=state.cards.map(card=>{
-    const plans=state.msiPlans.filter(p=>p.cardId===card.id);
-    return `<div class="form-card" data-card-id="${card.id}"><div class="budget-row-top"><div><div class="item-title">💳 ${esc(card.name)}</div><div class="account-type">${esc(card.type)} · Límite ${money(card.limit||0)}</div></div><div class="account-balance">${money(card.balance||0)}</div></div><div class="row mt-6"><button type="button" class="btn btn-ghost btn-sm" data-card-edit="${card.id}">Editar</button><button type="button" class="btn btn-ghost btn-sm" data-card-del="${card.id}">Borrar</button></div>${plans.length?plans.map(p=>{const paid=p.installments.filter(i=>i.paid).length;return `<div class="module-note mt-6"><div class="budget-row-top"><b>${esc(p.concept)}</b><b>${money(p.monthly)}/mes</b></div><div class="module-kpis"><span>${paid}/${p.months} mensualidades pagadas</span><span>Total ${money(p.total)}</span></div>${p.installments.map((i,idx)=>`<div class="msi-row"><div class="item-body"><b>Mes ${i.number}</b><div class="item-meta">${formatDate(i.due)}</div></div><span class="status-pill ${i.paid?'paid':''}">${i.paid?'Pagada':'Pendiente'}</span><button class="btn btn-ghost btn-sm" type="button" data-msi-paid="${p.id}:${idx}">${i.paid?'Desmarcar':'Marcar pagada'}</button></div>`).join('')}</div>`;}).join(''):'<p class="note mt-6">Sin compras a MSI.</p>'}</div>`;
-  }).join('');
-  
-  
-  
+  list.innerHTML=state.cards.map(cardDetailHtml).join('');
 }
-
-
 
 function loanPayment(principal,annualRate,months){
   const rate=safeNum(annualRate)/100/12;
@@ -2250,7 +2154,7 @@ ensureFinancialCore();
 function openMenu(){try{closeCalc();}catch(e){console.warn('No se pudo cerrar calculadora',e)}const menu=$('menuPage'),ov=$('menuOverlay');if(menu)menu.classList.add('open');if(ov){ov.classList.add('open');ov.style.pointerEvents='auto';}document.querySelector('.app')?.classList.add('menu-open');try{renderMenu();}catch(e){console.warn('No se pudo renderizar menú',e)}}
 function closeMenu(){const menu=$('menuPage'),ov=$('menuOverlay');if(menu){menu.classList.remove('open');menu.style.transform='';menu.style.transition='';}if(ov){ov.classList.remove('open');ov.style.transform='';ov.style.transition='';ov.style.opacity='';ov.style.pointerEvents='';}document.querySelector('.app')?.classList.remove('menu-open');}
 function toggleMenu(){if($('menuPage')?.classList.contains('open'))closeMenu();else openMenu();}
-function goPanel(name){closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}try{window.AbacoShell&&AbacoShell.onPanel(name);}catch(e){console.warn('Estructura no actualizada',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();updateSwipePreview();if(LS('swipe_hint_closed')!=='1')$('swipeCard')?.classList.add('hint');},150);}
+function goPanel(name){closeMenu();document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));const panel=$('panel-'+name);if(panel){panel.classList.add('active','panel-enter');setTimeout(()=>panel.classList.remove('panel-enter'),320);}state.activePanel=name;window.__abacoNavigated=true;LS_SET('active_panel',name);renderPinned();try{updateHeaderPhrase();}catch(e){console.warn('Encabezado no actualizado',e)}renderActivePanel(name);try{window.AbacoExtrasUI&&AbacoExtrasUI.onPanel(name);}catch(e){console.warn('Convivencia no actualizada',e)}try{window.AbacoShell&&AbacoShell.onPanel(name);}catch(e){console.warn('Estructura no actualizada',e)}try{window.AbacoCalm&&AbacoCalm.onPanel(name);}catch(e){console.warn('Modo calmado no actualizado',e)}if(name==='hormiga')setTimeout(()=>{$('hormAmount')?.focus();},150);}
 
 function renderWalletQuiz(){const body=$('walletQuizBody'),prog=$('walletQuizProgress');if(!body)return;const q=WALLET_QUIZ[walletQuizStep];if(prog)prog.textContent=`${walletQuizStep+1} de ${WALLET_QUIZ.length}`;let html=`<div class="wallet-quiz-title">${q.title}</div><div class="wallet-quiz-copy">${q.copy}</div>`;if(q.kind==='accounts')html+=`<div class="wallet-quiz-fields"><input id="quizAccountName" type="text" placeholder="Nombre (ej. BBVA, efectivo)"><div class="row"><select id="quizAccountType"><option value="débito">Débito</option><option value="crédito">Crédito</option><option value="efectivo">Efectivo</option></select><input id="quizAccountBalance" type="number" inputmode="decimal" placeholder="Saldo / límite $"></div><button type="button" class="btn" id="quizAddAccount" data-quiz="add-account">＋ Agregar a mi billetera</button><div class="wallet-entity-note" id="quizAccountList">${state.accounts.map(a=>`${esc(a.name)} · ${esc(a.type)}`).join(' · ')||'Aún no agregas cuentas'}</div></div>`;if(q.kind==='subscriptions')html+=`<div class="wallet-quiz-fields"><input id="quizSubName" type="text" placeholder="Ej. Netflix"><div class="row"><input id="quizSubAmount" type="number" inputmode="decimal" placeholder="Monto $"><select id="quizSubRange"><option value="mensual">Mensual</option><option value="quincenal">Quincenal</option><option value="semanal">Semanal</option></select></div><button type="button" class="btn" id="quizAddSub" data-quiz="add-sub">＋ Agregar suscripción</button><div class="wallet-entity-note" id="quizSubList">${state.subscriptions.map(a=>`${esc(a.name)} · ${money(a.amount)}`).join(' · ')||'Aún no agregas suscripciones'}</div></div>`;if(q.kind==='debts'){const cards=state.cards.filter(c=>financialType(c.type)==='credito');html+=`<div class="wallet-quiz-fields"><select id="quizDebtKind"><option value="loan">Préstamo / crédito</option><option value="msi">Compra a meses</option></select><select id="quizDebtCard"><option value="">${cards.length?'Tarjeta para MSI':'Primero agrega una tarjeta de crédito'}</option>${cards.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select><input id="quizDebtName" type="text" placeholder="Nombre de la deuda o compra"><div class="row"><input id="quizDebtAmount" type="number" inputmode="decimal" placeholder="Monto pendiente $"><input id="quizDebtMonths" type="number" min="2" placeholder="Meses"></div><div class="field"><label class="note">Fecha de compra / inicio</label><input id="quizDebtDate" type="date" value="${todayInputValue()}"></div><button type="button" class="btn" id="quizAddDebt" data-quiz="add-debt">＋ Agregar deuda</button><div class="wallet-entity-note" id="quizDebtList">${[...state.loans.map(a=>a.name),...state.msiPlans.map(a=>a.concept)].map(esc).join(' · ')||'Aún no agregas deudas'}</div></div>`;}body.innerHTML=html;
 }
@@ -2575,12 +2479,6 @@ function renderWalletQuiz(){const body=$('walletQuizBody'),prog=$('walletQuizPro
 /* Vinculación de botones existentes. No modifica estilos ni HTML visual. */
 $('btnRegister')?.addEventListener('click', registerUser);
 if($('msiPurchaseDate')&&!$('msiPurchaseDate').value)$('msiPurchaseDate').value=todayInputValue();
-$('quickAmounts')?.querySelectorAll('button[data-a]').forEach(btn => {
-  btn.onclick = () => {
-    $('hormAmount').value = btn.dataset.a;
-    updateSwipePreview();
-  };
-});
 $('budgetPeriodChips')?.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>setBudgetPeriod(ch.dataset.budgetPeriod));
 $('btnBudgetEntry')&&( $('btnBudgetEntry')&&( $('btnBudgetEntry').onclick=openBudgetEntry ) );
 $('btnBudgetCancel')&&( $('btnBudgetCancel')&&( $('btnBudgetCancel').onclick=closeBudgetEntry ) );
@@ -2669,7 +2567,6 @@ $('btnCloseInvForm')&&($('btnCloseInvForm')&&( $('btnCloseInvForm').onclick=()=>
 $('btnAddInv')&&($('btnAddInv')&&( $('btnAddInv').onclick=addInvestment) );
 $('btnToggleSubCal') && ($('btnToggleSubCal').onclick = () => { const el = $('subCalendar'); if(!el)return; const hide=el.classList.toggle('hidden'); $('btnToggleSubCal').textContent=hide?'Mostrar':'Ocultar'; if(!hide) renderSubCalendar(); });
 $('sharedTipSplitChips')?.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{ state.tipSplitMode=ch.dataset.val||'all'; $('sharedTipSplitChips').querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c===ch)); const wrap=$('sharedTipPeopleWrap'); if(wrap) wrap.classList.toggle('hidden', state.tipSplitMode!=='some'); });
-setupSwipe();
 setupMenuSwipe(); setupAndroidNavigation(); renderMenu(); renderPinned(); updateUI(); try{Abaco?.Finance?.ensure(); save(true);}catch(e){console.warn('Abaco core startup',e)} try{updateHeaderPhrase();}catch(e){console.warn('Frase de encabezado no disponible',e)}
 /* Al abrir la app (o al restaurar desde segundo plano) el panel que ya está
    marcado como activo en el HTML también debe pintarse con los datos

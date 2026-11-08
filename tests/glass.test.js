@@ -65,6 +65,20 @@ async function seed() {
 }
 
 const go = (name) => page.evaluate((n) => goPanel(n), name);
+
+/* Modo calmado: en Registrar, nota/cuenta/impulso viven en "Más opciones". */
+async function masOpciones() {
+  if (await page.evaluate(() => document.getElementById('regMore').classList.contains('hidden'))) await page.click('#regMoreBtn');
+}
+/* Modo calmado: cada ajuste se elige en su propia hoja. */
+async function ajuste(fila) {
+  await go('config');
+  await page.evaluate(() => window.AbacoCalm && AbacoCalm.closeSheet());
+  await page.click('[data-x="cfg"][data-v="' + fila + '"]');
+  await page.waitForSelector('#calmSheet');
+}
+const cerrarHoja = () => page.evaluate(() => AbacoCalm.closeSheet());
+const hoy = () => page.textContent('#homeToday');
 const extras = () => page.evaluate(() => JSON.parse(JSON.stringify(AbacoExtrasUI.extras())));
 
 /* Responde el diálogo propio: llena campos (select o input) y pulsa el botón principal. */
@@ -140,12 +154,11 @@ test('inicio: el saludo y el momento siguen la hora', async () => {
   await register('Ana');
   await go('inicio');
   assert.equal(await page.textContent('#tbSub'), 'Buenas noches, Ana');
-  assert.equal(await page.textContent('#tbChip'), 'Noche · 22:00');
-  assert.equal(await page.textContent('#tbTitle'), 'Inicio');
+  assert.equal(await page.isVisible('#tbChip'), false, 'modo calmado: sin chip de hora');
+  assert.equal(await page.textContent('#tbTitle'), 'Hoy');
   await open(9.5); // la persona ya está registrada: los datos viven en el mismo contexto
   await go('inicio');
   assert.equal(await page.textContent('#tbSub'), 'Buenos días, Ana');
-  assert.equal(await page.textContent('#tbChip'), 'Mañana · 09:30');
 });
 
 test('barra inferior y menú traen las pantallas del diseño', async () => {
@@ -154,6 +167,7 @@ test('barra inferior y menú traen las pantallas del diseño', async () => {
   const etiquetas = await page.$$eval('#pinnedBar .pin-label', (els) => els.map((e) => e.textContent));
   assert.deepEqual(etiquetas, ['Inicio', 'Movimientos', 'Registrar', 'Estadísticas', 'Cuentas']);
   await page.evaluate(() => openMenu());
+  await page.click('#menuAllToggle');   // modo calmado: las secciones están plegadas
   const menu = await page.textContent('#menuList');
   for (const t of ['Estadísticas', 'Cartas', 'Decisiones', 'Pactos', 'Ajustes', 'Movimientos', 'Sobres']) assert.match(menu, new RegExp(t));
 });
@@ -179,8 +193,9 @@ test('registrar: la equivalencia solo aparece si la persona eligió una unidad',
   await go('hormiga');
   await page.fill('#hormAmount', '240');
   assert.equal(await page.isVisible('#hormEquiv'), false, 'sin unidad no compara');
-  await go('config');
+  await ajuste('unit');
   await page.click('[data-x="unit"][data-v="cafe"]');
+  await cerrarHoja();
   await go('hormiga');
   await page.fill('#hormAmount', '240');
   assert.match(await page.textContent('#hormEquiv'), /Son 3 cafés/);
@@ -197,6 +212,7 @@ async function prepararImpulso(segundos = 1) {
   await page.evaluate((s) => { AbacoExtrasUI.extras().prefs.pauseSeconds = s; }, segundos);
   await go('hormiga');
   await page.fill('#hormAmount', '100');
+  await masOpciones();
   await page.fill('#hormDesc', 'Antojo');
   await page.click('#hormImpulse');
 }
@@ -256,8 +272,10 @@ test('pausa: sin impulso, o con la pausa apagada, guarda directo', async () => {
   await page.evaluate(() => registerHormiga());
   assert.equal(await page.$('.x-pause'), null);
   assert.equal(await gastos(), 1);
+  await page.click('[data-calm="reg-done"]');   // el paso 2 es opcional
   await page.evaluate(() => { AbacoExtrasUI.extras().prefs.pause = false; });
   await page.fill('#hormAmount', '60');
+  await masOpciones();
   await page.click('#hormImpulse');
   await page.evaluate(() => registerHormiga());
   assert.equal(await page.$('.x-pause'), null);
@@ -270,6 +288,7 @@ test('decisión: una compra grande con su motivo queda en el cajón', async () =
   await fondos();
   await go('hormiga');
   await page.fill('#hormAmount', '100');
+  await masOpciones();
   assert.equal(await page.isVisible('#hormWhyWrap'), false, 'el motivo se pide solo en compras grandes');
   await page.fill('#hormAmount', '1500');
   assert.equal(await page.isVisible('#hormWhyWrap'), true);
@@ -290,13 +309,13 @@ test('decisión vencida: avisa en Inicio y se responde sin culpa', async () => {
     AbacoExtrasUI.onPanel('inicio');
   });
   await go('inicio');
-  assert.match(await page.textContent('#homeNotices'), /¿Valió la pena «Audífonos»\?/);
-  await page.click('#homeNotices [data-go="decisiones"]');
+  assert.match(await hoy(), /¿Valió la pena «Audífonos»\?/);
+  await page.click('#homeToday [data-go="decisiones"]');
   await page.waitForSelector('#xv-decisiones [data-x="dec"][data-v="si"]');
   await page.click('#xv-decisiones [data-x="dec"][data-v="si"]');
   assert.equal((await extras()).decisions[0].verdict, 'si');
   await go('inicio');
-  assert.equal((await page.textContent('#homeNotices')).trim(), '');
+  assert.doesNotMatch(await hoy(), /Valió la pena/);
   assert.match(await page.textContent('#xv-decisiones'), /Sí valió/);
 });
 
@@ -321,7 +340,7 @@ test('brújula: está en Inicio, al tocarla muestra la nota y no navega', async 
   assert.equal(await page.isVisible('#brujulaBtn'), false, 'solo vive en Inicio');
 });
 
-test('brújula: la aguja apunta a donde conviene mirar y se sacude (inquieta) si hay algo que mirar', async () => {
+test('brújula: la aguja apunta a donde conviene mirar, quieta (modo calmado)', async () => {
   await open();
   await register();
   await seed();
@@ -329,7 +348,7 @@ test('brújula: la aguja apunta a donde conviene mirar y se sacude (inquieta) si
   assert.equal(await page.evaluate(() => document.getElementById('brujulaNeedle').style.transform), 'rotate(180deg)');
   assert.equal(await page.evaluate(() => document.getElementById('brujulaBtn').classList.contains('restless')), true);
   const anim = await page.evaluate(() => getComputedStyle(document.querySelector('#brujulaBtn .wobble')).animationName);
-  assert.equal(anim, 'abacoWobble');
+  assert.equal(anim, 'none', 'no se sacude: menos movimiento en pantalla');
   // Sin sobres excedidos apunta a la meta y se calma.
   await page.evaluate(async () => { await AbacoApp.data().setBudget({ category: 'comida', amount: 9000, description: '' }); AbacoApp.refreshUI(); });
   assert.equal(await page.evaluate(() => document.getElementById('brujulaNeedle').style.transform), 'rotate(90deg)');
@@ -345,9 +364,11 @@ test('sobres: pedir prestado mueve dinero entre sobres, queda anotado y se desha
   await register();
   await seed();
   await go('presupuesto');
-  assert.match(await page.textContent('#budgetList'), /113%/);
-  await page.click('[data-x="borrow"]');
+  assert.match(await page.textContent('#budgetList'), /\$400 por encima/);
+  await page.click('[data-calm="sobre"]');
+  await page.click('#calmSheet [data-x="borrow"]');
   await answerDialog({ from: 'transporte', to: 'ocio', amount: 200, note: 'regalo' });
+  await cerrarHoja();
   await page.waitForFunction(() => state.budgets.find((b) => b.category === 'ocio').amount === 1000);
   assert.equal(await sobre('transporte'), 800);
   assert.match(await page.textContent('#borrowBox'), /\$200 de transporte para ocio/i);
@@ -363,8 +384,10 @@ test('sobres: no se devuelve un préstamo si el sobre ya gastó ese dinero', asy
   await register();
   await seed();
   await go('presupuesto');
-  await page.click('[data-x="borrow"]');
+  await page.click('[data-calm="sobre"]');
+  await page.click('#calmSheet [data-x="borrow"]');
   await answerDialog({ from: 'transporte', to: 'comida', amount: 200 });
+  await cerrarHoja();
   await page.waitForFunction(() => state.budgets.find((b) => b.category === 'comida').amount === 3200);
   await page.click('[data-x="borrow-undo"]');
   await page.waitForFunction(() => /ya usó ese dinero/.test(document.getElementById('toast').textContent));
@@ -377,7 +400,8 @@ test('sobres: no deja pedir más de lo que le queda al sobre', async () => {
   await register();
   await seed();
   await go('presupuesto');
-  await page.click('[data-x="borrow"]');
+  await page.click('[data-calm="sobre"]');
+  await page.click('#calmSheet [data-x="borrow"]');
   await answerDialog({ from: 'transporte', to: 'ocio', amount: 5000 });
   await page.waitForFunction(() => /solo tiene/.test(document.getElementById('toast').textContent));
   assert.equal(await sobre('transporte'), 1000);
@@ -406,16 +430,18 @@ test('silencio por encargo: calla avisos y preguntas hasta el lunes', async () =
     AbacoExtras.addDecision(AbacoExtrasUI.extras(), { title: 'Algo', amount: 900, now: Date.now() - 120 * 86400000 });
   });
   await go('inicio');
-  assert.notEqual((await page.textContent('#homeNotices')).trim(), '');
-  await go('config');
+  assert.match(await hoy(), /Valió la pena/);
+  await ajuste('silence');
   await page.click('[data-x="silence"][data-v="on"]');
-  assert.match(await page.textContent('#xv-config'), /En silencio hasta/);
+  await cerrarHoja();
+  assert.match(await page.textContent('#xv-config'), /Hasta el lunes/);
   await go('inicio');
-  assert.equal((await page.textContent('#homeNotices')).trim(), '');
+  assert.doesNotMatch(await hoy(), /Valió la pena/, 'en silencio solo queda "anotar"');
   await go('cuentas');
   assert.equal((await page.textContent('#questionBox')).trim(), '');
-  await go('config');
+  await ajuste('silence');
   await page.click('[data-x="silence"][data-v="off"]');
+  await cerrarHoja();
   await go('cuentas');
   assert.match(await page.textContent('#questionBox'), /Streaming/);
 });
@@ -455,8 +481,8 @@ test('cartas: se escribe sola al cambiar de mes, se lee, se edita y borrar es de
   const creada = await page.evaluate(() => !!AbacoExtrasUI.checkLetters());
   assert.equal(creada, true);
   await go('inicio');
-  assert.match(await page.textContent('#homeNotices'), /está lista/);
-  await page.click('#homeNotices [data-go="cartas"]');
+  assert.match(await hoy(), /Leer tu carta de/);
+  await page.click('#homeToday [data-go="cartas"]');
   await page.waitForSelector('.x-letter');
   const carta = await page.textContent('.x-letter');
   assert.match(carta, /Hola, Hugo\./);
@@ -464,7 +490,7 @@ test('cartas: se escribe sola al cambiar de mes, se lee, se edita y borrar es de
   assert.match(carta, /lo que más pesó fue comida/);
   assert.equal((await extras()).letters[0].state, 'leida', 'leerla apaga el aviso');
   await go('inicio');
-  assert.equal((await page.textContent('#homeNotices')).trim(), '');
+  assert.doesNotMatch(await hoy(), /Leer tu carta/);
   await go('cartas');
   await page.click('[data-x="letter-edit"]');
   await answerDialog({ text: 'Mi propio texto.\n\nSegundo párrafo.' });
@@ -482,17 +508,23 @@ test('cartas: se escribe sola al cambiar de mes, se lee, se edita y borrar es de
 test('configuración: tono, unidad propia, pausa y medidas; todo sobrevive a recargar', async () => {
   await open();
   await register();
-  await go('config');
+  await ajuste('tone');
   await page.click('[data-x="tone"][data-v="directo"]');
+  await ajuste('unit');
   await page.click('[data-x="unit-add"]');
   await answerDialog({ singular: 'taco', plural: 'tacos', price: 25 });
-  await page.click('[data-x="pause"]');
+  await ajuste('pause');
+  await page.click('[data-x="pause-set"][data-v="0"]');
+  await ajuste('metrics');
   await page.click('[data-x="metric"][data-v="ahorro"]');
+  await cerrarHoja();
+  assert.match(await page.textContent('#xv-config'), /Directo/);
+  assert.match(await page.textContent('#xv-config'), /Taco/);
   await go('hormiga');
   await page.fill('#hormAmount', '100');
   assert.match(await page.textContent('#hormEquiv'), /Son 4 tacos/);
-  await page.evaluate(() => state.extras && window.save());
-  await page.waitForTimeout(250);
+  // Espera a que el guardado termine de verdad (no un tiempo fijo) antes de recargar.
+  await page.evaluate(() => AbacoApp.persistApp());
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.AbacoApp && window.AbacoApp.ready);
   await page.evaluate(() => window.AbacoApp.ready);
@@ -512,10 +544,10 @@ test('estadísticas: barras de la semana, lo que más pesó y las medidas elegid
   await seed();
   await go('estadisticas');
   const t = await page.textContent('#xv-estadisticas');
-  assert.match(t, /Gastos de la semana/);
-  assert.match(t, /\$3,400/);
-  assert.match(t, /Lo que más pesó: (Comida|comida)/);
-  assert.match(t, /Días de colchón/);
+  assert.match(t, /Esta semana gastaste \$3,400\. Lo que más pesó fue comida\./);
+  assert.doesNotMatch(t, /Días de colchón/, 'las medidas esperan detrás de "Ver más"');
+  await page.click('[data-x="stats-more"]');
+  assert.match(await page.textContent('#xv-estadisticas'), /Días de colchón/);
   assert.equal(await page.$$eval('#xv-estadisticas .xb', (els) => els.length), 7);
 });
 
@@ -535,9 +567,11 @@ test('las pantallas existentes siguen mostrando sus datos con el cristal puesto'
 test('borrar todos los datos también reinicia las preferencias de convivencia', async () => {
   await open();
   await register();
-  await go('config');
+  await ajuste('tone');
   await page.click('[data-x="tone"][data-v="directo"]');
+  await ajuste('unit');
   await page.click('[data-x="unit"][data-v="cafe"]');
+  await cerrarHoja();
   assert.equal((await extras()).prefs.tone, 'directo');
   await page.evaluate(() => { window.__c = clearAll(); });
   // Puede pedir más de una confirmación: se aceptan hasta que termine.

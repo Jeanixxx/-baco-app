@@ -124,11 +124,13 @@ test('abrir desde la notificación lleva a Registrar', async () => {
 test('Ajustes muestra el interruptor y lo cambia en Android', async () => {
   await openApp();
   await page.evaluate(() => goPanel('config'));
-  const toggle = '#xv-config [data-x="quick"]';
-  assert.equal(await page.getAttribute(toggle, 'aria-checked'), 'true');
-  await page.click(toggle);
-  await page.waitForFunction(() => document.querySelector('#xv-config [data-x="quick"]').getAttribute('aria-checked') === 'false');
+  assert.match(await page.textContent('#xv-config'), /Notificación rápida\s*Sí/);
+  await page.click('[data-x="cfg"][data-v="quick"]');
+  assert.equal(await page.getAttribute('#calmSheet [data-x="quick-set"][data-v="1"]', 'aria-pressed'), 'true');
+  await page.click('#calmSheet [data-x="quick-set"][data-v="0"]');
+  await page.waitForFunction(() => document.querySelector('#calmSheet [data-x="quick-set"][data-v="0"]').getAttribute('aria-pressed') === 'true');
   assert.deepEqual(await page.evaluate(() => window.AndroidBridge.toggles), [false]);
+  assert.match(await page.textContent('#xv-config'), /Notificación rápida\s*No/);
 });
 
 test('sin Android (navegador) no hace nada y Ajustes lo explica', async () => {
@@ -142,6 +144,7 @@ test('sin Android (navegador) no hace nada y Ajustes lo explica', async () => {
   await p.click('#btnRegister');
   await p.waitForFunction(() => !!state.user_id);
   await p.evaluate(() => goPanel('config'));
-  assert.match(await p.textContent('#xv-config'), /Disponible en la app de Android/);
+  await p.click('[data-x="cfg"][data-v="quick"]');
+  assert.match(await p.textContent('#calmSheet'), /Disponible en la app de Android/);
   await ctx.close();
 });

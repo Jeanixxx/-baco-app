@@ -359,3 +359,22 @@ test('propiedad: miles de operaciones aleatorias mantienen la partida doble y ni
   for (const a of l.liquidAccounts()) assert.ok(a.balanceC >= 0, a.name + ' negativo');
   assert.ok(l.entries.length > 500, 'la prueba debe ejecutar operaciones reales');
 });
+
+test('annotate cambia descripción y categoría sin tocar importes ni saldos', () => {
+  const l = new Ledger({ now: () => 1700000000000 });
+  const cta = l.createAccount({ name: 'Débito', type: 'débito', balance: 1000 });
+  const e = l.expense({ amount: 240, accountId: cta.id });
+  const antes = { saldo: l.balance(cta.id), postings: JSON.stringify(e.postings) };
+  l.annotate(e.id, { description: 'Antojo de tarde', category: 'comida' });
+  assert.equal(e.description, 'Antojo de tarde');
+  assert.equal(e.meta.category, 'comida');
+  assert.equal(l.balance(cta.id), antes.saldo);
+  assert.equal(JSON.stringify(e.postings), antes.postings);
+  assert.equal(l.verify().ok, true);
+  // Vacíos no borran lo que había.
+  l.annotate(e.id, { description: '  ', category: '' });
+  assert.equal(e.description, 'Antojo de tarde');
+  assert.throws(() => l.annotate('no-existe', { category: 'x' }), /no encontrado/);
+  l.reverse(e.id);
+  assert.throws(() => l.annotate(e.id, { category: 'x' }), /revertido/);
+});

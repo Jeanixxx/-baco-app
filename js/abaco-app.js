@@ -53,6 +53,7 @@
     }
     try { if (window.AbacoExtrasUI) window.AbacoExtrasUI.afterRefresh(); } catch (e) { console.warn('convivencia', e); }
     try { if (window.AbacoShell) window.AbacoShell.refresh(); } catch (e) { console.warn('estructura', e); }
+    try { if (window.AbacoCalm) window.AbacoCalm.afterRefresh(); } catch (e) { console.warn('modo calmado', e); }
   }
 
   /* Como act(), pero no llama a updateUI: el asistente de bienvenida depende de esa función
@@ -168,16 +169,18 @@
     const ui = window.AbacoExtrasUI;
     const info = { amount: val('hormAmount'), description: val('hormDesc').trim() };
     // Pausa antes de pagar: solo si la persona marcó "fue por impulso" y la tiene activada.
-    if (ui && (await ui.beforeExpense(info)) !== 'go') { resetSwipeCard(); return; }
+    if (ui && (await ui.beforeExpense(info)) !== 'go') return;
     const r = await data.expense({
       amount: info.amount, description: info.description || 'Gasto rápido',
       category: state.hormCat || 'general', accountId: val('hormFromAccount') || undefined, source: 'hormiga'
     });
-    if (!r.ok) { toast(r.error); resetSwipeCard(); return; }
+    if (!r.ok) { toast(r.error); return; }
     refreshUI();
     if (ui) ui.afterExpense(info);
     clear('hormAmount', 'hormDesc');
-    toast('✓ Gasto guardado');
+    // Paso 2 opcional (qué fue). Si no existe la capa calmada, basta un aviso.
+    if (window.AbacoCalm) window.AbacoCalm.afterSave(r.result, info);
+    else toast('✓ Gasto guardado');
     if ($$('hormAmount')) $$('hormAmount').focus();
   };
 

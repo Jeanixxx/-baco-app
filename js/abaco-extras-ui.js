@@ -24,6 +24,7 @@
   let impulse = false; // "fue por impulso" del formulario de Registrar
   let compassOpen = false;
   let viewMonth = null; // carta que se está leyendo
+  let statsMore = false; // Estadísticas: "Ver más" abierto
 
   /* ---------- datos ---------- */
 
@@ -159,7 +160,6 @@
       ['hormAmount', 'hormDesc', 'hormWhy'].forEach((id) => { if ($(id)) $(id).value = ''; });
       impulse = false;
       updateEquiv();
-      try { updateSwipePreview(); } catch (err) { /* sin vista previa */ }
       toast('Anotado: decidí no. Sin reproches.');
       return 'cancel';
     }
@@ -184,33 +184,11 @@
   function renderBorrow() {
     const box = $('borrowBox');
     if (!box) return;
-    const e = ex();
-    const budgets = state.budgets || [];
-    // Porcentaje en cada sobre; los que se pasan se ven sin esconderlo.
-    document.querySelectorAll('#budgetList .budget-row').forEach((row) => {
-      const btn = row.querySelector('[data-budget-spend]');
-      const b = btn && budgets.find((x) => x.id === btn.getAttribute('data-budget-spend'));
-      row.querySelectorAll('.x-pct-line').forEach((n) => n.remove());
-      if (!b || !(b.amount > 0)) return;
-      const pct = Math.round((b.spent / b.amount) * 100);
-      const bar = row.querySelector('.progress');
-      if (bar) bar.classList.toggle('over', pct > 100);
-      const line = document.createElement('div');
-      line.className = 'x-pct-line x-row';
-      line.style.margin = '6px 0 0';
-      line.innerHTML = '<span class="x-pct ' + (pct > 100 ? 'over' : '') + '">' + pct + '%</span><span class="note" style="margin:0">' +
-        (pct > 100 ? money(b.spent - b.amount) + ' por encima del sobre' : 'Te quedan ' + money(b.amount - b.spent)) + '</span>';
-      if (bar && bar.parentNode) bar.parentNode.insertBefore(line, bar.nextSibling);
-    });
-    const list = e.borrows.filter((b) => !b.undone).sort((a, b) => b.ts - a.ts);
-    const rows = list.map((b) =>
-      '<div class="x-row" style="margin-top:10px"><div><div class="xc-title" style="font-size:14px">' + money(b.amount) + ' de ' + esc(catLabel(b.from)) + ' para ' + esc(catLabel(b.to)) + '</div>' +
-      '<div class="xc-sub">' + shortDate(b.ts) + (b.note ? ' · «' + esc(b.note) + '»' : '') + ' · anotado, sin reproche</div></div>' +
-      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" data-x="borrow-undo" data-id="' + esc(b.id) + '">Deshacer</button></div>').join('');
-    box.innerHTML = '<div class="section-title">Pedir prestado entre sobres</div><div class="x-card">' +
-      (budgets.length >= 2
-        ? '<div class="xc-sub" style="margin:0 0 8px">Si un sobre se acabó, puedes tomar de otro que aún tenga. Queda anotado con tu nota.</div><button type="button" class="btn btn-primary" data-x="borrow">Pedir prestado</button>'
-        : '<div class="xc-sub" style="margin:0">Necesitas al menos dos sobres para pedir prestado de uno a otro.</div>') + rows + '</div>';
+    const list = ex().borrows.filter((b) => !b.undone).sort((a, b) => b.ts - a.ts).slice(0, 3);
+    box.innerHTML = list.length ? '<div class="section-title">Movimientos entre sobres</div><div class="calm-list">' + list.map((b) =>
+      '<div class="calm-row static"><span class="cr-body"><span class="cr-title">' + money(b.amount) + ' de ' + esc(catLabel(b.from)) + ' para ' + esc(catLabel(b.to)) + '</span>' +
+      '<span class="cr-sub">' + shortDate(b.ts) + (b.note ? ' · «' + esc(b.note) + '»' : '') + ' · anotado, sin reproche</span></span>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-x="borrow-undo" data-id="' + esc(b.id) + '">Deshacer</button></div>').join('') + '</div>' : '';
   }
 
   async function borrowDialog() {
@@ -317,15 +295,17 @@
     const eq = top ? X.equivalence(top[1], X.selectedUnit(e)) : null;
     const m = X.computeMetrics(viewForExtras(), t);
     const chosen = e.prefs.metrics.map((id) => X.METRICS.find((x) => x.id === id)).filter(Boolean);
-    box.innerHTML = '<div class="x-card hi"><div class="xc-label">Gastos de la semana</div><div class="xc-big">' + money(total) + '</div><div class="x-bars">' + bars + '</div></div>' +
-      '<div class="x-card"><div class="xc-title">' + (top ? 'Lo que más pesó: ' + esc(catLabel(top[0])) : 'Esta semana no hay gastos') + '</div>' +
-      '<div class="xc-sub">' + (top ? money(top[1]) + (eq ? ' · ' + esc(eq.text) + ' en tu unidad' : '') : 'Cuando registres gastos, aquí verás lo que más pesó.') + '</div></div>' +
-      '<div class="x-card"><div class="xc-label">Tus medidas elegidas</div>' +
-      (chosen.length ? '<div class="x-metrics">' + chosen.map((c) => '<div><div class="xm-l">' + esc(c.label) + '</div><div class="xm-v">' + esc(X.formatMetric(c.id, m[c.id])) + '</div></div>').join('') + '</div>'
-        : '<div class="xc-sub">Elige las que quieras ver en Configuración.</div>') +
-      '<div class="x-actions"><button type="button" class="btn btn-ghost btn-sm" data-go="config">Cambiar medidas</button></div></div>' +
-      '<div class="x-tiles">' + [['charts', 'estadisticas', 'Gráficas'], ['cartas', 'cartas', 'Cartas'], ['decisiones', 'decisiones', 'Decisiones'], ['pactos', 'pactos', 'Pactos']]
-        .map(([to, icon, label]) => '<button type="button" class="x-tile" ' + (to === 'charts' ? 'data-x="charts"' : 'data-go="' + to + '"') + '>' + navIconSvg(icon) + '<span>' + label + '</span></button>').join('') + '</div>';
+    const tiles = '<div class="x-tiles">' + [['charts', 'estadisticas', 'Gráficas'], ['cartas', 'cartas', 'Cartas'], ['decisiones', 'decisiones', 'Decisiones'], ['pactos', 'pactos', 'Pactos']]
+      .map(([to, icon, label]) => '<button type="button" class="x-tile" ' + (to === 'charts' ? 'data-x="charts"' : 'data-go="' + to + '"') + '>' + navIconSvg(icon) + '<span>' + label + '</span></button>').join('') + '</div>';
+    box.innerHTML = '<div class="calm-sentence">' + (total ? 'Esta semana gastaste <b>' + money(total) + '</b>. Lo que más pesó fue ' + esc(catLabel(top[0]).toLowerCase()) + '.' : 'Esta semana todavía no hay gastos.') + '</div>' +
+      '<div class="x-card hi"><div class="x-bars">' + bars + '</div></div>' +
+      (statsMore
+        ? (top ? '<div class="x-card"><div class="xc-title">' + esc(catLabel(top[0])) + ': ' + money(top[1]) + '</div>' + (eq ? '<div class="xc-sub">' + esc(eq.text) + ' en tu unidad</div>' : '') + '</div>' : '') +
+          '<div class="x-card"><div class="xc-label">Tus medidas</div>' +
+          (chosen.length ? '<div class="x-metrics">' + chosen.map((c) => '<div><div class="xm-l">' + esc(c.label) + '</div><div class="xm-v">' + esc(X.formatMetric(c.id, m[c.id])) + '</div></div>').join('') + '</div>'
+            : '<div class="xc-sub">Elige las que quieras ver en Ajustes.</div>') + '</div>' + tiles +
+          '<div class="calm-pill-row"><button type="button" class="calm-pill" data-x="stats-more">Ver menos ⌃</button></div>'
+        : '<div class="calm-pill-row"><button type="button" class="calm-pill" data-x="stats-more">Ver más (medidas, gráficas, cartas) ⌄</button></div>');
   }
 
   function decisionCard(d, t, due) {
@@ -417,51 +397,67 @@
       '<div class="x-actions" style="margin-top:14px">' + writers.join('') + '</div>';
   }
 
-  function seg(action, options, current) {
-    return '<div class="x-seg">' + options.map((o) => '<button type="button" class="' + (String(o.v) === String(current) ? 'on' : '') + '" data-x="' + action + '" data-v="' + esc(o.v) + '">' + esc(o.l) + '</button>').join('') + '</div>';
-  }
+  /* ---------- Ajustes (modo calmado): una lista corta; cada renglón abre una hoja con una sola decisión ---------- */
+
+  const opt = (action, v, title, desc, on, multi) =>
+    '<button type="button" class="cs-option' + (on ? ' on' : '') + '" data-x="' + action + '" data-v="' + esc(v) + '" aria-pressed="' + !!on + '">' +
+    '<span class="' + (multi ? 'cs-check' : 'cs-radio') + '"></span><span class="cs-opt-text"><b>' + esc(title) + '</b>' + (desc ? '<small>' + esc(desc) + '</small>' : '') + '</span></button>';
+  const done = '<button type="button" class="btn btn-primary cs-done" data-calm="close">Listo</button>';
+  const TONES = { directo: ['Directo', 'Cifras secas, sin adornos.'], amable: ['Amable', 'Con contexto y calma.'], silencioso: ['Silencioso', 'Solo hablo cuando tú me tocas.'] };
+  const SKY = { auto: 'Según la hora', light: 'Día', dark: 'Noche' };
+  const quickOn = () => !!(window.AbacoQuick && AbacoQuick.available() && AbacoQuick.enabled());
+
+  const CONFIG_SHEETS = {
+    tone: { title: 'Cómo te hablo', hint: 'Una sola decisión por hoja.', render: () => Object.entries(TONES).map(([k, [t, d]]) => opt('tone', k, t, d, ex().prefs.tone === k)).join('') + done },
+    sky: { title: 'Cielo', hint: 'El fondo y los colores de la app.', render: () => Object.entries(SKY).map(([k, t]) => opt('theme', k, t, k === 'auto' ? 'Día de día y noche de noche' : '', (window.AbacoSky ? AbacoSky.getMode() : 'auto') === k)).join('') + done },
+    unit: {
+      title: 'Mi unidad', hint: 'Si eliges una, te muestro cuánto equivale cada gasto. Si no, no comparo nada.',
+      render: () => {
+        const e = ex();
+        return opt('unit', 'none', 'Ninguna', '', !e.prefs.unitId) +
+          X.units(e).map((u) => opt('unit', u.id, cap(u.singular), money(u.price), e.prefs.unitId === u.id)).join('') +
+          '<button type="button" class="cs-link" data-x="unit-add">＋ Nueva unidad</button>' +
+          (e.prefs.customUnits.length ? '<div class="cs-note">Propias: ' + e.prefs.customUnits.map((u) => esc(u.singular) + ' <a href="#" data-x="unit-del" data-id="' + esc(u.id) + '">quitar</a>').join(' · ') + '</div>' : '') + done;
+      }
+    },
+    pause: {
+      title: 'Pausa antes de pagar', hint: 'Solo en compras que marques como impulso.',
+      render: () => { const p = ex().prefs; return opt('pause-set', '0', 'No', 'Guardar sin pausa', !p.pause) + [3, 5, 10].map((n) => opt('pause-set', String(n), 'Sí, ' + n + ' segundos', '', p.pause && p.pauseSeconds === n)).join('') + done; }
+    },
+    quick: {
+      title: 'Notificación rápida', hint: 'Una notificación fija y silenciosa: escribes «85 tacos» y se guarda al abrir Ábaco.',
+      render: () => (window.AbacoQuick && AbacoQuick.available()
+        ? opt('quick-set', '1', 'Sí', 'Queda en tu barra de notificaciones', quickOn()) + opt('quick-set', '0', 'No', 'Quitarla de la barra', !quickOn())
+        : '<div class="cs-note">Disponible en la app de Android.</div>') + done
+    },
+    silence: {
+      title: 'Silencio por encargo', hint: 'Sin avisos ni preguntas.',
+      render: () => { const p = ex().prefs; const on = p.silenceUntil && now() < p.silenceUntil; return opt('silence', 'off', 'No', 'Te aviso como siempre', !on) + opt('silence', 'on', 'Hasta el lunes', 'No te digo nada hasta entonces', on) + done; }
+    },
+    metrics: { title: 'Mis medidas', hint: 'Las que verás en Estadísticas. Elige las que quieras.', render: () => X.METRICS.map((m) => opt('metric', m.id, m.label, '', ex().prefs.metrics.includes(m.id), true)).join('') + done },
+    data: {
+      title: 'Mis datos', hint: 'Son tuyos: expórtalos o bórralos cuando quieras.',
+      render: () => '<div class="cs-actions"><button type="button" class="btn btn-ghost" data-x="data" data-v="export">Exportar copia</button>' +
+        '<button type="button" class="btn btn-ghost" data-x="data" data-v="import">Importar copia</button>' +
+        '<button type="button" class="btn btn-ghost cs-danger" data-x="data" data-v="clear">Borrar todo</button></div>' + done
+    }
+  };
 
   function renderConfig() {
     const box = $('xv-config');
     if (!box) return;
     const e = ex();
     const p = e.prefs;
-    const t = now();
-    const units = X.units(e);
-    const mode = window.AbacoSky ? AbacoSky.getMode() : 'auto';
-    const silent = p.silenceUntil && t < p.silenceUntil;
-    const untilTxt = silent ? new Date(p.silenceUntil).toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' }) : '';
-    box.innerHTML = '<div class="x-card"><div class="xc-label">Cómo te hablo</div>' + seg('tone', [{ v: 'directo', l: 'Directo' }, { v: 'amable', l: 'Amable' }, { v: 'silencioso', l: 'Silencioso' }], p.tone) +
-      '<div class="xc-sub">' + (p.tone === 'directo' ? 'Cifras secas, sin adornos.' : p.tone === 'silencioso' ? 'Solo hablo cuando tú me tocas: sin avisos ni preguntas.' : 'Con contexto y calma.') + '</div></div>' +
-      '<div class="x-card"><div class="xc-label">Cielo</div>' + seg('theme', [{ v: 'auto', l: 'Según la hora' }, { v: 'light', l: 'Día' }, { v: 'dark', l: 'Noche' }], mode) + '</div>' +
-      '<div class="x-card"><div class="xc-label">Mi unidad de equivalencia</div><div class="xc-sub" style="margin:2px 0 0">Si eliges una, te muestro cuánto equivale cada gasto. Si no, no comparo nada.</div><div class="x-chips">' +
-      '<button type="button" class="' + (p.unitId ? '' : 'on') + '" data-x="unit" data-v="none">Ninguna</button>' +
-      units.map((u) => '<button type="button" class="' + (p.unitId === u.id ? 'on' : '') + '" data-x="unit" data-v="' + esc(u.id) + '">' + esc(cap(u.singular)) + ' · ' + money(u.price) + '</button>').join('') +
-      '<button type="button" data-x="unit-add">＋ Nueva</button></div>' +
-      (p.customUnits.length ? '<div class="xc-sub">Propias: ' + p.customUnits.map((u) => esc(u.singular) + ' <a href="#" data-x="unit-del" data-id="' + esc(u.id) + '">quitar</a>').join(' · ') + '</div>' : '') + '</div>' +
-      '<div class="x-card"><div class="x-row"><div><div class="xc-title">Pausa antes de pagar</div><div class="xc-sub">Solo en compras que marques como impulso</div></div>' +
-      '<button type="button" class="x-toggle ' + (p.pause ? 'on' : '') + '" role="switch" aria-checked="' + p.pause + '" aria-label="Pausa antes de pagar" data-x="pause"></button></div>' +
-      (p.pause ? '<div class="xc-sub" style="margin-top:8px">Segundos de pausa</div>' + seg('pause-secs', [{ v: 3, l: '3 s' }, { v: 5, l: '5 s' }, { v: 10, l: '10 s' }], p.pauseSeconds) : '') + '</div>' +
-      quickCard() +
-      '<div class="x-card"><div class="xc-title">Silencio por encargo</div><div class="xc-sub">' + (silent ? 'En silencio hasta el ' + esc(untilTxt) + '.' : 'Sin avisos ni preguntas hasta el lunes.') + '</div>' +
-      '<div class="x-actions"><button type="button" class="btn btn-ghost" data-x="silence" data-v="' + (silent ? 'off' : 'on') + '">' + (silent ? 'Quitar el silencio' : 'No me hables hasta el lunes') + '</button></div></div>' +
-      '<div class="x-card"><div class="xc-label">Mis medidas (en Estadísticas)</div><div class="x-chips">' +
-      X.METRICS.map((m) => '<button type="button" class="' + (p.metrics.includes(m.id) ? 'on' : '') + '" data-x="metric" data-v="' + m.id + '">' + esc(m.label) + '</button>').join('') + '</div></div>' +
-      '<div class="x-card"><div class="xc-title">Tus datos</div><div class="xc-sub">Son tuyos: expórtalos o bórralos cuando quieras.</div><div class="x-actions">' +
-      '<button type="button" class="btn btn-ghost" data-x="data" data-v="export">Exportar copia</button><button type="button" class="btn btn-ghost" data-x="data" data-v="import">Importar copia</button>' +
-      '<button type="button" class="btn btn-ghost" data-x="data" data-v="clear" style="color:var(--bad)">Borrar todo</button></div></div>';
-  }
-
-  /* Notificación fija de Android para anotar gastos desde la barra (js/abaco-quick.js). */
-  function quickCard() {
-    const Q = window.AbacoQuick;
-    if (!Q || !Q.available()) {
-      return '<div class="x-card"><div class="xc-title">Anotar desde la barra de notificaciones</div><div class="xc-sub">Disponible en la app de Android: una notificación silenciosa donde escribes «85 tacos» y queda anotado.</div></div>';
-    }
-    const on = Q.enabled();
-    return '<div class="x-card"><div class="x-row"><div><div class="xc-title">Anotar desde la barra de notificaciones</div>' +
-      '<div class="xc-sub">Notificación fija y silenciosa. Escribe «85 tacos» y se guarda al abrir Ábaco.</div></div>' +
-      '<button type="button" class="x-toggle ' + (on ? 'on' : '') + '" role="switch" aria-checked="' + on + '" aria-label="Notificación para anotar gastos" data-x="quick"></button></div></div>';
+    const unit = X.selectedUnit(e);
+    const silent = p.silenceUntil && now() < p.silenceUntil;
+    const row = (k, t, v) => '<button type="button" class="calm-row" data-x="cfg" data-v="' + k + '"><span class="cr-body"><span class="cr-title">' + t + '</span></span><span class="cr-value">' + esc(v) + '</span><span class="cr-chev">›</span></button>';
+    box.innerHTML = '<div class="calm-list">' +
+      row('tone', 'Cómo te hablo', TONES[p.tone][0]) + row('sky', 'Cielo', SKY[window.AbacoSky ? AbacoSky.getMode() : 'auto']) +
+      row('unit', 'Mi unidad', unit ? cap(unit.singular) : 'Ninguna') + row('pause', 'Pausa antes de pagar', p.pause ? 'Sí' : 'No') +
+      row('quick', 'Notificación rápida', window.AbacoQuick && AbacoQuick.available() ? (quickOn() ? 'Sí' : 'No') : 'Android') +
+      row('silence', 'Silencio', silent ? 'Hasta el lunes' : 'No') + '</div>' +
+      '<div class="calm-list">' + row('metrics', 'Mis medidas', String(p.metrics.length)) + row('data', 'Mis datos', 'Copias') + '</div>';
+    if (window.AbacoCalm) AbacoCalm.refreshSheet();
   }
 
   const RENDERERS = { estadisticas: renderEstadisticas, decisiones: renderDecisiones, pactos: renderPactos, cartas: renderCartas, config: renderConfig };
@@ -516,15 +512,15 @@
         break;
       }
       case 'unit-del': X.removeUnit(e, id); after('config'); updateEquiv(); break;
-      case 'pause': e.prefs.pause = !e.prefs.pause; after('config'); break;
-      case 'quick': {
-        const next = !window.AbacoQuick.enabled();
+      case 'cfg': if (window.AbacoCalm && CONFIG_SHEETS[v]) AbacoCalm.openSheet(CONFIG_SHEETS[v]); break;
+      case 'pause-set': e.prefs.pause = v !== '0'; if (v !== '0') e.prefs.pauseSeconds = Number(v); after('config'); break;
+      case 'quick-set': {
+        const next = v === '1';
         window.AbacoQuick.setEnabled(next);
         toast(next ? 'Listo: la notificación queda en tu barra' : 'Quité la notificación de la barra');
         setTimeout(() => render('config'), 200);
         break;
       }
-      case 'pause-secs': e.prefs.pauseSeconds = Number(v) || 5; after('config'); break;
       case 'silence':
         if (v === 'on') { X.setSilence(e, X.nextMonday(t)); toast('Listo, hasta el lunes no te digo nada'); } else { X.clearSilence(e); toast('Volví a hablar'); }
         after('config'); renderNotices(); updateCompass(); break;
@@ -584,6 +580,7 @@
         after('cartas'); renderNotices(); break;
       }
       case 'q': X.answerQuestion(e, id, v, t); persist(); renderQuestion(); if (v === 'no') toast('Anotado. Si quieres, la revisas en Suscripciones.'); else if (v === 'si') toast('Gracias'); break;
+      case 'stats-more': statsMore = !statsMore; render('estadisticas'); break;
       case 'charts': goPanel('inicio'); setTimeout(() => { if (typeof toggleHomeCharts === 'function') toggleHomeCharts(); }, 60); break;
       case 'borrow': await borrowDialog(); break;
       case 'borrow-undo': await undoBorrow(id); break;
@@ -597,7 +594,6 @@
     if (t.closest('#brujulaBtn')) { toggleCompass(); return; }
     if (t.closest('#brujulaCard')) { toggleCompass(false); return; }
     if (t.closest('#hormImpulse')) { impulse = !impulse; updateEquiv(); return; }
-    if (t.closest('#quickAmounts')) setTimeout(updateEquiv, 0);
     const el = t.closest('[data-x]');
     if (el) { ev.preventDefault(); onAction(el).catch((err) => { console.warn('Acción', el.dataset.x, err); toast('No se pudo completar'); }); }
   });
@@ -641,11 +637,6 @@
     started = true;
     ex();
     checkLetters();
-    const orig = window.updateSwipePreview;
-    if (typeof orig === 'function' && !orig.__extras) {
-      window.updateSwipePreview = function () { const r = orig.apply(this, arguments); try { updateEquiv(); } catch (err) { /* sin equivalencia */ } return r; };
-      window.updateSwipePreview.__extras = true;
-    }
     onPanel(state.activePanel || 'hormiga');
   }
 

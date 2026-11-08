@@ -184,6 +184,7 @@
       msiRevert: (input) => run((l) => l.msiRevertInstallment(input)),
       deleteCard: (id) => run((l) => l.deleteCard(id)),
       reverse: (id) => run((l) => l.reverse(id)),
+      annotate: (id, input) => run((l) => l.annotate(id, input)),
       setBudget: (input) => run((l) => l.setBudget(input)),
       deleteBudget: (id) => run((l) => l.deleteBudget(id)),
       renameAccount: (id, name) => run((l) => l.renameAccount(id, name)),

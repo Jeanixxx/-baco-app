@@ -325,7 +325,8 @@ test('delegación: pagar una cuota MSI con un clic en la lista de tarjetas', asy
   await act('addMsi');
   await page.evaluate(() => goPanel('tarjetas'));
   await page.waitForTimeout(350);
-  await page.click('[data-msi-paid]');
+  await page.click('[data-calm="tarjeta"]');   // el plan se abre en una hoja al tocar la tarjeta
+  await page.click('#calmSheet [data-msi-paid]');
   await page.waitForTimeout(150);
   assert.equal(await page.evaluate(() => state.msiPlans[0].installments[0].paid), true);
 });
@@ -356,6 +357,7 @@ test('delegación: los botones siguen funcionando después de repintar la lista'
 /* Con el rediseño, "Gráficas" se abre desde el mosaico de Estadísticas. */
 async function openCharts() {
   await page.evaluate(() => goPanel('estadisticas'));
+  await page.click('#xv-estadisticas [data-x="stats-more"]');   // "Ver más" muestra los mosaicos
   await page.click('#xv-estadisticas [data-x="charts"]');
   await page.waitForFunction(() => document.getElementById('chartsBlock').classList.contains('chart-modal-open'));
 }

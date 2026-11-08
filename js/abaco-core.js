@@ -518,6 +518,18 @@
       return entry;
     }
 
+    /* Cambia solo la descripción y la categoría de un gasto o ingreso ya guardado.
+       Los importes no se tocan, así que los saldos y la verificación no cambian. */
+    annotate(entryId, { description, category } = {}) {
+      const entry = this.entries.find((e) => e.id === entryId);
+      if (!entry) throw new CoreError('NOT_FOUND', 'Movimiento no encontrado');
+      if (entry.reversed) throw new CoreError('ALREADY_REVERSED', 'Este movimiento ya fue revertido');
+      if (entry.type !== 'gasto' && entry.type !== 'ingreso') throw new CoreError('INVALID_ENTRY', 'Solo se pueden anotar gastos o ingresos');
+      if (description != null && String(description).trim()) entry.description = String(description).trim();
+      if (category != null && String(category).trim()) entry.meta = { ...(entry.meta || {}), category: String(category).trim() };
+      return entry;
+    }
+
     setBudget({ category, amount, description = '' } = {}) {
       const name = String(category || '').trim();
       if (!name) throw new CoreError('INVALID_NAME', 'Elige una categoría');

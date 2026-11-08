@@ -1,7 +1,7 @@
 /* Ábaco · estructura de la interfaz (rediseño del canvas).
  *
- *  - Cabecera de título grande: subtítulo (saludo en Inicio, momento del día en las demás),
- *    título de la pantalla y, en Inicio, el chip "Tarde · 16:20". Al desplazar se compacta.
+ *  - Cabecera de título grande: subtítulo (saludo en Inicio, momento del día en las demás) y
+ *    título de la pantalla. Al desplazar se compacta.
  *  - Formularios como hojas inferiores: cualquier formulario de captura que se muestre se
  *    convierte en hoja con fondo atenuado. Tocar el fondo o "volver" la cierra.
  *  - Ayuda de la sección y cierre desde el menú.
@@ -14,7 +14,7 @@
   const $ = (id) => document.getElementById(id);
 
   const TITLES = {
-    inicio: 'Inicio', hormiga: 'Registrar', historial: 'Movimientos', estadisticas: 'Estadísticas', cuentas: 'Cuentas',
+    inicio: 'Hoy', hormiga: 'Registrar', historial: 'Movimientos', estadisticas: 'Estadísticas', cuentas: 'Cuentas',
     ingresos: 'Ingresos', ahorros: 'Ahorros', tarjetas: 'Tarjetas', prestamos: 'Préstamos', deudores: 'Por cobrar',
     inversiones: 'Inversiones', suscripciones: 'Suscripciones', presupuesto: 'Sobres', simulador: 'Simulador',
     compras: 'Compras', lista: 'Qué comprar', kanban: 'Pendientes', recordatorios: 'Recordatorios', categorias: 'Categorías',
@@ -27,11 +27,6 @@
 
   const sky = () => (window.AbacoSky ? AbacoSky.current() : null);
 
-  function clock() {
-    const s = sky();
-    const h = s && typeof s.realHour === 'number' ? s.realHour : new Date().getHours() + new Date().getMinutes() / 60;
-    return String(Math.floor(h)).padStart(2, '0') + ':' + String(Math.floor((h % 1) * 60)).padStart(2, '0');
-  }
 
   /* ---------- cabecera ---------- */
 
@@ -43,14 +38,9 @@
     const name = state.activePanel || 'hormiga';
     const s = sky();
     title.textContent = TITLES[name] || 'Ábaco';
-    if (name === 'inicio') {
-      sub.textContent = (s ? s.saludo : 'Hola') + (state.user_name ? ', ' + state.user_name : '');
-      chip.textContent = (s ? s.momento + ' · ' : '') + clock();
-      chip.classList.remove('hidden');
-    } else {
-      sub.textContent = s ? s.momento : '';
-      chip.classList.add('hidden');
-    }
+    // Modo calmado: sin chip de hora; en Inicio, solo el saludo.
+    sub.textContent = name === 'inicio' ? (s ? s.saludo : 'Hola') + (state.user_name ? ', ' + state.user_name : '') : (s ? s.momento : '');
+    chip.classList.add('hidden');
   }
 
   function bindScroll() {
