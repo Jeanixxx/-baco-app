@@ -148,6 +148,12 @@
     }
     soon.sort((a, b) => a.d - b.d).forEach((s) => list.push(s));
 
+    // Operaciones de la calculadora que esperan dinero: agregarlo para completarlas.
+    const pendientes = (e && Array.isArray(e.pendingMoney)) ? e.pendingMoney : [];
+    for (const p of pendientes.slice(0, 2)) {
+      list.push({ key: 'dinero:' + p.id, title: 'Agregar dinero a ' + (p.accountName || 'tu cuenta'), sub: 'Faltan ' + money(p.missing) + ' para: ' + (p.desc || (p.kind === 'abono' ? 'abono a deuda' : 'gasto')), income: true, tag: 'pendiente' });
+    }
+
     // Domingo (o lunes, si se pasó): la revisión de un minuto.
     if (F && e && F.sundayDue(e, t)) list.push({ key: 'domingo:' + F.sundayKey(t), title: 'Revisión de domingo', sub: 'Un minuto, tres tarjetas', tag: '1 min', focus: 'domingo' });
 
@@ -475,7 +481,6 @@
     if (t.closest('#btnNewSobre')) { if (typeof openBudgetEntry === 'function') openBudgetEntry(); return; }
     if (t.closest('#btnNewCard')) { if (typeof openOpForm === 'function') openOpForm('cardFormPanel'); return; }
     if (t.closest('#menuAllToggle')) { api.menuAllOpen = !api.menuAllOpen; if (typeof renderMenu === 'function') renderMenu(); return; }
-    if (t.closest('#btnCalcMenu')) { if (typeof closeMenu === 'function') closeMenu(); if (typeof openCalc === 'function') openCalc(); return; }
     const el = t.closest('[data-calm]');
     if (!el) return;
     const a = el.dataset.calm;

@@ -24,7 +24,6 @@
     <div class="menu-list" id="menuList"></div>
     <div class="menu-footer">
       <div class="menu-section" style="margin-top:0">Preferencias</div>
-      <div class="menu-item" id="btnCalcMenu"><span class="ico">123</span><span class="menu-item-label">Calculadora</span></div>
       <div class="menu-item" id="btnHelpMenu"><span class="ico">?</span><span class="menu-item-label">Ayuda</span></div>
       <div class="menu-item" id="btnThemeMenu"><span class="ico">◐</span><span class="menu-item-label">Cielo</span></div>
       <div class="menu-item" id="btnPronounMenu"><span class="ico">Aa</span><span class="menu-item-label">Pronombres</span></div>
@@ -42,16 +41,25 @@
   </div>
 </div>
 <div id="menuEdgeHint" title="Abrir menú">‹</div>
-<div id="calcEdgeHint" title="Calculadora">›</div>
 <div class="calc-overlay" id="calcOverlay"></div>
-<div class="calc-page" id="calcPage">
-  <div class="op-form-head">
-    <h3 style="margin:0;font-size:16px">Calculadora</h3>
+<div class="calc-page" id="calcPage" role="dialog" aria-modal="true" aria-label="Calculadora">
+  <div class="ck-head">
+    <h3>Calculadora</h3>
     <button type="button" class="btn btn-ghost btn-sm" id="btnCloseCalc">Cerrar</button>
   </div>
-  <div class="calc-expression" id="calcExpression" aria-live="polite"></div>
-  <div class="calc-display" id="calcDisplay" aria-live="polite">0</div>
-  <div class="calc-grid" id="calcGrid"></div>
+  <div class="ck-tape" id="ckTape" aria-live="polite"></div>
+  <div class="ck-display" id="ckDisplay" aria-live="polite">0</div>
+  <div class="ck-error" id="ckError" role="status"></div>
+  <div class="ck-src">
+    <button type="button" class="ck-chip" id="ckFrom">Tomar de…</button>
+    <button type="button" class="ck-chip" id="ckAvail">Disponible</button>
+  </div>
+  <div class="ck-hist" id="ckHist"></div>
+  <div class="ck-keys" id="ckKeys"></div>
+  <div class="ck-actions">
+    <button type="button" class="btn btn-primary" id="ckSpend" disabled>Anotar gasto</button>
+    <button type="button" class="btn btn-ghost" id="ckPay" disabled>Abonar a deuda</button>
+  </div>
 </div>
 
 <div class="content" id="appContent">
@@ -63,6 +71,7 @@
     </div>
     <div class="tb-actions">
       <span class="tb-chip hidden" id="tbChip"></span>
+      <button class="tb-btn" id="btnCalcTop" type="button" aria-label="Calculadora" title="Calculadora"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M16 12h0M8 16h2M12 16h2M16 16h0"/></svg></button>
       <button class="tb-btn" id="btnMenuHeader" type="button" aria-label="Abrir menú" title="Menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
     </div>
   </div>
@@ -829,6 +838,8 @@
 <script src="js/abaco-intent.js"></script>
 <script src="js/abaco-quick.js"></script>
 <script src="js/abaco-focus.js"></script>
+<script src="js/abaco-calc-engine.js"></script>
+<script src="js/abaco-calc.js"></script>
 <script src="js/abaco-extras-ui.js"></script>
 <script src="js/security.js"></script>
 </body>

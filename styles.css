@@ -1090,14 +1090,14 @@ header, .content, .mode-choice, .pinned-bar {
 /* Calculadora lateral (izquierda) */
 .calc-overlay {
   position: fixed; inset: 0; background: rgba(42,51,68,.28);
-  z-index: 75; opacity: 0; pointer-events: none;
+  z-index: 195; opacity: 0; pointer-events: none;
   transition: opacity .38s cubic-bezier(.22,1,.36,1);
   backdrop-filter: blur(2px);
 }
 .calc-overlay.open { opacity: 1; pointer-events: auto; }
 [data-theme="dark"] .calc-overlay { background: rgba(0,0,0,.45); }
 .calc-page {
-  position: fixed; top: 0; left: 0; bottom: 0;
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 200 !important;
   width: min(400px, 94%);
   height: 100%; height: 100dvh;
   background: var(--bg);
@@ -2181,3 +2181,37 @@ body.focus-open { overflow: hidden; }
   100% { box-shadow: 0 0 0 0 rgba(18, 112, 79, 0); }
 }
 @media (prefers-reduced-motion: reduce) { .fx-day.glow { animation: none; } }
+
+/* ---------- Calculadora (js/abaco-calc.js) ---------- */
+.calc-page { overflow-y: auto; gap: 10px; }
+.ck-head { display: flex; justify-content: space-between; align-items: center; }
+.ck-head h3 { margin: 0; font-size: 17px; font-weight: 700; }
+.ck-tape { min-height: 22px; font-size: 14px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; overflow-x: auto; white-space: nowrap; padding: 0 4px; }
+.ck-display { font-size: 52px; font-weight: 600; letter-spacing: -1px; text-align: right; font-variant-numeric: tabular-nums; line-height: 1.15; padding: 0 4px; min-width: 0; overflow-x: auto; white-space: nowrap; color: var(--ink, var(--text)); }
+.ck-error { min-height: 18px; font-size: 13px; color: var(--bad); text-align: right; padding: 0 4px; }
+.ck-src { display: flex; gap: 8px; }
+.ck-chip { flex: 1; min-height: 40px; border-radius: 14px; font: inherit; font-size: 14px; font-weight: 600; color: var(--text); background: var(--glass-soft); border: 1px solid var(--glass-edge); cursor: pointer; }
+.ck-hist { display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.ck-hrow { display: flex; justify-content: space-between; gap: 8px; min-height: 34px; padding: 6px 10px; border-radius: 12px; background: var(--glass-soft); border: 1px solid var(--glass-edge); font: inherit; font-size: 13px; color: var(--muted); text-align: left; cursor: pointer; }
+.ck-hrow span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-hrow b { color: var(--text); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.ck-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.ck-key { min-height: 56px; border-radius: 18px; font: inherit; font-size: 22px; font-weight: 500; color: var(--text); background: var(--glass-soft); border: 1px solid var(--glass-edge); cursor: pointer; transition: transform .1s ease, background .15s ease; }
+.ck-key:active { transform: scale(.95); background: var(--glass-hi); }
+.ck-key.op { color: var(--green); background: var(--glass-hi); }
+.ck-key.fn { font-size: 17px; color: var(--muted); }
+.ck-key.eq { grid-row: span 2; background: var(--accent); color: #fff; border: none; font-size: 26px; min-height: 0; box-shadow: 0 8px 20px rgba(18, 112, 79, .28); }
+.ck-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ck-actions .btn { min-height: 48px; font-size: 14px; }
+.ck-actions .btn:disabled { opacity: .45; }
+.ck-sheet { z-index: 210; max-height: 86vh; overflow-y: auto; }
+.ck-sheet[hidden] { display: none; }
+.ck-group { font-size: 12px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin: 16px 2px 6px; }
+.ck-list { display: flex; flex-direction: column; gap: 8px; }
+.ck-opt { display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 48px; padding: 12px 14px; border-radius: 16px; font: inherit; font-size: 15px; color: var(--text); background: var(--glass-soft); border: 1px solid var(--glass-edge); cursor: pointer; text-align: left; }
+.ck-opt b { font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.ck-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.ck-amount { font-size: 34px; font-weight: 700; letter-spacing: -.5px; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.ck-sheet input { width: 100%; margin-top: 6px; }
+.ck-go { width: 100%; margin-top: 18px; }
+.ck-note { font-size: 13px; color: var(--muted); line-height: 1.45; margin: 12px 2px 0; }

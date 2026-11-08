@@ -44,7 +44,7 @@
         tone: 'amable', unitId: null, customUnits: [], pause: true, pauseSeconds: 5,
         silenceUntil: null, metrics: ['colchon', 'hormiga'], bigAmount: 500, decisionDays: 90
       },
-      decisions: [], pacts: [], letters: [], letterSkips: [], borrows: [], answers: {}
+      decisions: [], pacts: [], letters: [], letterSkips: [], borrows: [], answers: {}, pendingMoney: []
     };
   }
 
@@ -53,7 +53,7 @@
     const base = defaults();
     const src = raw && typeof raw === 'object' ? raw : {};
     const out = { ...base, ...src, prefs: { ...base.prefs, ...(src.prefs || {}) } };
-    for (const k of ['decisions', 'pacts', 'letters', 'letterSkips', 'borrows']) if (!Array.isArray(out[k])) out[k] = [];
+    for (const k of ['decisions', 'pacts', 'letters', 'letterSkips', 'borrows', 'pendingMoney']) if (!Array.isArray(out[k])) out[k] = [];
     if (!out.answers || typeof out.answers !== 'object') out.answers = {};
     if (!Array.isArray(out.prefs.customUnits)) out.prefs.customUnits = [];
     if (!Array.isArray(out.prefs.metrics)) out.prefs.metrics = base.prefs.metrics.slice();

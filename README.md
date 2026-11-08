@@ -19,6 +19,8 @@ Aplicación web para llevar cuentas, gastos, ingresos, préstamos, tarjetas (con
 | `js/abaco-calm.js` | Modo calmado: Inicio «Hoy, solo tres cosas», Registrar en dos pasos, Sobres y Tarjetas con hoja de detalle, menú con lo que más usas. |
 | `js/abaco-tour.js` | Tour de bienvenida que se puede saltar: enseña Hoy y Registrar y recoge saldos, día de pago, sobres y un pago fijo. |
 | `js/abaco-intent.js` | Detector de frases (reglas, sin internet): distingue gasto, ingreso, «le debo», «me debe», abono, cobro, recordatorio y lista; lee montos con letra («mil quinientos», «2k»), personas, fechas y horas, categoría y cuenta. |
+| `js/abaco-calc-engine.js` | Motor de la calculadora: jerarquía de operaciones, borrar dígito, paréntesis, cinta e historial. Sin pantalla. |
+| `js/abaco-calc.js` | Calculadora en pantalla: tomar datos de cuentas, deudas y préstamos; anotar gastos y abonos; dinero pendiente que se marca en Hoy y se anota solo. |
 | `js/abaco-focus.js` | Herramientas para TDAH: volver sin culpa, trámites en pasos, Lo que viene, Constancia y revisión de domingo. |
 | `js/abaco-quick.js` | Frases anotadas desde la notificación de Android: las interpreta con `abaco-intent.js`, las guarda con su hora y confirma a Android. |
 | `js/abaco-extras-ui.js` | Interfaz de convivencia: avisos de Inicio, brújula flotante, pausa antes de pagar y las pantallas Estadísticas, Decisiones, Pactos, Cartas y Configuración. |

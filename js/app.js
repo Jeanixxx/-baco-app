@@ -1365,52 +1365,6 @@ function firstLiquidAccount(){
   ensureDefaultAccounts();
   return state.accounts.find(a=>['efectivo','débito','debito'].includes((a.type||'').toLowerCase())) || null;
 }
-let calcValue='0', calcPrev=null, calcOp=null, calcFresh=true, calcExpressionText='';
-function openCalc(){ $('calcPage')?.classList.add('open'); $('calcOverlay')?.classList.add('open'); document.querySelector('.app')?.classList.add('calc-open'); }
-function closeCalc(){ $('calcPage')?.classList.remove('open'); $('calcOverlay')?.classList.remove('open'); document.querySelector('.app')?.classList.remove('calc-open'); }
-function updateCalcDisplay(){
-  if($('calcDisplay')) $('calcDisplay').textContent=calcValue;
-  if($('calcExpression')) $('calcExpression').textContent=calcExpressionText;
-}
-function updatePendingCalcExpression(){
-  if(calcOp!==null&&calcPrev!==null){
-    calcExpressionText=`${calcPrev} ${calcOp}${calcFresh?'':` ${calcValue}`}`;
-  }
-}
-function calcInput(key){
-  if(key==='C'){ calcValue='0'; calcPrev=null; calcOp=null; calcFresh=true; calcExpressionText=''; updateCalcDisplay(); return; }
-  if(key==='±'){ calcValue=String(-(parseFloat(calcValue)||0)); updatePendingCalcExpression(); updateCalcDisplay(); return; }
-  if(key==='%'){ calcValue=String((parseFloat(calcValue)||0)/100); updatePendingCalcExpression(); updateCalcDisplay(); return; }
-  if(['+','-','×','÷'].includes(key)){
-    if(calcOp&&!calcFresh) calcEquals();
-    calcPrev=parseFloat(calcValue)||0; calcOp=key; calcFresh=true;
-    calcExpressionText=`${calcPrev} ${calcOp}`; updateCalcDisplay(); return;
-  }
-  if(key==='='){ calcEquals(); return; }
-  if(key==='.'){
-    if(calcFresh){calcValue='0.';calcFresh=false;} else if(!calcValue.includes('.')) calcValue+='.';
-    updatePendingCalcExpression(); updateCalcDisplay(); return;
-  }
-  if(calcFresh||calcValue==='0'){ calcValue=key; calcFresh=false; if(calcOp===null) calcExpressionText=''; } else calcValue+=key;
-  updatePendingCalcExpression();
-  updateCalcDisplay();
-}
-function calcEquals(){
-  if(calcOp==null||calcPrev==null) return;
-  const a=calcPrev, op=calcOp, b=parseFloat(calcValue)||0; let r=a;
-  if(op==='+') r=a+b; if(op==='-') r=a-b; if(op==='×') r=a*b; if(op==='÷') r=b===0?0:a/b;
-  calcExpressionText=`${a} ${op} ${calcValue} =`;
-  calcValue=String(Math.round(r*1e8)/1e8); calcOp=null; calcPrev=null; calcFresh=true; updateCalcDisplay();
-}
-function setupCalculator(){
-  const grid=$('calcGrid'); if(!grid) return;
-  const keys=['C','±','%','÷','7','8','9','×','4','5','6','-','1','2','3','+','0','.','='];
-  grid.innerHTML=keys.map(k=>{const cls=['+','-','×','÷','%','±'].includes(k)?'op':(k==='='?'eq':'');return `<button type="button" class="${cls}" data-k="${k}">${k}</button>`;}).join('');
-  grid.querySelectorAll('button').forEach(b=>b.onclick=()=>calcInput(b.dataset.k));
-  if($('btnCloseCalc')) $('btnCloseCalc').onclick=closeCalc;
-  if($('calcOverlay')) $('calcOverlay').onclick=closeCalc;
-  // Apertura solo por botón (header), sin gesto de borde
-}
 function renderDebtors(){
   const list=$('debtorsList'); if(!list)return;
   const items=(state.debtors||[]).filter(d=>!d.settled).sort((a,b)=>(b.created_at||0)-(a.created_at||0));
@@ -2544,7 +2498,6 @@ updateBackupStatusLabel();
 checkReminders();
 
 setupMoneyChartsUI();
-try{setupCalculator();}catch(e){console.warn(e)}
 $('btnMenuHeader')&&($('btnMenuHeader')&&( $('btnMenuHeader').onclick=()=>openMenu()) );
 $('btnCalcHeader')&&($('btnCalcHeader')&&( $('btnCalcHeader').onclick=()=>openCalc()) );
 $('btnHelpHeader')&&($('btnHelpHeader')&&( $('btnHelpHeader').onclick=()=>showPanelHelp()) );

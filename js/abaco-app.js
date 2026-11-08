@@ -55,6 +55,7 @@
     try { if (window.AbacoShell) window.AbacoShell.refresh(); } catch (e) { console.warn('estructura', e); }
     try { if (window.AbacoCalm) window.AbacoCalm.afterRefresh(); } catch (e) { console.warn('modo calmado', e); }
     try { if (window.AbacoFocus) window.AbacoFocus.afterRefresh(); } catch (e) { console.warn('herramientas', e); }
+    try { if (window.AbacoCalc) window.AbacoCalc.afterRefresh(); } catch (e) { console.warn('calculadora', e); }
   }
 
   /* Como act(), pero no llama a updateUI: el asistente de bienvenida depende de esa función
